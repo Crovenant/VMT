@@ -1,78 +1,37 @@
-import React from 'react';
+// src/modules/Components/DuplicateResolver/ResolverDialog.tsx
+
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  FormControlLabel,
-  Radio,
   Typography,
   Box,
-  Divider
+  Divider,
+  FormControlLabel,
+  Radio
 } from '@mui/material';
-
-interface Entry {
-  [key: string]: any;
-}
-
-interface DuplicatePair {
-  existing: Entry;
-  incoming: Entry;
-}
+import type { DuplicatePair } from '../../types/item';
+import { renderEntry } from './ResolverLogic';
 
 interface Props {
   open: boolean;
   duplicates: DuplicatePair[];
   selectedOptions: ('existing' | 'incoming')[];
-  setSelectedOptions: React.Dispatch<React.SetStateAction<('existing' | 'incoming')[]>>;
+  handleChange: (index: number, value: 'existing' | 'incoming') => void;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-const fieldLabels: { [key: string]: string } = {
-  numero: "Número",
-  idExterno: "ID externo",
-  estado: "Estado",
-  resumen: "Resumen",
-  breveDescripcion: "Breve descripción",
-  elementoConfiguracion: "Elemento de configuración",
-  prioridad: "Prioridad",
-  puntuacionRiesgo: "Puntuación de riesgo",
-  grupoAsignacion: "Grupo de asignación",
-  asignadoA: "Asignado a",
-  creado: "Creado",
-  actualizado: "Actualizado",
-  sites: "Sites",
-  vulnerabilitySolution: "Vulnerability solution",
-  vulnerabilidad: "Vulnerabilidad"
-};
-
-const DuplicateResolver: React.FC<Props> = ({
+export default function ResolverDialog({
   open,
   duplicates,
   selectedOptions,
-  setSelectedOptions,
+  handleChange,
   onClose,
   onConfirm
-}) => {
-  const handleChange = (index: number, value: 'existing' | 'incoming') => {
-    const updated = [...selectedOptions];
-    updated[index] = value;
-    setSelectedOptions(updated);
-    console.log(`🔘 Selección actualizada en índice ${index}:`, value);
-  };
-
-  const renderEntry = (entry: Entry) => (
-    <Box sx={{ fontSize: 12, lineHeight: 1.4 }}>
-      {Object.entries(fieldLabels).map(([key, label]) => (
-        <Typography key={key} variant="body2">
-          <strong>{label}:</strong> {String(entry[key] ?? '')}
-        </Typography>
-      ))}
-    </Box>
-  );
-
+}: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Conflicts detected</DialogTitle>
@@ -95,7 +54,7 @@ const DuplicateResolver: React.FC<Props> = ({
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-              <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+              <Box sx={{ flex: 1 }}>
                 <FormControlLabel
                   value="existing"
                   control={
@@ -107,7 +66,7 @@ const DuplicateResolver: React.FC<Props> = ({
                   label="Keep current data"
                 />
               </Box>
-              <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+              <Box sx={{ flex: 1 }}>
                 <FormControlLabel
                   value="incoming"
                   control={
@@ -133,6 +92,4 @@ const DuplicateResolver: React.FC<Props> = ({
       </DialogActions>
     </Dialog>
   );
-};
-
-export default DuplicateResolver;
+}

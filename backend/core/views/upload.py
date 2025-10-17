@@ -1,3 +1,5 @@
+# backend/core/views/upload.py
+
 import json
 import os
 import pandas as pd
@@ -9,7 +11,6 @@ from .utils import add_cors_headers
 from .normalize import normalize_headers
 from .duplicates import detect_duplicates
 from .risk_logic import assign_ids_and_merge
-
 @csrf_exempt
 def upload_data(request):
     if request.method == 'OPTIONS':
@@ -45,7 +46,11 @@ def upload_data(request):
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(updated_data, f, ensure_ascii=False, indent=2)
 
-            response = JsonResponse({'message': 'Data added successfully', 'new': [], 'duplicates': []})
+            response = JsonResponse({
+                'message': 'Data added successfully',
+                'new': [],
+                'duplicates': []
+            })
         else:
             response = JsonResponse({
                 'message': 'Duplicates detected',

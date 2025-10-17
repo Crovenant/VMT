@@ -1,10 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { mutate } from 'swr';
-import DuplicateResolver from './DuplicateResolver';
+// src/modules/hooks/useUploadFile.ts
 
-interface UploadFileProps {
-  onClose: (success: boolean) => void;
-}
+import { useState } from 'react';
+import { mutate } from 'swr';
 
 interface Entry {
   [key: string]: any;
@@ -15,8 +12,7 @@ interface DuplicatePair {
   incoming: Entry;
 }
 
-const UploadFile: React.FC<UploadFileProps> = ({ onClose }) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+export function useUploadFile(onClose: (success: boolean) => void) {
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [duplicates, setDuplicates] = useState<DuplicatePair[]>([]);
   const [resolverOpen, setResolverOpen] = useState(false);
@@ -89,35 +85,13 @@ const UploadFile: React.FC<UploadFileProps> = ({ onClose }) => {
     mutate('http://localhost:8000/risk-data/');
   };
 
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <h3>Selecciona un archivo Excel</h3>
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept=".xls,.xlsx,.csv"
-        onChange={handleFileUpload}
-      />
-      <br />
-      <button onClick={() => onClose(false)} style={{ marginTop: '1rem' }}>
-        Cancelar
-      </button>
-      {mensaje && (
-        <div style={{ marginTop: '1rem', color: mensaje.startsWith('✅') ? 'green' : 'red' }}>
-          {mensaje}
-        </div>
-      )}
-
-      <DuplicateResolver
-        open={resolverOpen}
-        duplicates={duplicates}
-        selectedOptions={selectedOptions}
-        setSelectedOptions={setSelectedOptions}
-        onClose={() => setResolverOpen(false)}
-        onConfirm={handleConfirmDuplicates}
-      />
-    </div>
-  );
-};
-
-export default UploadFile;
+  return {
+    mensaje,
+    resolverOpen,
+    duplicates,
+    selectedOptions,
+    setSelectedOptions,
+    handleFileUpload,
+    handleConfirmDuplicates,
+  };
+}

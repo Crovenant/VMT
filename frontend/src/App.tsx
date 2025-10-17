@@ -1,4 +1,6 @@
-import Dashboard from './modules/Dashboard';
+// src/App.tsx
+
+import Dashboard from './modules/Main/Components/Dashboard';
 import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
 
 const theme = createTheme({
