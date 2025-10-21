@@ -16,7 +16,6 @@ type Props = {
 export default function FilterBar({
   columns: _columns,
   setColumns: _setColumns,
-  showPanel,
   togglePanel,
   handleDownload,
   onResetView,
