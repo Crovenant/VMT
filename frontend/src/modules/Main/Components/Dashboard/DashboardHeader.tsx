@@ -5,7 +5,8 @@ import {
   Box,
   Typography,
   IconButton,
-  Badge
+  Badge,
+  Tooltip
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 
@@ -36,12 +37,13 @@ export default function DashboardHeader({
             Vulnerability Management Tool
           </Typography>
         </Box>
-
-        <IconButton color={bellColor} onClick={handleBellClick}>
-          <Badge overlap="rectangular" badgeContent={followUpCount} color="secondary">
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
+        <Tooltip title="Follow-up ítems">
+          <IconButton color={bellColor} onClick={handleBellClick}>
+            <Badge overlap="rectangular" badgeContent={followUpCount} color="secondary">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+        </Tooltip>
       </Toolbar>
     </AppBar>
   );

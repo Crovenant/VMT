@@ -1,5 +1,5 @@
 // src/modules/Main/Components/ListItems/ListWrapper.tsx
-import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
+import { ListItemButton, ListItemIcon, ListItemText, Tooltip } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import ListTable from './ListTable';
 import useItems from '../../hooks/useItems';
@@ -10,12 +10,14 @@ export function mainListItems({
   setShowUploadModal: (val: boolean) => void;
 }) {
   return (
+    <Tooltip title= "Upload Excel file">
     <ListItemButton onClick={() => setShowUploadModal(true)}>
       <ListItemIcon>
         <UploadFileIcon />
       </ListItemIcon>
       <ListItemText primary="Upload File" />
     </ListItemButton>
+    </Tooltip>
   );
 }
 

@@ -8,6 +8,7 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Tooltip
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import type { Item } from '../../types/item';
@@ -123,13 +124,15 @@ export default function DisplayTable({
 
       <Box sx={{ marginTop: 3 }}>
         {visibleRows < rows.length && (
+          <Tooltip title="See 10 more items">
           <Link
             component="button"
             variant="body2"
             onClick={() => setVisibleRows(visibleRows + 10)}
           >
-            See 10 more items.
+            View More.
           </Link>
+          </Tooltip>
         )}
       </Box>
     </>
