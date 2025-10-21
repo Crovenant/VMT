@@ -49,16 +49,27 @@ function normalizeItem(entry: any): Item {
     resumen: entry.resumen ?? '',
     breveDescripcion: entry.breveDescripcion ?? '',
     elementoConfiguracion: entry.elementoConfiguracion ?? '',
+
+    // Campo que usa el front para cálculos
     fechaCreacion: String(creado),
+
+    // Prioridad normalizada para el chart
     prioridad,
+
     puntuacionRiesgo: Number(entry.puntuacionRiesgo ?? entry.riesgo ?? 0),
     grupoAsignacion: entry.grupoAsignacion ?? '',
     asignadoA: entry.asignadoA ?? '',
     sites: entry.sites ?? '',
     vulnerabilidad: entry.vulnerabilidad ?? '',
     vulnerabilitySolution: entry.vulnerabilitySolution ?? '',
+
+    // Requeridos por tu tipo Item
     creado: String(creado),
     actualizado: String(actualizado),
+
+    // Se calcularán luego
+    // followUp: false,
+    // soonDue: false,
   };
 }
 
@@ -66,56 +77,50 @@ export default function useItems(refreshKey: number) {
   const [items, setItems] = useState<Item[]>([]);
 
   useEffect(() => {
-    const fetchData = () => {
-      fetch('http://localhost:8000/risk-data/')
-        .then((response) => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return response.json();
-        })
-        .then((raw: any[]) => {
-          const normalized = (Array.isArray(raw) ? raw : []).map(normalizeItem);
+    fetch('http://localhost:8000/risk-data/')
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((raw: any[]) => {
+        const normalized = (Array.isArray(raw) ? raw : []).map(normalizeItem);
 
-          const msPerDay = 1000 * 60 * 60 * 24;
-          const horizonDaysByPriority: Record<Item['prioridad'], number> = {
-            'Crítico': 30,
-            'Alto': 90,
-            'Medio': 365,
-            'Bajo': 365,
-          };
+        // Reglas de caducidad:
+        // Crítico: 30 días, Alto: 90, Medio/Bajo: 365
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const horizonDaysByPriority: Record<Item['prioridad'], number> = {
+          'Crítico': 30,
+          'Alto': 90,
+          'Medio': 365,
+          'Bajo': 365,
+        };
 
-          const now = new Date();
+        const now = new Date();
 
-          const withFlags = normalized.map((item) => {
-            const created = new Date(item.fechaCreacion);
-            if (isNaN(created.getTime())) {
-              return { ...item, followUp: false, soonDue: false };
-            }
+        const withFlags = normalized.map((item) => {
+          const created = new Date(item.fechaCreacion);
+          if (isNaN(created.getTime())) {
+            return { ...item, followUp: false, soonDue: false };
+          }
 
-            const horizonDays = horizonDaysByPriority[item.prioridad] ?? 365;
-            const expiry = new Date(created.getTime() + horizonDays * msPerDay);
-            const daysToExpiry = Math.floor((expiry.getTime() - now.getTime()) / msPerDay);
+          const horizonDays = horizonDaysByPriority[item.prioridad] ?? 365;
+          const expiry = new Date(created.getTime() + horizonDays * msPerDay);
 
-            const followUp = daysToExpiry < 0;
-            const soonDue = !followUp && daysToExpiry <= 7;
+          const daysToExpiry = Math.floor((expiry.getTime() - now.getTime()) / msPerDay);
 
-            return { ...item, followUp, soonDue };
-          });
+          const followUp = daysToExpiry < 0;                 // ya caducó
+          const soonDue  = !followUp && daysToExpiry <= 7;   // ≤ 7 días y aún no caducó
 
-          setItems(withFlags);
-        })
-        .catch((err) => {
-          console.error('Error fetching items:', err);
-          setItems([]);
+          return { ...item, followUp, soonDue };
         });
-    };
 
-    fetchData(); // primera carga o cambio de refreshKey
-
-    const interval = setInterval(fetchData, 2000); // polling cada 2 segundos
-
-    return () => clearInterval(interval);
-  }, [refreshKey]); // ← se mantiene para el botón y el upload
-  
+        setItems(withFlags);
+      })
+      .catch((err) => {
+        console.error('Error fetching items:', err);
+        setItems([]);
+      });
+  }, [refreshKey]);
 
   return { items };
 }

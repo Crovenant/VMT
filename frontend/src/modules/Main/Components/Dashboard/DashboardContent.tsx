@@ -1,20 +1,13 @@
 // src/modules/Main/Components/Dashboard/DashboardContent.tsx
 import {
-  Container,
-  Grid,
-  Paper,
-  Box,
-  Toolbar,
-  Drawer,
-  Divider,
-  List,
+  Container, Grid, Paper, Box, Toolbar, Drawer, Divider, List,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 import Chart from '../Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
-import { mainListItems, secondaryListItems } from '../ListItems/ListWrapper';
+import { mainListItems } from '../ListItems/ListWrapper';
 
 const drawerWidth = 72;
 
@@ -53,6 +46,7 @@ export default function DashboardContent({
   setSelectedItemId,
   setCustomFlagFilter,
   setShowUploadModal,
+  onResetView,          // ⬅️ NUEVO
 }: {
   refreshKey: number;
   priorityFilter: string | null;
@@ -62,15 +56,15 @@ export default function DashboardContent({
   setSelectedItemId: (val: number | null) => void;
   setCustomFlagFilter: (val: 'followUp' | 'soonDue' | null) => void;
   setShowUploadModal: (val: boolean) => void;
+  onResetView: () => void; // ⬅️ NUEVO
 }) {
   return (
     <>
-      <DrawerStyled variant="permanent" open={true}>
+      <DrawerStyled variant="permanent" open>
         <ToolbarIcon />
         <Divider />
         <List>{mainListItems({ setShowUploadModal })}</List>
         <Divider />
-        
       </DrawerStyled>
 
       <Box component="main" sx={{ flexGrow: 1, height: '100vh', overflow: 'auto' }}>
@@ -89,6 +83,7 @@ export default function DashboardContent({
                 />
               </FixedHeightPaper>
             </Grid>
+
             <Grid item xs={12} md={4} lg={3}>
               <FixedHeightPaper>
                 <FocusItems
@@ -101,6 +96,7 @@ export default function DashboardContent({
                 />
               </FixedHeightPaper>
             </Grid>
+
             <Grid item xs={12}>
               <Paper sx={{ p: 2, display: 'flex', overflow: 'auto', flexDirection: 'column' }}>
                 <DisplayData
@@ -108,6 +104,7 @@ export default function DashboardContent({
                   priorityFilter={priorityFilter}
                   selectedItemId={selectedItemId !== null ? String(selectedItemId) : null}
                   customFlagFilter={customFlagFilter}
+                  onResetView={onResetView}   // ⬅️ se lo pasamos a la tabla
                 />
               </Paper>
             </Grid>

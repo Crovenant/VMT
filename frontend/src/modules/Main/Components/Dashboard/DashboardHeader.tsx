@@ -21,32 +21,22 @@ export default function DashboardHeader({
   return (
     <AppBar position="absolute" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar sx={{ justifyContent: 'space-between' }}>
-        {/* Logo + Título centrado */}
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexGrow: 1
         }}>
-          
           <img
-                src="/VMTicon.png"
-                alt="Logo"
-                style={{ width: 32, height: 32, marginRight: 8 }}               
-              />  
-
-          <Typography
-            component="h1"
-            variant="h6"
-            color="inherit"
-            noWrap
-            sx={{ fontWeight: 500 }}
-          >
+            src="/VMTicon.png"
+            alt="Logo"
+            style={{ width: 32, height: 32, marginRight: 8 }}
+          />
+          <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ fontWeight: 500 }}>
             Vulnerability Management Tool
           </Typography>
         </Box>
 
-        {/* Campana */}
         <IconButton color={bellColor} onClick={handleBellClick}>
           <Badge overlap="rectangular" badgeContent={followUpCount} color="secondary">
             <NotificationsIcon />

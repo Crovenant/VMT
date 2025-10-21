@@ -30,13 +30,38 @@ const columnKeyMap: Record<string, keyof Item> = {
   "Vulnerabilidad": "vulnerabilidad"
 };
 
-const getWarningColor = (priority: string) => {
-  switch (priority.toLowerCase()) {
-    case 'crítica': return '#d32f2f';
-    case 'alta': return '#f57c00';
-    case 'media': return '#fbc02d';
-    case 'baja': return '#1976d2';
-    default: return '#9e9e9e';
+// ---------- helpers de prioridad (normalización con tildes/mayúsculas) ----------
+const normalize = (v: unknown) =>
+  String(v ?? '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '') // remove diacritics
+    .toLowerCase()
+    .trim();
+
+/**
+ * Admite variantes: "Crítico/Crítica/CRITICO", "Alto/Alta", "Medio/Media", "Bajo/Baja".
+ * Si llega en inglés (critical/high/medium/low) también lo mapeamos por si acaso.
+ */
+const getWarningColor = (priority: unknown) => {
+  switch (normalize(priority)) {
+    case 'critico':
+    case 'critica':
+    case 'critical':
+      return '#d32f2f'; // rojo
+    case 'alto':
+    case 'alta':
+    case 'high':
+      return '#f57c00'; // naranja
+    case 'medio':
+    case 'media':
+    case 'medium':
+      return '#fbc02d'; // amarillo
+    case 'bajo':
+    case 'baja':
+    case 'low':
+      return '#1976d2'; // azul
+    default:
+      return '#9e9e9e'; // gris por defecto
   }
 };
 
@@ -54,7 +79,6 @@ export default function DisplayTable({
 }) {
   return (
     <>
-      
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -66,22 +90,29 @@ export default function DisplayTable({
         <TableBody>
           {rows.slice(0, visibleRows).map((row: Item) => (
             <TableRow
-              key={`${row.id}-${row.numero}`}
+              key={`${(row as any).id ?? row.numero}-${row.numero}`}
               sx={row.followUp ? { backgroundColor: '#fff8e1' } : {}}
             >
               {visibleColumns.map((col) => {
                 const key = columnKeyMap[col];
                 const value = row[key];
-                return (
-                  <TableCell key={col}>
-                    {col === "Prioridad" ? (
+
+                if (key === 'prioridad') {
+                  return (
+                    <TableCell key={col}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <WarningAmberIcon
-                          sx={{ color: getWarningColor(value as string), fontSize: 18 }}
+                          sx={{ color: getWarningColor(value), fontSize: 18 }}
                         />
-                        <Typography variant="body2">{value}</Typography>
+                        <Typography variant="body2">{String(value ?? '')}</Typography>
                       </Box>
-                    ) : typeof value === 'string' ? value : String(value ?? '')}
+                    </TableCell>
+                  );
+                }
+
+                return (
+                  <TableCell key={col}>
+                    {typeof value === 'string' ? value : String(value ?? '')}
                   </TableCell>
                 );
               })}

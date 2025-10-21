@@ -1,8 +1,6 @@
 // modules/components/Dashboard/DashboardWrapper.tsx
 import React from 'react';
-import {
-  Box, CssBaseline, Popover, Typography, Grid
-} from '@mui/material';
+import { Box, CssBaseline, Popover, Typography, Grid } from '@mui/material';
 import useItems from '../../hooks/useItems';
 import UploadFile from '../uploadFile';
 import DashboardHeader from './DashboardHeader';
@@ -17,11 +15,40 @@ export default function DashboardWrapper() {
   const [selectedItemId, setSelectedItemId] = React.useState<number | null>(null);
   const [customFlagFilter, setCustomFlagFilter] = React.useState<'followUp' | 'soonDue' | null>(null);
 
+  // 🔁 Auto-refresh cada 2s (pausado si la pestaña está oculta)
+  React.useEffect(() => {
+    let timer: number | undefined;
+
+    const stop = () => {
+      if (timer !== undefined) {
+        clearInterval(timer);
+        timer = undefined;
+      }
+    };
+
+    const start = () => {
+      stop(); // evita duplicados
+      timer = window.setInterval(() => {
+        setRefreshKey((k) => k + 1);
+      }, 2000);
+    };
+
+    const onVisibility = () => (document.hidden ? stop() : start());
+
+    start();
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
   const handleUploadClose = (success: boolean) => {
     setShowUploadModal(false);
     if (success) {
       setShowConfirmation(true);
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
       setTimeout(() => setShowConfirmation(false), 4000);
     }
   };
@@ -30,9 +57,17 @@ export default function DashboardWrapper() {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
 
+  // ✅ Reset "soft" SIN recargar el navegador
+  const handleResetView = () => {
+    setPriorityFilter(null);
+    setSelectedItemId(null);
+    setCustomFlagFilter(null);
+    setRefreshKey((prev) => prev + 1);
+  };
+
   const { items } = useItems(refreshKey);
-  const followUpItems = items.filter(item => item.followUp);
-  const soonDueItems = items.filter(item => item.soonDue);
+  const followUpItems = items.filter((item) => item.followUp);
+  const soonDueItems = items.filter((item) => item.soonDue);
   const followUpCount = followUpItems.length;
 
   let bellColor: 'inherit' | 'default' | 'error' | 'warning' | 'info' | 'success' = 'inherit';
@@ -61,44 +96,44 @@ export default function DashboardWrapper() {
         setSelectedItemId={setSelectedItemId}
         setCustomFlagFilter={setCustomFlagFilter}
         setShowUploadModal={setShowUploadModal}
+        onResetView={handleResetView} // ✅
       />
 
       {showUploadModal && (
-        <Box sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1300
-        }}>
-          <Box sx={{
-            backgroundColor: '#fff',
-            padding: 2,
-            borderRadius: 4,
-            boxShadow: 5
-          }}>
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1300,
+          }}
+        >
+          <Box sx={{ backgroundColor: '#fff', padding: 2, borderRadius: 4, boxShadow: 5 }}>
             <UploadFile onClose={handleUploadClose} />
           </Box>
         </Box>
       )}
 
       {showConfirmation && (
-        <Box sx={{
-          position: 'fixed',
-          bottom: 32,
-          right: 32,
-          backgroundColor: '#4caf50',
-          color: '#fff',
-          padding: 2,
-          borderRadius: 4,
-          boxShadow: 3,
-          zIndex: 1400
-        }}>
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+            backgroundColor: '#4caf50',
+            color: '#fff',
+            padding: 2,
+            borderRadius: 4,
+            boxShadow: 3,
+            zIndex: 1400,
+          }}
+        >
           File accepted
         </Box>
       )}
@@ -112,7 +147,9 @@ export default function DashboardWrapper() {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Box sx={{ p: 2, minWidth: 300 }}>
-          <Typography variant="h6" gutterBottom>Follow-up Items</Typography>
+          <Typography variant="h6" gutterBottom>
+            Follow-up Items
+          </Typography>
           {followUpItems.length === 0 && soonDueItems.length === 0 ? (
             <Typography variant="body2">No items to show.</Typography>
           ) : (
@@ -120,19 +157,11 @@ export default function DashboardWrapper() {
               {[...followUpItems, ...soonDueItems].map((item, idx) => (
                 <Box
                   key={idx}
-                  sx={{
-                    mb: 1,
-                    p: 1,
-                    border: '1px solid #ccc',
-                    borderRadius: 2,
-                    cursor: 'pointer'
-                  }}
-                  
+                  sx={{ mb: 1, p: 1, border: '1px solid #ccc', borderRadius: 2, cursor: 'pointer' }}
                   onClick={() => {
-                    setSelectedItemId(Number(item.id)); // ✅ conversión explícita
+                    setSelectedItemId(Number(item.id));
                     setAnchorEl(null);
                   }}
-
                 >
                   <Typography variant="body2">
                     <strong>{item.numero}</strong> - {item.prioridad} - {item.resumen}

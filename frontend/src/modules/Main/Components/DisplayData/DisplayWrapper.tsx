@@ -1,3 +1,4 @@
+// src/modules/Main/Components/DisplayData/DisplayWrapper.tsx
 import { Box } from '@mui/material';
 import Title from '../Title';
 import FilterBar from './FilterBar';
@@ -9,11 +10,13 @@ export default function DisplayWrapper({
   priorityFilter,
   selectedItemId,
   customFlagFilter,
+  onResetView,                 // ⬅️ NUEVO
 }: {
   refreshKey: number;
   priorityFilter?: string | null;
   selectedItemId?: string | null;
   customFlagFilter?: 'followUp' | 'soonDue' | null;
+  onResetView?: () => void;     // ⬅️ NUEVO (opcional)
 }) {
   const {
     rows,
@@ -36,8 +39,10 @@ export default function DisplayWrapper({
           showPanel={showFilterPanel}
           togglePanel={() => setShowFilterPanel(!showFilterPanel)}
           handleDownload={handleDownload}
+          onResetView={onResetView}     // ⬅️ pasa el handler al botón
         />
       </Box>
+
       <DisplayTable
         rows={rows}
         visibleColumns={visibleColumns}
