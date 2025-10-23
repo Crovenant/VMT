@@ -7,6 +7,7 @@ import type { Item } from '../../types/item';
 import type { ColDef, GridReadyEvent } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
+import './DisplayTable/Styles/DisplayTable.css';
 
 const columnKeyMap: Record<string, keyof Item> = {
   "Número": "numero",
@@ -59,6 +60,7 @@ const getWarningColor = (priority: unknown) => {
 export default function DisplayTable({
   rows,
   visibleColumns,
+  showFilterPanel,
 }: {
   rows: Item[];
   visibleColumns: string[];
@@ -66,48 +68,76 @@ export default function DisplayTable({
 }) {
   const gridRef = useRef<AgGridReact<Item>>(null);
 
+  // Configuración por defecto para columnas dinámicas
   const defaultColDef: ColDef = useMemo(() => ({
     resizable: true,
     sortable: true,
     filter: 'agTextColumnFilter',
     wrapText: true,
     autoHeight: true,
-    headerClass: 'ag-center-cols-header',
+    headerClass: 'ag-center-cols-header custom-header', // separador flotante en header
     cellStyle: { whiteSpace: 'normal', lineHeight: '1.4' },
+    suppressMenu: !showFilterPanel,
+  }), [showFilterPanel]);
+
+  // Columna fija de selección con checkbox
+  const selectionColumnDef: ColDef = useMemo(() => ({
+    headerCheckboxSelection: true,
+    checkboxSelection: true,
+    width: 30,    
+    suppressMovable: true
   }), []);
 
+  // Columna fija del icono del ojo
+  const eyeColumnDef: ColDef = useMemo(() => ({
+    headerName: '',
+    field: 'eyeIcon',  
+    suppressMovable: true,   
+    cellRenderer: () => (
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#1976d2">
+          <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 13a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0-9a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/>
+        </svg>
+      </Box>
+    ),
+  }), []);
+
+  // Columnas dinámicas visibles
   const columnDefs: ColDef[] = useMemo(() => {
-    return visibleColumns.map((col): ColDef => {
+    const defs: ColDef[] = [];
+
+    defs.push(selectionColumnDef);
+    defs.push(eyeColumnDef);
+
+    visibleColumns.forEach((col) => {
       const key = columnKeyMap[col];
 
-      if (key === 'prioridad') {
-        return {
-          headerName: col,
-          field: key,
-          filter: true,
-          sortable: true,
-          headerClass: 'ag-center-cols-header',
-          cellRenderer: (params: any) => {
-            const value = params.value;
-            const color = getWarningColor(value);
-            return (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <WarningAmberIcon sx={{ color, fontSize: 18 }} />
-                <span>{String(value ?? '')}</span>
-              </Box>
-            );
-          }
-        };
-      }
-
-      return {
+      const baseDef: ColDef = {
         headerName: col,
         field: key,
         filter: true,
         sortable: true,
-        headerClass: 'ag-center-cols-header',
+        headerClass: 'ag-center-cols-header custom-header', // separador flotante
+        cellClass: 'custom-cell', // separador flotante
       };
+
+      if (key === 'prioridad') {
+        baseDef.cellRenderer = (params: any) => {
+          const value = params.value;
+          const color = getWarningColor(value);
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <WarningAmberIcon sx={{ color, fontSize: 18 }} />
+              <span>{String(value ?? '')}</span>
+            </Box>
+          );
+        };
+      }
+
+      defs.push(baseDef);
     });
+
+    return defs;
   }, [visibleColumns]);
 
   const handleGridReady = (params: GridReadyEvent) => {
@@ -130,6 +160,7 @@ export default function DisplayTable({
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
         rowSelection="multiple"
+        rowMultiSelectWithClick={true}
         suppressRowClickSelection={false}
         animateRows={true}
         onGridReady={handleGridReady}

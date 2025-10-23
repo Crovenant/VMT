@@ -30,7 +30,7 @@ export default function DashboardWrapper() {
       stop(); // evita duplicados
       timer = window.setInterval(() => {
         setRefreshKey((k) => k + 1);
-      }, 2000);
+      }, 30000000);
     };
 
     const onVisibility = () => (document.hidden ? stop() : start());

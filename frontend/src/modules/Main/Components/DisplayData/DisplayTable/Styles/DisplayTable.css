@@ -1,0 +1,54 @@
+/* === Separadores flotantes entre columnas dinámicas del header === */
+/* AG Grid ya aplica esto con su clase por defecto, pero aquí lo reforzamos */
+.ag-theme-alpine .ag-header-cell {
+  position: relative;
+  border-right: none;
+}
+
+.ag-theme-alpine .ag-header-cell::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  right: 0;
+  width: 1px;
+  background-color: #d0d0d0;
+  pointer-events: none;
+}
+
+/* === Separadores flotantes entre celdas dinámicas === */
+.ag-theme-alpine .ag-cell {
+  position: relative;
+  border-right: none;
+}
+
+.ag-theme-alpine .ag-cell::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  right: 0;
+  width: 1px;
+  background-color: #e0e0e0;
+  pointer-events: none;
+}
+
+/* === Eliminar separadores en columnas fijas (checkbox y ojo) === */
+.ag-header-cell.no-separator::after,
+.ag-cell.no-separator::after {
+  display: none !important;
+}
+
+.ag-header-cell.no-separator,
+.ag-cell.no-separator {
+  border-right: none !important;
+}
+
+/* Ajusta el padding y elimina espacio extra en la celda del checkbox */
+.ag-selection-cell.no-separator {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  justify-content: center !important;
+  display: flex !important;
+  align-items: center !important;
+}
