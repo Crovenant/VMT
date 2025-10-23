@@ -1,18 +1,12 @@
 // modules/components/DisplayTable.tsx
-import {
-  Box,
-  Link,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-  Tooltip,
-  TableContainer
-} from '@mui/material';
+import { useMemo, useRef } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import { Box } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import type { Item } from '../../types/item';
+import type { ColDef, GridReadyEvent } from 'ag-grid-community';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 const columnKeyMap: Record<string, keyof Item> = {
   "Número": "numero",
@@ -65,84 +59,86 @@ const getWarningColor = (priority: unknown) => {
 export default function DisplayTable({
   rows,
   visibleColumns,
-  visibleRows,
-  setVisibleRows,
 }: {
   rows: Item[];
   visibleColumns: string[];
-  visibleRows: number;
-  setVisibleRows: (val: number) => void;
   showFilterPanel: boolean;
 }) {
+  const gridRef = useRef<AgGridReact<Item>>(null);
+
+  const defaultColDef: ColDef = useMemo(() => ({
+    resizable: true,
+    sortable: true,
+    filter: 'agTextColumnFilter',
+    wrapText: true,
+    autoHeight: true,
+    headerClass: 'ag-center-cols-header',
+    cellStyle: { whiteSpace: 'normal', lineHeight: '1.4' },
+  }), []);
+
+  const columnDefs: ColDef[] = useMemo(() => {
+    return visibleColumns.map((col): ColDef => {
+      const key = columnKeyMap[col];
+
+      if (key === 'prioridad') {
+        return {
+          headerName: col,
+          field: key,
+          filter: true,
+          sortable: true,
+          headerClass: 'ag-center-cols-header',
+          cellRenderer: (params: any) => {
+            const value = params.value;
+            const color = getWarningColor(value);
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <WarningAmberIcon sx={{ color, fontSize: 18 }} />
+                <span>{String(value ?? '')}</span>
+              </Box>
+            );
+          }
+        };
+      }
+
+      return {
+        headerName: col,
+        field: key,
+        filter: true,
+        sortable: true,
+        headerClass: 'ag-center-cols-header',
+      };
+    });
+  }, [visibleColumns]);
+
+  const handleGridReady = (params: GridReadyEvent) => {
+    const allColumnIds: string[] = [];
+    const columns = params.columnApi.getColumns();
+    if (columns) {
+      columns.forEach((col: any) => {
+        const colId = col.getColId?.();
+        if (colId) allColumnIds.push(colId);
+      });
+      params.columnApi.autoSizeColumns(allColumnIds, false);
+    }
+  };
+
   return (
-    <>
-      <TableContainer sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-        <Table size="small" stickyHeader>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#e3f2fd' }}>
-              {visibleColumns.map((col) => (
-                <TableCell
-                  key={col}
-                  sx={{
-                    fontWeight: 'bold',
-                    color: '#0d47a1',
-                    fontSize: '0.95rem',
-                    backgroundColor: '#e3f2fd',
-                  }}
-                >
-                  {col}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.slice(0, visibleRows).map((row: Item) => (
-              <TableRow
-                key={`${(row as any).id ?? row.numero}-${row.numero}`}
-                sx={row.followUp ? { backgroundColor: '#fff8e1' } : {}}
-              >
-                {visibleColumns.map((col) => {
-                  const key = columnKeyMap[col];
-                  const value = row[key];
-
-                  if (key === 'prioridad') {
-                    return (
-                      <TableCell key={col}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <WarningAmberIcon
-                            sx={{ color: getWarningColor(value), fontSize: 18 }}
-                          />
-                          <Typography variant="body2">{String(value ?? '')}</Typography>
-                        </Box>
-                      </TableCell>
-                    );
-                  }
-
-                  return (
-                    <TableCell key={col}>
-                      {typeof value === 'string' ? value : String(value ?? '')}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Box sx={{ marginTop: 3 }}>
-        {visibleRows < rows.length && (
-          <Tooltip title="See 10 more items">
-            <Link
-              component="button"
-              variant="body2"
-              onClick={() => setVisibleRows(visibleRows + 10)}
-            >
-              View More.
-            </Link>
-          </Tooltip>
-        )}
-      </Box>
-    </>
+    <div className="ag-theme-quartz" style={{ height: '70vh', width: '100%' }}>
+      <AgGridReact
+        ref={gridRef}
+        rowData={rows}
+        columnDefs={columnDefs}
+        defaultColDef={defaultColDef}
+        rowSelection="multiple"
+        suppressRowClickSelection={false}
+        animateRows={true}
+        onGridReady={handleGridReady}
+        getRowStyle={(params) => {
+          return params.data?.followUp
+            ? { backgroundColor: '#fff8e1' }
+            : undefined;
+        }}
+      />
+    </div>
   );
 }
