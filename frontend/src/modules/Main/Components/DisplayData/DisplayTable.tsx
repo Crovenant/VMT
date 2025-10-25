@@ -1,13 +1,14 @@
-// modules/components/DisplayTable.tsx
 import { useMemo, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { Box } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import AccordionDetail from './DisplayTable/Renderers/AccordionDetail';
 import type { Item } from '../../types/item';
-import type { ColDef, GridReadyEvent } from 'ag-grid-community';
+import type { ColDef, GridReadyEvent, ICellRendererParams } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-import './DisplayTable/Styles/DisplayTable.css';
 
 const columnKeyMap: Record<string, keyof Item> = {
   "Número": "numero",
@@ -68,31 +69,34 @@ export default function DisplayTable({
 }) {
   const gridRef = useRef<AgGridReact<Item>>(null);
 
-  // Configuración por defecto para columnas dinámicas
+  // Activar el acordeón en la primera fila si no tiene datos
+  if (rows.length > 0 && !rows[0].comentarios && !rows[0].logHistory) {
+    rows[0].comentarios = 'Comentarios de prueba';
+    rows[0].logHistory = 'Historial de prueba';
+  }
+
   const defaultColDef: ColDef = useMemo(() => ({
     resizable: true,
     sortable: true,
     filter: 'agTextColumnFilter',
     wrapText: true,
     autoHeight: true,
-    headerClass: 'ag-center-cols-header custom-header', // separador flotante en header
+    headerClass: 'ag-center-cols-header custom-header',
     cellStyle: { whiteSpace: 'normal', lineHeight: '1.4' },
     suppressMenu: !showFilterPanel,
   }), [showFilterPanel]);
 
-  // Columna fija de selección con checkbox
   const selectionColumnDef: ColDef = useMemo(() => ({
     headerCheckboxSelection: true,
     checkboxSelection: true,
-    width: 30,    
-    suppressMovable: true
+    width: 30,
+    suppressMovable: true,
   }), []);
 
-  // Columna fija del icono del ojo
   const eyeColumnDef: ColDef = useMemo(() => ({
     headerName: '',
-    field: 'eyeIcon',  
-    suppressMovable: true,   
+    field: 'eyeIcon',
+    suppressMovable: true,
     cellRenderer: () => (
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="#1976d2">
@@ -102,7 +106,6 @@ export default function DisplayTable({
     ),
   }), []);
 
-  // Columnas dinámicas visibles
   const columnDefs: ColDef[] = useMemo(() => {
     const defs: ColDef[] = [];
 
@@ -117,12 +120,12 @@ export default function DisplayTable({
         field: key,
         filter: true,
         sortable: true,
-        headerClass: 'ag-center-cols-header custom-header', // separador flotante
-        cellClass: 'custom-cell', // separador flotante
+        headerClass: 'ag-center-cols-header custom-header',
+        cellClass: 'custom-cell',
       };
 
       if (key === 'prioridad') {
-        baseDef.cellRenderer = (params: any) => {
+        baseDef.cellRenderer = (params: ICellRendererParams) => {
           const value = params.value;
           const color = getWarningColor(value);
           return (
@@ -131,6 +134,13 @@ export default function DisplayTable({
               <span>{String(value ?? '')}</span>
             </Box>
           );
+        };
+      }
+
+      if (key === 'numero') {
+        baseDef.cellRenderer = 'agGroupCellRenderer';
+        baseDef.cellRendererParams = {
+          suppressCount: true,
         };
       }
 
@@ -169,6 +179,12 @@ export default function DisplayTable({
             ? { backgroundColor: '#fff8e1' }
             : undefined;
         }}
+        masterDetail={true}
+        isRowMaster={(data) => !!data.comentarios || !!data.logHistory}
+        detailCellRenderer={AccordionDetail}
+        
+        detailRowHeight={200}
+
       />
     </div>
   );

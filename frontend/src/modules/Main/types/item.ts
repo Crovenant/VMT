@@ -20,7 +20,10 @@ export type Item = {
   vulnerabilidad: string;
   vulnerabilitySolution: string;
   followUp?: boolean;
-  soonDue?: boolean;
+  soonDue?: boolean;  
+  comentarios?: string;
+  logHistory?: string;
+
 };
 
 export interface Entry {
