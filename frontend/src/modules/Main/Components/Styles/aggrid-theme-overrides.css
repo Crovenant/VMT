@@ -1,0 +1,21 @@
+.pastel-theme {
+  --ag-header-background-color: #e8f0fe;
+  --ag-header-foreground-color: #1f2d5a;
+  --ag-header-column-separator: 1px solid rgba(31, 45, 90, 0.25);
+  --ag-header-column-separator-color: rgba(31, 45, 90, 0.25);
+  --ag-vertical-border-color: rgba(31, 45, 90, 0.1);
+  --ag-header-height: 44px;
+  --ag-font-size: 13px;
+  --ag-borders: solid 1px var(--ag-vertical-border-color);
+}
+
+/* separador vertical visible en cabecera */
+.ag-theme-quartz.pastel-theme .ag-header-cell::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: rgba(31, 45, 90, 0.25);
+}
