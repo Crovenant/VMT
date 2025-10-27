@@ -1,11 +1,10 @@
 // src/modules/Main/Components/DisplayData/DisplayTable.tsx
-import { useMemo, useRef, useCallback, useState } from 'react';
+import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { Box } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import ChevronRight from '@mui/icons-material/ChevronRight';
-
 import type { Item } from '../../types/item';
 import type {
   ColDef,
@@ -17,12 +16,17 @@ import type {
   ColSpanParams,
   IsFullWidthRowParams,
 } from 'ag-grid-community';
-
 import AccordionDetail from './DisplayTable/Renderers/AccordionDetail';
+import { exportFilteredDataToExcel } from './Export/exportExcel';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
-/* ---------- mapping headers -> campo del Item ---------- */
+declare global {
+  interface Window {
+    exportFilteredDataToExcel: () => void;
+  }
+}
+
 const columnKeyMap: Record<string, keyof Item> = {
   'Número': 'numero',
   'ID externo': 'idExterno',
@@ -41,7 +45,6 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Vulnerabilidad': 'vulnerabilidad',
 };
 
-/* ---------- util colores prioridad ---------- */
 const norm = (v: unknown) =>
   String(v ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 
@@ -68,7 +71,6 @@ const getWarningColor = (priority: unknown) => {
   }
 };
 
-/* ---------- tipos de fila visual ---------- */
 type DetailRow = { _kind: 'detail'; parentId: string };
 type DisplayRow = Item | DetailRow;
 
@@ -103,14 +105,12 @@ export default function DisplayTable({
 }) {
   const gridRef = useRef<AgGridReact<DisplayRow>>(null);
 
-  // id -> item (para renderizar el detalle)
   const itemById = useMemo(() => {
     const m = new Map<string, Item>();
     for (const it of rows) m.set(String(it.id ?? it.numero), it);
     return m;
   }, [rows]);
 
-  // estado de expandido (ids de filas con detalle abierto)
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
 
@@ -123,7 +123,10 @@ export default function DisplayTable({
     });
   }, []);
 
-  /* ---------- defaultColDef ---------- */
+  useEffect(() => {
+    window.exportFilteredDataToExcel = () => exportFilteredDataToExcel(rows, visibleColumns);
+  }, [rows, visibleColumns]);
+
   const defaultColDef: ColDef = useMemo(
     () => ({
       resizable: true,
@@ -142,13 +145,12 @@ export default function DisplayTable({
     [showFilterPanel]
   );
 
-  /* ---------- selección (checkbox) – PRIMERA COLUMNA ---------- */
   const selectionColDef: ColDef = useMemo(
     () => ({
       headerName: '',
       field: '__sel__',
       headerCheckboxSelection: true,
-      checkboxSelection: (p) => (!isDetailRow(p?.data as any)),
+      checkboxSelection: p => !isDetailRow(p?.data as any),
       width: 42,
       minWidth: 42,
       maxWidth: 42,
@@ -161,7 +163,6 @@ export default function DisplayTable({
     []
   );
 
-  /* ---------- ojo – SEGUNDA COLUMNA ---------- */
   const eyeColDef: ColDef = useMemo(
     () => ({
       headerName: '',
@@ -189,7 +190,6 @@ export default function DisplayTable({
     []
   );
 
-  /* ---------- toggle (flecha) – TERCERA COLUMNA (entre ojo y “Número”) ---------- */
   const toggleColDef: ColDef = useMemo(
     () => ({
       headerName: '',
@@ -202,29 +202,22 @@ export default function DisplayTable({
       suppressMenu: true,
       filter: false,
       sortable: false,
-
-      // En filas de detalle hacemos colSpan hasta el final para que no se cuele nada.
       colSpan: (p: ColSpanParams<DisplayRow>) => {
         const r = p.data as DisplayRow | undefined;
         if (!r || !isDetailRow(r)) return 1;
         const all = (p as any).columnApi?.getAllDisplayedColumns?.() ?? [];
         return Array.isArray(all) ? all.length : 20;
       },
-
-      // Normal: flecha para expandir/contraer
       cellRenderer: (p: ICellRendererParams<DisplayRow>) => {
         const d = p.data;
-        if (!d) return null;
-        if (isDetailRow(d)) return null; // en full-width renderizamos el contenido, aquí nada
-
+        if (!d || isDetailRow(d)) return null;
         const id = String((d as Item).id ?? (d as Item).numero);
         const open = expanded.has(id);
         const Icon = open ? ExpandMore : ChevronRight;
-
         return (
           <Box
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer' }}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               toggleExpand(id);
             }}
@@ -238,13 +231,10 @@ export default function DisplayTable({
     [expanded, toggleExpand]
   );
 
-  /* ---------- columnas de negocio ---------- */
   const businessColDefs: ColDef[] = useMemo(() => {
     const defs: ColDef[] = [];
-
-    visibleColumns.forEach((col) => {
+    visibleColumns.forEach(col => {
       const key = columnKeyMap[col];
-
       const baseDef: ColDef = {
         headerName: col,
         field: key as string,
@@ -252,17 +242,14 @@ export default function DisplayTable({
         sortable: true,
         headerClass: 'custom-header',
         cellClass: 'custom-cell',
-        // Ocultar valores en filas de detalle
-        valueGetter: (p) => {
+        valueGetter: p => {
           const d = p.data as DisplayRow | undefined;
           if (!d || isDetailRow(d)) return null;
           const item = d as Item;
           return (item as Record<string, unknown>)[key] ?? null;
         },
       };
-
       const noWrap = { cellStyle: { whiteSpace: 'nowrap' as const } };
-
       if (key === 'numero') Object.assign(baseDef, { width: 110, minWidth: 100, maxWidth: 130 }, noWrap);
       if (key === 'estado') Object.assign(baseDef, { width: 120, minWidth: 100, maxWidth: 140 }, noWrap);
       if (key === 'prioridad') Object.assign(baseDef, { width: 120, minWidth: 110, maxWidth: 140 }, noWrap);
@@ -270,7 +257,6 @@ export default function DisplayTable({
       if (key === 'asignadoA') Object.assign(baseDef, { width: 170, minWidth: 140, maxWidth: 220 }, noWrap);
       if (key === 'actualizado') Object.assign(baseDef, { width: 140, minWidth: 120, maxWidth: 160 }, noWrap);
       if (key === 'resumen') Object.assign(baseDef, { flex: 1, minWidth: 250 });
-
       if (key === 'prioridad') {
         baseDef.cellRenderer = (params: ICellRendererParams<DisplayRow>) => {
           const value = params.value as string | null;
@@ -284,29 +270,23 @@ export default function DisplayTable({
           );
         };
       }
-
       defs.push(baseDef);
     });
-
     return defs;
   }, [visibleColumns]);
 
-  /* ---------- columnDefs finales ---------- */
   const columnDefs: ColDef[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
     [selectionColDef, eyeColDef, toggleColDef, businessColDefs]
   );
 
-  /* ---------- auto-anchos ---------- */
   const tightenColumns = useCallback((api: GridApi<DisplayRow>) => {
-    const ids = (api.getColumns() as Column[] | null | undefined)?.map((c) => c.getColId()) ?? [];
+    const ids = (api.getColumns() as Column[] | null | undefined)?.map(c => c.getColId()) ?? [];
     api.autoSizeColumns(ids, false);
-
     const set = (id: string, w: number) => api.setColumnWidth(id as any, w, false);
     set('__sel__', 42);
     set('__eye__', 42);
     set('__toggle__', 42);
-
     set('numero', 110);
     set('estado', 120);
     set('prioridad', 120);
@@ -328,7 +308,7 @@ export default function DisplayTable({
       <AgGridReact<DisplayRow>
         ref={gridRef}
         rowData={displayRows}
-        getRowId={(p) => getRowKey(p.data)}
+        getRowId={p => getRowKey(p.data)}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
         rowSelection="multiple"
@@ -337,11 +317,7 @@ export default function DisplayTable({
         animateRows
         onGridReady={handleGridReady}
         onFirstDataRendered={handleFirstDataRendered}
-
-        /* 🔴 CLAVE: renderizar el full-width row FUERA del viewport central */
         embedFullWidthRows={false}
-
-        /* Fila de detalle a ancho completo */
         isFullWidthRow={(p: IsFullWidthRowParams<DisplayRow>) =>
           isDetailRow(p.rowNode?.data as DisplayRow | undefined)
         }
@@ -355,21 +331,15 @@ export default function DisplayTable({
             </div>
           );
         }}
-
-        /* Altura fija (puedes ajustarla) para la fila de detalle */
-        getRowHeight={(p) => (isDetailRow(p.data as any) ? 300 : undefined)}
-
-        /* Estilos visuales */
-        getRowStyle={(p) =>
+        getRowHeight={p => (isDetailRow(p.data as any) ? 300 : undefined)}
+        getRowStyle={p =>
           isDetailRow(p.data as any)
-            ? { backgroundColor: '#f5f6f8' } // gris clarito de fondo del panel
+            ? { backgroundColor: '#f5f6f8' }
             : (p.data as any)?.followUp
             ? { backgroundColor: '#fff8e1' }
             : undefined
         }
-
-        /* No seleccionar la fila de detalle */
-        isRowSelectable={(p) => !isDetailRow(p?.data as any)}
+        isRowSelectable={p => !isDetailRow(p?.data as any)}
       />
     </div>
   );

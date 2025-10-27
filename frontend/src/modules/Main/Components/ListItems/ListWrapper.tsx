@@ -1,6 +1,8 @@
 // src/modules/Main/Components/ListItems/ListWrapper.tsx
-import { ListItemButton, ListItemIcon, ListItemText, Tooltip } from '@mui/material';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
+import { Box, IconButton, Tooltip } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import ListTable from './ListTable';
 import useItems from '../../hooks/useItems';
 
@@ -10,21 +12,57 @@ export function mainListItems({
   setShowUploadModal: (val: boolean) => void;
 }) {
   return (
-    <Tooltip title= "Upload Excel file">
-    <ListItemButton onClick={() => setShowUploadModal(true)}>
-      <ListItemIcon>
-        <UploadFileIcon />
-      </ListItemIcon>
-      <ListItemText primary="Upload File" />
-    </ListItemButton>
-    </Tooltip>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 3,
+        backgroundColor: '#eeeeee',
+        border: 'none',
+        boxShadow: 'none',
+      }}
+    >
+      {/* Icono Upload */}
+      <Tooltip title="Upload Excel file">
+        <IconButton onClick={() => setShowUploadModal(true)} disableRipple sx={{ p: 0 }}>
+          <CloudUploadIcon sx={{ fontSize: 36, color: '#01a301f8' }} />
+        </IconButton>
+      </Tooltip>
+    </Box>
   );
 }
 
+export const dashboardListItem = (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      backgroundColor: '#eeeeee',
+    }}
+  >
+    <Tooltip title="Dashboard">
+      <IconButton disableRipple sx={{ p: 0 }}>
+        <DashboardIcon sx={{ fontSize: 36, color: '#1976d2' }} />
+      </IconButton>
+    </Tooltip>
+  </Box>
+);
+
 export const secondaryListItems = (
-  <ListItemButton>
-    <ListItemText primary="Secondary Action" />
-  </ListItemButton>
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      backgroundColor: '#eeeeee',
+    }}
+  >
+    <Tooltip title="Reports">
+      <IconButton disableRipple sx={{ p: 0 }}>
+        <AssessmentIcon sx={{ fontSize: 36, color: '#f87c08ff' }} />
+      </IconButton>
+    </Tooltip>
+  </Box>
 );
 
 export default function ListWrapper({

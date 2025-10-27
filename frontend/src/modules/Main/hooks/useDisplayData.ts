@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import useItems from './useItems';
 import type { Item } from '../types/item';
-import * as XLSX from 'xlsx';
+import { exportFilteredDataToExcel } from '../Components/DisplayData/Export/exportExcel';
 
 const STORAGE_KEY = 'displayData.visibleColumns';
 const DEFAULT_VISIBLE_COLUMNS = [
@@ -22,7 +22,7 @@ export default function useDisplayData({
 }: {
   refreshKey: number;
   priorityFilter?: string | null;
-  selectedItemId?: string | null; // ← corregido aquí
+  selectedItemId?: string | null;
   customFlagFilter?: 'followUp' | 'soonDue' | null;
 }) {
   const [visibleRows, setVisibleRows] = useState<number>(10);
@@ -40,7 +40,7 @@ export default function useDisplayData({
   const { items }: { items: Item[] } = useItems(refreshKey);
 
   const rows = selectedItemId
-    ? items.filter((row: Item) => String(row.id) === selectedItemId) // ← comparación corregida
+    ? items.filter((row: Item) => String(row.id) === selectedItemId)
     : priorityFilter
     ? items.filter(
         (row: Item) =>
@@ -53,38 +53,7 @@ export default function useDisplayData({
     : items;
 
   const handleDownload = () => {
-    const allKeys = Array.from(
-      rows.reduce((acc: Set<string>, row: Item) => {
-        Object.keys(row).forEach((key) => acc.add(key));
-        return acc;
-      }, new Set<string>())
-    );
-
-    const dataToExport = rows.map((row: Item) => {
-      const fullRow: Record<string, string> = {};
-      allKeys.forEach((key) => {
-        const value = row[key as keyof Item];
-        fullRow[key] = typeof value === 'string' ? value : String(value ?? '');
-      });
-      return fullRow;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Vulnerability list');
-
-    const range = XLSX.utils.decode_range(worksheet['!ref'] ?? '');
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].s = {
-          font: { bold: true },
-          alignment: { horizontal: 'center' },
-        };
-      }
-    }
-
-    XLSX.writeFile(workbook, 'vulnerability_list_export.xlsx');
+    exportFilteredDataToExcel(rows, visibleColumns);
   };
 
   return {
