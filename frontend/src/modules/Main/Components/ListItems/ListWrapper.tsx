@@ -5,6 +5,8 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ListTable from './ListTable';
 import useItems from '../../hooks/useItems';
+import { useNavigate } from 'react-router-dom';
+import type { Item } from '../../types/item';
 
 export function mainListItems({
   setShowUploadModal,
@@ -33,37 +35,43 @@ export function mainListItems({
   );
 }
 
-export const dashboardListItem = (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      backgroundColor: '#eeeeee',
-    }}
-  >
-    <Tooltip title="Dashboard">
-      <IconButton disableRipple sx={{ p: 0 }}>
-        <DashboardIcon sx={{ fontSize: 36, color: '#1976d2' }} />
-      </IconButton>
-    </Tooltip>
-  </Box>
-);
+export function DashboardListItem() {
+  const navigate = useNavigate();
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        backgroundColor: '#eeeeee',
+      }}
+    >
+      <Tooltip title="Dashboard">
+        <IconButton onClick={() => navigate('/dashboard')} disableRipple sx={{ p: 0 }}>
+          <DashboardIcon sx={{ fontSize: 36, color: '#1976d2' }} />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+}
 
-export const secondaryListItems = (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      backgroundColor: '#eeeeee',
-    }}
-  >
-    <Tooltip title="Reports">
-      <IconButton disableRipple sx={{ p: 0 }}>
-        <AssessmentIcon sx={{ fontSize: 36, color: '#f87c08ff' }} />
-      </IconButton>
-    </Tooltip>
-  </Box>
-);
+export function ReportsListItem() {
+  const navigate = useNavigate();
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        backgroundColor: '#eeeeee',
+      }}
+    >
+      <Tooltip title="Reports">
+        <IconButton onClick={() => navigate('/reports')} disableRipple sx={{ p: 0 }}>
+          <AssessmentIcon sx={{ fontSize: 36, color: '#f87c08ff' }} />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+}
 
 export default function ListWrapper({
   refreshKey,
@@ -73,7 +81,7 @@ export default function ListWrapper({
   filter: string;
 }) {
   const { items } = useItems(refreshKey);
-  const filteredItems = items.filter(item => item.prioridad === filter);
+  const filteredItems = items.filter((item: Item) => item.prioridad === filter);
 
   return <ListTable items={filteredItems} />;
 }

@@ -6,7 +6,7 @@ import { styled } from '@mui/material/styles';
 import Chart from '../Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
-import { mainListItems, dashboardListItem, secondaryListItems } from '../ListItems/ListWrapper';
+import { mainListItems, DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
 
 const drawerWidth = 72;
 
@@ -22,7 +22,7 @@ const DrawerStyled = styled(Drawer)(() => ({
     border: 'none',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'fñex-start',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 32,
     paddingTop: 80,
@@ -63,9 +63,9 @@ export default function DashboardContent({
   return (
     <>
       <DrawerStyled variant="permanent" open>
-        {dashboardListItem}
+        <DashboardListItem />
         {mainListItems({ setShowUploadModal })}
-        {secondaryListItems}
+        <ReportsListItem />
       </DrawerStyled>
 
       <Box component="main" sx={{ flexGrow: 1, height: '100vh', overflow: 'auto' }}>
