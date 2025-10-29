@@ -8,11 +8,10 @@ import useItems from '../../../../Shared/hooks/useItems';
 import { useNavigate } from 'react-router-dom';
 import type { Item } from '../../../../Types/item';
 
-export function mainListItems({
-  setShowUploadModal,
-}: {
-  setShowUploadModal: (val: boolean) => void;
-}) {
+type UploadSetter = { setShowUploadModal: (val: boolean) => void };
+
+// Componente para el botón de subir fichero
+export function MainListItems({ setShowUploadModal }: UploadSetter) {
   return (
     <Box
       sx={{
@@ -25,7 +24,6 @@ export function mainListItems({
         boxShadow: 'none',
       }}
     >
-      {/* Icono Upload */}
       <Tooltip title="Upload Excel file">
         <IconButton onClick={() => setShowUploadModal(true)} disableRipple sx={{ p: 0 }}>
           <CloudUploadIcon sx={{ fontSize: 36, color: '#01a301f8' }} />
@@ -35,16 +33,11 @@ export function mainListItems({
   );
 }
 
+// Botón para ir al Dashboard
 export function DashboardListItem() {
   const navigate = useNavigate();
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        backgroundColor: '#eeeeee',
-      }}
-    >
+    <Box sx={{ display: 'flex', justifyContent: 'center', backgroundColor: '#eeeeee' }}>
       <Tooltip title="Dashboard">
         <IconButton onClick={() => navigate('/dashboard')} disableRipple sx={{ p: 0 }}>
           <DashboardIcon sx={{ fontSize: 36, color: '#1976d2' }} />
@@ -54,16 +47,11 @@ export function DashboardListItem() {
   );
 }
 
+// Botón para ir a Reports
 export function ReportsListItem() {
   const navigate = useNavigate();
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        backgroundColor: '#eeeeee',
-      }}
-    >
+    <Box sx={{ display: 'flex', justifyContent: 'center', backgroundColor: '#eeeeee' }}>
       <Tooltip title="Reports">
         <IconButton onClick={() => navigate('/reports')} disableRipple sx={{ p: 0 }}>
           <AssessmentIcon sx={{ fontSize: 36, color: '#f87c08ff' }} />
@@ -73,6 +61,7 @@ export function ReportsListItem() {
   );
 }
 
+// Tabla filtrada por prioridad
 export default function ListWrapper({
   refreshKey,
   filter,
@@ -82,6 +71,5 @@ export default function ListWrapper({
 }) {
   const { items } = useItems(refreshKey);
   const filteredItems = items.filter((item: Item) => item.prioridad === filter);
-
   return <ListTable items={filteredItems} />;
 }

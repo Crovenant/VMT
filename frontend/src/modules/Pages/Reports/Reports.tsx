@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { mainListItems, DashboardListItem, ReportsListItem } from '../Dashboard/Components/ListItems/ListWrapper';
+import { MainListItems, DashboardListItem, ReportsListItem } from '../Dashboard/Components/ListItems/ListWrapper';
 
 const drawerWidth = 72;
 
@@ -46,7 +46,7 @@ export default function Reports() {
       {/* Sidebar */}
       <DrawerStyled variant="permanent" open>
         <DashboardListItem />
-        {mainListItems({ setShowUploadModal: () => {} })}
+        {MainListItems({ setShowUploadModal: () => {} })}
         <ReportsListItem />
       </DrawerStyled>
 

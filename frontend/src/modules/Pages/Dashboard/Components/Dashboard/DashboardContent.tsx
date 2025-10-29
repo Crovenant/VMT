@@ -6,7 +6,7 @@ import { styled } from '@mui/material/styles';
 import Chart from '../Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
-import { mainListItems, DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
+import { MainListItems, DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
 
 const drawerWidth = 72;
 
@@ -64,7 +64,7 @@ export default function DashboardContent({
     <>
       <DrawerStyled variant="permanent" open>
         <DashboardListItem />
-        {mainListItems({ setShowUploadModal })}
+        {MainListItems({ setShowUploadModal })}
         <ReportsListItem />
       </DrawerStyled>
 
