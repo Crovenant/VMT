@@ -11,43 +11,31 @@ export default function DisplayWrapper({
   selectedItemId,
   customFlagFilter,
   onResetView,
+  setShowUploadModal,
 }: {
   refreshKey: number;
   priorityFilter?: string | null;
   selectedItemId?: string | null;
   customFlagFilter?: 'followUp' | 'soonDue' | null;
   onResetView?: () => void;
+  setShowUploadModal: (val: boolean) => void;
 }) {
-  const {
-    rows,
-    visibleColumns,
-    setVisibleColumns,
-    // visibleRows,          // ⬅️ ya no se usan
-    // setVisibleRows,       // ⬅️ ya no se usan
-    showFilterPanel,
-    setShowFilterPanel,
-    handleDownload,
-  } = useDisplayData({ refreshKey, priorityFilter, selectedItemId, customFlagFilter });
+  const { rows, visibleColumns, showFilterPanel, setShowFilterPanel, handleDownload } =
+    useDisplayData({ refreshKey, priorityFilter, selectedItemId, customFlagFilter });
 
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Title>Vulnerability list</Title>
         <FilterBar
-          columns={visibleColumns}
-          setColumns={setVisibleColumns}
-          showPanel={showFilterPanel}
           togglePanel={() => setShowFilterPanel(!showFilterPanel)}
           handleDownload={handleDownload}
           onResetView={onResetView}
+          onShowUploadModal={() => setShowUploadModal(true)}
         />
       </Box>
 
-      <DisplayTable
-        rows={rows}
-        visibleColumns={visibleColumns}
-        showFilterPanel={showFilterPanel}
-      />
+      <DisplayTable rows={rows} visibleColumns={visibleColumns} showFilterPanel={showFilterPanel} />
     </>
   );
 }

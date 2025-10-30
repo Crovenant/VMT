@@ -6,7 +6,7 @@ import { styled } from '@mui/material/styles';
 import Chart from '../Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
-import { MainListItems, DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
+import { DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
 
 const drawerWidth = 72;
 
@@ -64,7 +64,6 @@ export default function DashboardContent({
     <>
       <DrawerStyled variant="permanent" open>
         <DashboardListItem />
-        {MainListItems({ setShowUploadModal })}
         <ReportsListItem />
       </DrawerStyled>
 
@@ -115,6 +114,7 @@ export default function DashboardContent({
                   selectedItemId={selectedItemId !== null ? String(selectedItemId) : null}
                   customFlagFilter={customFlagFilter}
                   onResetView={onResetView}
+                  setShowUploadModal={setShowUploadModal}
                 />
               </Paper>
             </Grid>

@@ -1,37 +1,11 @@
 // src/modules/Main/Components/ListItems/ListWrapper.tsx
 import { Box, IconButton, Tooltip } from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ListTable from './ListTable';
 import useItems from '../../../../Shared/hooks/useItems';
 import { useNavigate } from 'react-router-dom';
 import type { Item } from '../../../../Types/item';
-
-type UploadSetter = { setShowUploadModal: (val: boolean) => void };
-
-// Componente para el botón de subir fichero
-export function MainListItems({ setShowUploadModal }: UploadSetter) {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        backgroundColor: '#eeeeee',
-        border: 'none',
-        boxShadow: 'none',
-      }}
-    >
-      <Tooltip title="Upload Excel file">
-        <IconButton onClick={() => setShowUploadModal(true)} disableRipple sx={{ p: 0 }}>
-          <CloudUploadIcon sx={{ fontSize: 36, color: '#01a301f8' }} />
-        </IconButton>
-      </Tooltip>
-    </Box>
-  );
-}
 
 // Botón para ir al Dashboard
 export function DashboardListItem() {

@@ -1,3 +1,4 @@
+// src/modules/Main/Components/Reports/Reports.tsx
 import {
   Box,
   Drawer,
@@ -8,7 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { MainListItems, DashboardListItem, ReportsListItem } from '../Dashboard/Components/ListItems/ListWrapper';
+import { DashboardListItem, ReportsListItem } from '../Dashboard/Components/ListItems/ListWrapper';
 
 const drawerWidth = 72;
 
@@ -46,7 +47,6 @@ export default function Reports() {
       {/* Sidebar */}
       <DrawerStyled variant="permanent" open>
         <DashboardListItem />
-        {MainListItems({ setShowUploadModal: () => {} })}
         <ReportsListItem />
       </DrawerStyled>
 
