@@ -68,7 +68,7 @@ export default function DashboardWrapper() {
   const { items } = useItems(refreshKey);
   const followUpItems = items.filter((item) => item.followUp);
   const soonDueItems = items.filter((item) => item.soonDue);
-  const followUpCount = followUpItems.length;
+  const followUpCount = followUpItems.length + soonDueItems.length;
 
   let bellColor: 'inherit' | 'default' | 'error' | 'warning' | 'info' | 'success' = 'inherit';
   if (followUpItems.length > 0) bellColor = 'error';
@@ -136,8 +136,7 @@ export default function DashboardWrapper() {
         >
           File accepted
         </Box>
-      )}
-
+      )}      
       <Popover
         id={id}
         open={openPopover}
@@ -154,20 +153,35 @@ export default function DashboardWrapper() {
             <Typography variant="body2">No items to show.</Typography>
           ) : (
             <Grid container direction="column">
-              {[...followUpItems, ...soonDueItems].map((item, idx) => (
-                <Box
-                  key={idx}
-                  sx={{ mb: 1, p: 1, border: '1px solid #ccc', borderRadius: 2, cursor: 'pointer' }}
-                  onClick={() => {
-                    setSelectedItemId(Number(item.id));
-                    setAnchorEl(null);
-                  }}
-                >
-                  <Typography variant="body2">
-                    <strong>{item.numero}</strong> - {item.prioridad} - {item.resumen}
-                  </Typography>
-                </Box>
-              ))}
+              {[...followUpItems, ...soonDueItems].map((item, idx) => {
+                const isExpired = followUpItems.includes(item);
+                return (
+                  <Box
+                    key={idx}
+                    sx={{
+                      mb: 1,
+                      p: 1,
+                      border: '1px solid #ccc',
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                    onClick={() => {
+                      setSelectedItemId(Number(item.id));
+                      setAnchorEl(null);
+                    }}
+                  >
+                    <span style={{ fontSize: '18px' }}>
+                      {isExpired ? '🔴' : '🟠'}
+                    </span>
+                    <Typography variant="body2">
+                      <strong>{item.numero}</strong> - {item.prioridad} - {item.resumen}
+                    </Typography>
+                  </Box>
+                );
+              })}
             </Grid>
           )}
         </Box>
