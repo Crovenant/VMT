@@ -2,6 +2,7 @@
 import React from 'react';
 import ResolverDialog from './ResolverDialog';
 
+
 interface Entry {
   [key: string]: string | number | boolean | null; // Sustituido any por tipos concretos
 }

@@ -1,7 +1,7 @@
-// src/modules/Main/Components/UploadFile/UploadFileWrapper.tsx
 import DuplicateResolver from '../../Pages/Dashboard/Components/DuplicateResolver/ResolverWrapper';
 import { useUploadFile } from '../hooks/useUploadFile';
 import { useRef } from 'react';
+import type { DuplicatePair } from '../../Types/uploadTypes';
 
 interface UploadFileProps {
   onClose: (success: boolean) => void;
@@ -45,7 +45,7 @@ export default function UploadFileWrapper({ onClose }: UploadFileProps) {
 
       <DuplicateResolver
         open={resolverOpen}
-        duplicates={duplicates}
+        duplicates={duplicates as DuplicatePair[]}
         selectedOptions={selectedOptions}
         setSelectedOptions={setSelectedOptions}
         onClose={() => setSelectedOptions([])}
