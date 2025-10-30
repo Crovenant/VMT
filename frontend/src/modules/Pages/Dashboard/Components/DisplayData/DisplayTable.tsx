@@ -160,7 +160,7 @@ export default function DisplayTable({
       autoHeight: true,
       headerClass: 'custom-header',
       cellStyle: { whiteSpace: 'normal', lineHeight: '1.4' },
-      suppressHeaderMenuButton: !showFilterPanel,
+      suppressHeaderMenuButton: false,
       minWidth: 60,
     }),
     [showFilterPanel],
