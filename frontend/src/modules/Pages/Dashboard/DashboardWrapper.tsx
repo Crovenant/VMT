@@ -1,10 +1,10 @@
 // modules/components/Dashboard/DashboardWrapper.tsx
 import React from 'react';
 import { Box, CssBaseline, Popover, Typography, Grid } from '@mui/material';
-import useItems from '../Shared/hooks/useItems';
-import UploadFile from './Dashboard/Components/uploadFile';
-import DashboardHeader from './Dashboard/Components/Dashboard/DashboardHeader';
-import DashboardContent from './Dashboard/Components/Dashboard/DashboardContent';
+import useItems from '../../Shared/hooks/useItems';
+import UploadFile from './Components/uploadFile';
+import DashboardHeader from './Components/Dashboard/DashboardHeader';
+import DashboardContent from './Components/Dashboard/DashboardContent';
 
 export default function DashboardWrapper() {
   const [showUploadModal, setShowUploadModal] = React.useState(false);

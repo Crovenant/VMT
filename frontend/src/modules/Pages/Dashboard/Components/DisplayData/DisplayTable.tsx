@@ -5,6 +5,7 @@ import { Box } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import ChevronRight from '@mui/icons-material/ChevronRight';
+import SideFilterPanel from './DisplayTable/GridComponents/SideFilterPanel';
 
 import type { Item } from '../../../../Types/item';
 import type {
@@ -336,8 +337,23 @@ export default function DisplayTable({
     tightenColumns(e.api as GridApi<GridRow>);
   };
 
-  return (
-    <div className="ag-theme-quartz custom-ag" style={{ height: '70vh', width: '100%', overflow: 'hidden' }}>
+return (
+  <Box
+    sx={{
+      display: 'flex', // ✅ panel integrado como columna
+      height: '70vh',
+      width: '100%',
+      backgroundColor: '#f5f6f8',
+    }}
+  >
+    {/* Contenedor de la tabla */}
+    <Box
+      sx={{
+        flex: 1,
+        position: 'relative',
+      }}
+      className="ag-theme-quartz custom-ag"
+    >
       <AgGridReact<GridRow>
         ref={gridRef}
         rowData={displayRows}
@@ -351,7 +367,9 @@ export default function DisplayTable({
         onGridReady={handleGridReady}
         onFirstDataRendered={handleFirstDataRendered}
         embedFullWidthRows={false}
-        isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) => isDetailRow(p.rowNode?.data as DisplayRow | undefined)}
+        isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) =>
+          isDetailRow(p.rowNode?.data as DisplayRow | undefined)
+        }
         fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => {
           const d = p.data as DisplayRow | undefined;
           if (!isDetailRow(d)) return null;
@@ -372,6 +390,10 @@ export default function DisplayTable({
         }
         isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
       />
-    </div>
-  );
+    </Box>
+
+    {/* ✅ Panel lateral integrado */}
+    <SideFilterPanel />
+  </Box>
+);
 }
