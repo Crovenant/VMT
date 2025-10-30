@@ -1,7 +1,6 @@
 // src/modules/hooks/useUploadFile.ts
 import { useState } from 'react';
 import { mutate } from 'swr';
-import type { Entry, DuplicatePair } from '../../Types/uploadTypes';
 
 interface Entry {
   [key: string]: unknown; // Sustituido any por unknown
