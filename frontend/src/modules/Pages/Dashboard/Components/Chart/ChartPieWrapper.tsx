@@ -1,7 +1,7 @@
 import { Box, MenuItem, Select } from '@mui/material';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import useItems from '../../../../Shared/hooks/useItems';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function ChartPieWrapper({ refreshKey }: { refreshKey: number }) {
   const { items } = useItems(refreshKey);
@@ -34,34 +34,49 @@ export default function ChartPieWrapper({ refreshKey }: { refreshKey: number }) 
         }));
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-      <ResponsiveContainer width="100%" height={100}>
-        <PieChart margin={{ left: -10 }}>
+    <Box sx={{ position: 'relative', width: '100%', height: '120px' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
           <Pie
             data={data}
             dataKey="value"
             nameKey="name"
-            cx="50%"
+            cx="40%"
             cy="50%"
-            outerRadius={40}
-            label
+            outerRadius={60} // tamaño adecuado para el contenedor
+            
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip cursor={false} />
         </PieChart>
       </ResponsiveContainer>
-      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end', pr: 1 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: -21,
+          right: -14,
+        }}
+      >
         <Select
           size="small"
           value={viewMode}
           onChange={(e) => setViewMode(e.target.value as 'priority' | 'status')}
-          sx={{ fontSize: '0.65rem', minWidth: 70, height: 26 }}
+          sx={{
+            fontSize: '0.6rem',
+            minWidth: 65,
+            height: 22,
+            padding: 0,
+          }}
         >
-          <MenuItem value="priority">Priority</MenuItem>
-          <MenuItem value="status">Status</MenuItem>
+          <MenuItem value="priority" sx={{ fontSize: '0.6rem' }}>
+            Priority
+          </MenuItem>
+          <MenuItem value="status" sx={{ fontSize: '0.6rem' }}>
+            Status
+          </MenuItem>
         </Select>
       </Box>
     </Box>

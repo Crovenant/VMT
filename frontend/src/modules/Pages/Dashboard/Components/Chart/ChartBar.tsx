@@ -32,16 +32,17 @@ export default function ChartBar({
           tick={{ fontSize: 12 }}
         />
         <YAxis
-          width={30} // controla el ancho del eje Y (antes era automático)
+           width={30} // controla el ancho del eje Y (antes era automático)
           tickMargin={4} // separación mínima entre ticks y línea
           stroke={theme.palette.text.secondary}
           tick={{ fontSize: 10 }}
         />
         <Tooltip
+          cursor={false} // elimina el fondo gris en hover
           formatter={(value, name) => [`${value}`, name]}
           labelFormatter={(label) => `Priority: ${label}`}
         />
-        <Bar dataKey="cantidad" name="Count" radius={[4, 4, 0, 0]}>
+        <Bar dataKey="cantidad" name="Count" radius={[4, 4, 0, 0] } activeBar={false}>
           {data.map((entry) => (
             <Cell
               key={entry.prioridad}
