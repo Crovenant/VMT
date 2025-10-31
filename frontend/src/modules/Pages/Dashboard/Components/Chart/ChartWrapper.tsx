@@ -1,5 +1,5 @@
-// modules/components/Chart/ChartWrapper.tsx
 import Title from '../Title';
+import { ResponsiveContainer } from 'recharts';
 import ChartBar from './ChartBar';
 import useItems from '../../../../Shared/hooks/useItems';
 
@@ -26,9 +26,13 @@ export default function ChartWrapper({
   }));
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Title>Priority</Title>
-      <ChartBar data={chartData} onSelectPriority={onSelectPriority} />
-    </>
+      <div style={{ flexGrow: 1 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ChartBar data={chartData} onSelectPriority={onSelectPriority} />
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }

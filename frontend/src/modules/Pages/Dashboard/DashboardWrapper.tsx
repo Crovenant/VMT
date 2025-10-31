@@ -1,4 +1,3 @@
-// modules/components/Dashboard/DashboardWrapper.tsx
 import React from 'react';
 import { Box, CssBaseline, Popover, Typography, Grid } from '@mui/material';
 import useItems from '../../Shared/hooks/useItems';
@@ -15,7 +14,7 @@ export default function DashboardWrapper() {
   const [selectedItemId, setSelectedItemId] = React.useState<number | null>(null);
   const [customFlagFilter, setCustomFlagFilter] = React.useState<'followUp' | 'soonDue' | null>(null);
 
-  // 🔁 Auto-refresh cada 2s (pausado si la pestaña está oculta)
+  // 🔁 Auto-refresh cada 30 min
   React.useEffect(() => {
     let timer: number | undefined;
 
@@ -27,10 +26,10 @@ export default function DashboardWrapper() {
     };
 
     const start = () => {
-      stop(); // evita duplicados
+      stop();
       timer = window.setInterval(() => {
         setRefreshKey((k) => k + 1);
-      }, 3000000);
+      }, 1800000); // 30 min
     };
 
     const onVisibility = () => (document.hidden ? stop() : start());
@@ -57,7 +56,6 @@ export default function DashboardWrapper() {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
 
-  // ✅ Reset "soft" SIN recargar el navegador
   const handleResetView = () => {
     setPriorityFilter(null);
     setSelectedItemId(null);
@@ -96,7 +94,7 @@ export default function DashboardWrapper() {
         setSelectedItemId={setSelectedItemId}
         setCustomFlagFilter={setCustomFlagFilter}
         setShowUploadModal={setShowUploadModal}
-        onResetView={handleResetView} // ✅
+        onResetView={handleResetView}
       />
 
       {showUploadModal && (
@@ -136,7 +134,8 @@ export default function DashboardWrapper() {
         >
           File accepted
         </Box>
-      )}      
+      )}
+
       <Popover
         id={id}
         open={openPopover}

@@ -1,4 +1,3 @@
-// modules/components/Chart/ChartBar.tsx
 import {
   BarChart,
   Bar,
@@ -13,7 +12,7 @@ import type { ChartData } from '../../hooks/useChart';
 
 export default function ChartBar({
   data,
-  onSelectPriority
+  onSelectPriority,
 }: {
   data: ChartData[];
   onSelectPriority: (prioridad: string) => void;
@@ -21,24 +20,28 @@ export default function ChartBar({
   const theme = useTheme();
 
   return (
-    <ResponsiveContainer>
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
-        margin={{
-          top: 16,
-          right: 16,
-          bottom: 0,
-          left: 24,
-        }}
+        margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+        barCategoryGap="3%" // barras más anchas
       >
-        <XAxis dataKey="prioridad" stroke={theme.palette.text.secondary} />
-        <YAxis stroke={theme.palette.text.secondary}>
-        </YAxis>
+        <XAxis
+          dataKey="prioridad"
+          stroke={theme.palette.text.secondary}
+          tick={{ fontSize: 12 }}
+        />
+        <YAxis
+          width={30} // controla el ancho del eje Y (antes era automático)
+          tickMargin={4} // separación mínima entre ticks y línea
+          stroke={theme.palette.text.secondary}
+          tick={{ fontSize: 10 }}
+        />
         <Tooltip
           formatter={(value, name) => [`${value}`, name]}
-          labelFormatter={(label) => `Prioridad: ${label}`}
+          labelFormatter={(label) => `Priority: ${label}`}
         />
-        <Bar dataKey="cantidad" name="Cantidad">
+        <Bar dataKey="cantidad" name="Count" radius={[4, 4, 0, 0]}>
           {data.map((entry) => (
             <Cell
               key={entry.prioridad}

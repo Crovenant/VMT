@@ -1,4 +1,3 @@
-// src/modules/Main/Components/Dashboard/DashboardContent.tsx
 import {
   Container, Grid, Paper, Box, Toolbar, Drawer,
 } from '@mui/material';
@@ -6,6 +5,7 @@ import { styled } from '@mui/material/styles';
 import Chart from '../Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
+import ChartPieWrapper from '../Chart/ChartPieWrapper';
 import { DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
 
 const drawerWidth = 72;
@@ -29,15 +29,16 @@ const DrawerStyled = styled(Drawer)(() => ({
   },
 }));
 
-const FixedHeightPaper = styled(Paper)(({ theme }) => ({
-  height: 240,
-  padding: theme.spacing(2),
+const CompactPaper = styled(Paper)(({ theme }) => ({
+  height: 160, // 🔍 Altura fija del card
+  padding: theme.spacing(2), // 🔍 Espacio interno (reduce área útil para el gráfico)
   display: 'flex',
-  overflow: 'auto',
-  flexDirection: 'column',
-  boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+  overflow: 'hidden',
+  flexDirection: 'column', // 🔍 Coloca título y gráfico en columna
+  boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
   border: 'none',
 }));
+
 
 export default function DashboardContent({
   refreshKey,
@@ -71,8 +72,9 @@ export default function DashboardContent({
         <Toolbar />
         <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={8} lg={9}>
-              <FixedHeightPaper>
+            {/* Priority Chart */}
+            <Grid item xs={12} md={6} lg={6}>
+              <CompactPaper>
                 <Chart
                   refreshKey={refreshKey}
                   onSelectPriority={(p) => {
@@ -81,11 +83,19 @@ export default function DashboardContent({
                     setPriorityFilter(p);
                   }}
                 />
-              </FixedHeightPaper>
+              </CompactPaper>
             </Grid>
 
-            <Grid item xs={12} md={4} lg={3}>
-              <FixedHeightPaper>
+            {/* Pie Chart */}
+            <Grid item xs={12} md={3} lg={3}>
+              <CompactPaper>
+                <ChartPieWrapper refreshKey={refreshKey} />
+              </CompactPaper>
+            </Grid>
+
+            {/* Focus Items */}
+            <Grid item xs={12} md={3} lg={3}>
+              <CompactPaper sx={{ alignItems: 'center', justifyContent: 'center' }}>
                 <FocusItems
                   refreshKey={refreshKey}
                   onFilterByFlag={(flag: 'followUp' | 'soonDue') => {
@@ -94,9 +104,10 @@ export default function DashboardContent({
                     setCustomFlagFilter(flag);
                   }}
                 />
-              </FixedHeightPaper>
+              </CompactPaper>
             </Grid>
 
+            {/* Table */}
             <Grid item xs={12}>
               <Paper
                 sx={{
@@ -104,7 +115,7 @@ export default function DashboardContent({
                   display: 'flex',
                   overflow: 'auto',
                   flexDirection: 'column',
-                  boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+                  boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
                   border: 'none',
                 }}
               >
