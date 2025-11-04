@@ -1,15 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   esbuild: {
-    jsx: 'automatic', // ✅ activa el runtime JSX moderno (React 17+)
+    jsx: 'automatic',
   },
   server: {
     proxy: {
-      '/upload_data': {
+      // Proxy a Django para las 3 rutas del backend
+      '^/(risk-data|upload_data|save_selection)/?$': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,

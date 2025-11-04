@@ -1,11 +1,24 @@
-// src/modules/Main/Components/DisplayData/DisplayWrapper.tsx
-import { Box } from '@mui/material';
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayWrapper.tsx
+import { useState } from 'react';
+import Box from '@mui/material/Box';
+import Dialog from '@mui/material/Dialog';
+
 import Title from '../Title';
 import FilterBar from './FilterBar';
 import DisplayTable from './DisplayTable';
 import useDisplayData from '../../hooks/useDisplayData';
-import { useState } from 'react';
 import LatchWidget from './Widgets/LatchWidget';
+import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
+
+type ViewType = 'Tshirt' | 'Soup';
+
+interface Props {
+  refreshKey: number;
+  priorityFilter?: string | null;
+  selectedItemId?: string | null;
+  customFlagFilter?: 'followUp' | 'soonDue' | null | undefined;
+  onResetView?: () => void;
+}
 
 export default function DisplayWrapper({
   refreshKey,
@@ -13,44 +26,75 @@ export default function DisplayWrapper({
   selectedItemId,
   customFlagFilter,
   onResetView,
-}: {
-  refreshKey: number;
-  priorityFilter?: string | null;
-  selectedItemId?: string | null;
-  customFlagFilter?: 'followUp' | 'soonDue' | null;
-  onResetView?: () => void;
-}) {
+}: Props) {
   const { rows, visibleColumns, showFilterPanel, handleDownload } =
     useDisplayData({ refreshKey, priorityFilter, selectedItemId, customFlagFilter });
 
-  const [viewType, setViewType] = useState<'Tshirt' | 'Soup'>('Tshirt');
+  const [viewType, setViewType] = useState<ViewType>('Tshirt');
+  const [uploadOpen, setUploadOpen] = useState(false);
 
-  const handleUpload = (type: 'Tshirt' | 'Soup') => {
-    console.log(`Uploading file for ${type}`);
-    // Lógica real de upload
+  const handleUploadByKind = (kind: ViewType) => {
+    if (kind === 'Soup') {
+      console.warn('Upload Soup aún no implementado');
+      return;
+    }
+    setViewType('Tshirt');
+    setUploadOpen(true);
+  };
+
+  const handleUploadClose = (success: boolean) => {
+    setUploadOpen(false);
+    if (success && typeof onResetView === 'function') onResetView();
   };
 
   return (
     <>
-      {/* Cabecera */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2, position: 'relative' }}>
-        <Title>{viewType === 'Tshirt' ? 'TSHIRT view' : 'SOUP view'}</Title>
-
-        {/* LatchWidget centrado */}
-        <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-          <LatchWidget viewType={viewType} onSwitchView={(type) => setViewType(type)} />
+      {/* Header en 3 columnas: izquierda título, centro toggle, derecha iconos */}
+      <Box
+        display="grid"
+        gridTemplateColumns="1fr auto auto"
+        alignItems="center"
+        columnGap={2}
+        mb={0.5}
+      >
+        {/* Izquierda: título pegado al card (sin margen extra) */}
+        <Box>
+          <Title>{viewType.toUpperCase()} view</Title>
         </Box>
 
-        {/* Barra de filtros a la derecha */}
-        <FilterBar
-          handleDownload={handleDownload}
-          onResetView={onResetView}
-          onUpload={handleUpload}
-        />
+        {/* Centro: toggle centrado respecto al ancho del card */}
+        <Box display="flex" justifyContent="center">
+          <LatchWidget viewType={viewType} onSwitchView={(v: ViewType) => setViewType(v)} />
         </Box>
 
-      {/* Tabla */}
-      <DisplayTable rows={rows} visibleColumns={visibleColumns} showFilterPanel={showFilterPanel} />
+        {/* Derecha: iconos/acciones */}
+        <Box display="flex" justifyContent="flex-end">
+          <FilterBar
+            handleDownload={handleDownload}
+            onResetView={onResetView}
+            onUpload={handleUploadByKind}
+          />
+        </Box>
+      </Box>
+
+      {/* Tabla principal */}
+      <DisplayTable
+        rows={rows}
+        visibleColumns={visibleColumns}
+        showFilterPanel={showFilterPanel}
+      />
+
+      {/* Modal de subida */}
+      <Dialog
+        open={uploadOpen}
+        onClose={() => handleUploadClose(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <Box p={3}>
+          <UploadFileWrapper onClose={handleUploadClose} />
+        </Box>
+      </Dialog>
     </>
   );
 }

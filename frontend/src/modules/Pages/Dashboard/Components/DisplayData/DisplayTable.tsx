@@ -155,8 +155,8 @@ export default function DisplayTable({
       sortable: true,
       filter: 'agTextColumnFilter',
       floatingFilter: false,
-      wrapHeaderText: true,
-      autoHeaderHeight: true,
+      wrapHeaderText: true,      // <-- ya lo tienes: habilita wrap en header
+      autoHeaderHeight: true,    // <-- y ajusta la altura automáticamente
       wrapText: false,
       autoHeight: true,
       headerClass: 'custom-header',
@@ -274,9 +274,12 @@ export default function DisplayTable({
           return (item as Record<string, unknown>)[key] ?? null;
         },
       };
+
       const noWrap = { cellStyle: { whiteSpace: 'nowrap' as const } };
+
       if (key === 'numero') Object.assign(baseDef, { width: 110 }, noWrap);
       if (key === 'estado') Object.assign(baseDef, { width: 120 }, noWrap);
+
       if (key === 'prioridad') {
         Object.assign(baseDef, { width: 120 }, noWrap);
         baseDef.cellRenderer = (params: ICellRendererParams<GridRow>) => {
@@ -291,6 +294,14 @@ export default function DisplayTable({
           );
         };
       }
+
+      // ←↓↓ NUEVO: encabezado en dos líneas para "Puntuación de riesgo"
+      if (key === 'puntuacionRiesgo') {
+        baseDef.headerName = 'Puntuación\nde riesgo';
+        // Ya tienes wrapHeaderText/autoHeaderHeight en defaultColDef
+        Object.assign(baseDef, { minWidth: 110, maxWidth: 140 });
+      }
+
       defs.push(baseDef);
     });
     return defs;

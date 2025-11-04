@@ -30,7 +30,7 @@ export function useUploadFile(onClose: (success: boolean) => void) {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:8000/upload_data/', {
+      const response = await fetch('/upload_data/', {
         method: 'POST',
         body: formData,
       });
@@ -48,7 +48,7 @@ export function useUploadFile(onClose: (success: boolean) => void) {
         await guardarFinal(result.new || []);
         setMensaje('✅ Archivo subido correctamente sin duplicados.');
         onClose(true);
-        mutate('http://localhost:8000/risk-data/');
+        mutate('/risk-data/'); // clave alineada con el GET
       }
     } catch (error) {
       console.error('Error al subir el archivo:', error);
@@ -59,7 +59,7 @@ export function useUploadFile(onClose: (success: boolean) => void) {
 
   const guardarFinal = async (finalEntries: Entry[]) => {
     try {
-      await fetch('http://localhost:8000/save_selection/', {
+      await fetch('/save_selection/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entries: finalEntries }),
@@ -81,7 +81,7 @@ export function useUploadFile(onClose: (success: boolean) => void) {
     setResolverOpen(false);
     setMensaje('✅ Selección guardada correctamente.');
     onClose(true);
-    mutate('http://localhost:8000/risk-data/');
+    mutate('/risk-data/'); // clave alineada con el GET
   };
 
   return {
@@ -92,5 +92,7 @@ export function useUploadFile(onClose: (success: boolean) => void) {
     setSelectedOptions,
     handleFileUpload,
     handleConfirmDuplicates,
+    closeResolver: () => setResolverOpen(false), // ← añadir
   };
+
 }

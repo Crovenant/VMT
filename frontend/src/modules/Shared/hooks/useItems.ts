@@ -66,7 +66,8 @@ export default function useItems(refreshKey: number) {
   const [items, setItems] = useState<Item[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/risk-data/')
+    // Ruta relativa al backend (mantiene /risk-data/ exactamente como en urls.py)
+    fetch('/risk-data/')
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
@@ -94,7 +95,6 @@ export default function useItems(refreshKey: number) {
 
           const horizonDays = horizonDaysByPriority[item.prioridad] ?? 365;
           const expiry = new Date(created.getTime() + horizonDays * msPerDay);
-
           const daysToExpiry = Math.floor((expiry.getTime() - now.getTime()) / msPerDay);
 
           const followUp = daysToExpiry < 0;
