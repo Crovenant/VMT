@@ -1,4 +1,4 @@
-# backend/core/views/duplicates.py
+# backend/core/views/tshirt/duplicates.py
 from typing import List, Dict, Tuple
 import unicodedata
 
@@ -6,7 +6,7 @@ def _norm(s: str) -> str:
     if s is None:
         return ""
     s = str(s).strip().lower()
-    # quita acentos
+    # Quita acentos (NFD → sin marcas diacríticas)
     s = "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
     return s
 
@@ -26,7 +26,7 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
     Devuelve (duplicates, unique_new_entries)
 
     - duplicates: lista de dicts {"existing": <fila_json>, "incoming": <fila_excel>}
-      cuando HAY coincidencia exacta por (numero,idExterno) normalizados.
+      cuando hay coincidencia exacta por (numero, idExterno) normalizados.
 
     - unique_new_entries: filas del Excel que NO tienen match por la clave compuesta.
     """

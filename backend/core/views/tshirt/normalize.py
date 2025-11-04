@@ -1,6 +1,13 @@
+# backend/core/views/tshirt/normalize.py
+
 import pandas as pd
 
-def normalize_headers(df):
+def normalize_headers(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normaliza cabeceras del Excel a las claves usadas por el backend.
+    Convierte 'puntuacionRiesgo' a numérico y fechas a str.
+    """
+    # Mapeo exacto que usas actualmente
     header_mapping = {
         "Número": "numero",
         "ID externo": "idExterno",
@@ -16,12 +23,20 @@ def normalize_headers(df):
         "Actualizado": "actualizado",
         "Sites": "sites",
         "Vulnerability solution": "vulnerabilitySolution",
-        "Vulnerabilidad": "vulnerabilidad"
+        "Vulnerabilidad": "vulnerabilidad",
     }
+
+    # Renombrado directo según cabeceras esperadas
+    df = df.copy()
     df.rename(columns=header_mapping, inplace=True)
-    if 'puntuacionRiesgo' in df.columns:
-        df['puntuacionRiesgo'] = pd.to_numeric(df['puntuacionRiesgo'], errors='coerce')
-    for col in ['creado', 'actualizado']:
+
+    # Tipado de riesgo → numérico
+    if "puntuacionRiesgo" in df.columns:
+        df["puntuacionRiesgo"] = pd.to_numeric(df["puntuacionRiesgo"], errors="coerce")
+
+    # Fechas a string (mantén tu formato actual)
+    for col in ["creado", "actualizado"]:
         if col in df.columns:
             df[col] = df[col].astype(str)
+
     return df
