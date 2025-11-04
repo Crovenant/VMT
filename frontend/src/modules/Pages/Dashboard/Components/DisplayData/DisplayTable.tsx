@@ -1,12 +1,11 @@
 // src/modules/Main/Components/DisplayData/DisplayTable.tsx
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { Box } from '@mui/material';
+import { Box, Modal, Typography, Grid, Paper } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import SideFilterPanel from './DisplayTable/GridComponents/SideFilterPanel';
-
 import type { Item } from '../../../../Types/item';
 import type {
   ColDef,
@@ -19,10 +18,8 @@ import type {
   CheckboxSelectionCallbackParams,
   ValueGetterParams,
 } from 'ag-grid-community';
-
 import AccordionDetail from './DisplayTable/Renderers/AccordionDetail';
 import { exportFilteredDataToExcel } from './Export/exportExcel';
-
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
@@ -32,16 +29,9 @@ declare global {
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Tipos                                                               */
-/* ------------------------------------------------------------------ */
+/* -------------------- Tipos -------------------- */
 type DetailRow = { _kind: 'detail'; parentId: string };
 type DisplayRow = Item | DetailRow;
-
-/**
- * Para que AG Grid permita `field: string` sin usar `any`,
- * tipamos la fila como objeto indexable.
- */
 type GridRow = Record<string, unknown>;
 
 const columnKeyMap: Record<string, keyof Item> = {
@@ -112,9 +102,7 @@ function buildDisplayRows(items: Item[], expanded: Set<string>): DisplayRow[] {
   return out;
 }
 
-/* ------------------------------------------------------------------ */
-/* Componente                                                          */
-/* ------------------------------------------------------------------ */
+/* -------------------- Componente -------------------- */
 export default function DisplayTable({
   rows,
   visibleColumns,
@@ -125,7 +113,6 @@ export default function DisplayTable({
   showFilterPanel: boolean;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
-
   const itemById = useMemo(() => {
     const m = new Map<string, Item>();
     for (const it of rows) m.set(String(it.id ?? it.numero), it);
@@ -134,7 +121,6 @@ export default function DisplayTable({
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
-
   const toggleExpand = useCallback((id: string) => {
     setExpanded((old) => {
       const next = new Set(old);
@@ -148,7 +134,21 @@ export default function DisplayTable({
     window.exportFilteredDataToExcel = () => exportFilteredDataToExcel(rows, visibleColumns);
   }, [rows, visibleColumns]);
 
-  /* ---------- defaultColDef ---------- */
+  /* Estado para el modal */
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+
+  const handleOpenModal = (item: Item) => {
+    setSelectedItem(item);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedItem(null);
+  };
+
+  /* defaultColDef */
   const defaultColDef: ColDef<GridRow> = useMemo(
     () => ({
       resizable: true,
@@ -167,7 +167,7 @@ export default function DisplayTable({
     [showFilterPanel],
   );
 
-  /* ---------- selección (checkbox) ---------- */
+  /* selección */
   const selectionColDef: ColDef<GridRow> = useMemo(
     () => ({
       headerName: '',
@@ -187,7 +187,7 @@ export default function DisplayTable({
     [],
   );
 
-  /* ---------- ojo ---------- */
+  /* ojo */
   const eyeColDef: ColDef<GridRow> = useMemo(
     () => ({
       headerName: '',
@@ -203,8 +203,12 @@ export default function DisplayTable({
       cellRenderer: (p: ICellRendererParams<GridRow>) => {
         const d = p.data as DisplayRow | undefined;
         if (!d || isDetailRow(d)) return null;
+        const item = d as Item;
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer' }}
+            onClick={() => handleOpenModal(item)}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#1976d2" aria-hidden>
               <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 13a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0-9a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" />
             </svg>
@@ -215,7 +219,7 @@ export default function DisplayTable({
     [],
   );
 
-  /* ---------- toggle (flecha) ---------- */
+  /* toggle */
   const toggleColDef: ColDef<GridRow> = useMemo(
     () => ({
       headerName: '',
@@ -231,11 +235,9 @@ export default function DisplayTable({
       cellRenderer: (p: ICellRendererParams<GridRow>) => {
         const d = p.data as DisplayRow | undefined;
         if (!d || isDetailRow(d)) return null;
-
         const id = String((d as Item).id ?? (d as Item).numero);
         const open = expanded.has(id);
         const Icon = open ? ExpandMore : ChevronRight;
-
         return (
           <Box
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer' }}
@@ -253,16 +255,14 @@ export default function DisplayTable({
     [expanded, toggleExpand],
   );
 
-  /* ---------- columnas de negocio ---------- */
+  /* columnas de negocio */
   const businessColDefs: ColDef<GridRow>[] = useMemo(() => {
     const defs: ColDef<GridRow>[] = [];
-
     visibleColumns.forEach((col) => {
       const key = columnKeyMap[col];
-
       const baseDef: ColDef<GridRow> = {
         headerName: col,
-        field: key as unknown as string, // permitir string como clave
+        field: key as unknown as string,
         filter: true,
         sortable: true,
         headerClass: 'custom-header',
@@ -274,18 +274,11 @@ export default function DisplayTable({
           return (item as Record<string, unknown>)[key] ?? null;
         },
       };
-
       const noWrap = { cellStyle: { whiteSpace: 'nowrap' as const } };
-
-      if (key === 'numero') Object.assign(baseDef, { width: 110, minWidth: 100, maxWidth: 130 }, noWrap);
-      if (key === 'estado') Object.assign(baseDef, { width: 120, minWidth: 100, maxWidth: 140 }, noWrap);
-      if (key === 'prioridad') Object.assign(baseDef, { width: 120, minWidth: 110, maxWidth: 140 }, noWrap);
-      if (key === 'puntuacionRiesgo') Object.assign(baseDef, { width: 150, minWidth: 120, maxWidth: 160 }, noWrap);
-      if (key === 'asignadoA') Object.assign(baseDef, { width: 170, minWidth: 140, maxWidth: 220 }, noWrap);
-      if (key === 'actualizado') Object.assign(baseDef, { width: 140, minWidth: 120, maxWidth: 160 }, noWrap);
-      if (key === 'resumen') Object.assign(baseDef, { flex: 1, minWidth: 250 });
-
+      if (key === 'numero') Object.assign(baseDef, { width: 110 }, noWrap);
+      if (key === 'estado') Object.assign(baseDef, { width: 120 }, noWrap);
       if (key === 'prioridad') {
+        Object.assign(baseDef, { width: 120 }, noWrap);
         baseDef.cellRenderer = (params: ICellRendererParams<GridRow>) => {
           const value = params.value as string | null;
           if (value == null) return null;
@@ -298,35 +291,23 @@ export default function DisplayTable({
           );
         };
       }
-
       defs.push(baseDef);
     });
-
     return defs;
   }, [visibleColumns]);
 
-  /* ---------- columnDefs finales ---------- */
   const columnDefs: ColDef<GridRow>[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
     [selectionColDef, eyeColDef, toggleColDef, businessColDefs],
   );
 
-  /* ---------- auto-anchos ---------- */
   const tightenColumns = useCallback((api: GridApi<GridRow>) => {
     const ids = (api.getColumns() as Column[] | null | undefined)?.map((c) => c.getColId()) ?? [];
     api.autoSizeColumns(ids, false);
-
     const set = (id: string, w: number) => api.setColumnWidth(id, w, false);
     set('__sel__', 42);
     set('__eye__', 42);
     set('__toggle__', 42);
-
-    set('numero', 110);
-    set('estado', 120);
-    set('prioridad', 120);
-    set('puntuacionRiesgo', 150);
-    set('asignadoA', 170);
-    set('actualizado', 140);
   }, []);
 
   const handleGridReady = (params: GridReadyEvent) => {
@@ -337,63 +318,106 @@ export default function DisplayTable({
     tightenColumns(e.api as GridApi<GridRow>);
   };
 
-return (
-  <Box
-    sx={{
-      display: 'flex', // ✅ panel integrado como columna
-      height: '70vh',
-      width: '100%',
-      backgroundColor: '#f5f6f8',
-    }}
-  >
-    {/* Contenedor de la tabla */}
-    <Box
-      sx={{
-        flex: 1,
-        position: 'relative',
-      }}
-      className="ag-theme-quartz custom-ag"
-    >
-      <AgGridReact<GridRow>
-        ref={gridRef}
-        rowData={displayRows}
-        getRowId={(p) => getRowKey(p.data as DisplayRow)}
-        columnDefs={columnDefs}
-        defaultColDef={defaultColDef}
-        rowSelection="multiple"
-        rowMultiSelectWithClick
-        suppressRowClickSelection={false}
-        animateRows
-        onGridReady={handleGridReady}
-        onFirstDataRendered={handleFirstDataRendered}
-        embedFullWidthRows={false}
-        isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) =>
-          isDetailRow(p.rowNode?.data as DisplayRow | undefined)
-        }
-        fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => {
-          const d = p.data as DisplayRow | undefined;
-          if (!isDetailRow(d)) return null;
-          const parent = itemById.get(d.parentId);
-          return (
-            <div className="full-width-detail-wrapper">
-              <AccordionDetail item={parent} />
-            </div>
-          );
+  return (
+    <>
+      <Box
+        sx={{
+          display: 'flex',
+          height: '70vh',
+          width: '100%',
+          backgroundColor: '#f5f6f8',
+          border: '1px solid rgba(31, 45, 90, 0.25)',
+          borderRadius: '15px 0 0 15px',
+          overflow: 'hidden',
         }}
-        getRowHeight={(p) => (isDetailRow(p.data as DisplayRow) ? 300 : undefined)}
-        getRowStyle={(p) =>
-          isDetailRow(p.data as DisplayRow)
-            ? { backgroundColor: '#f5f6f8' }
-            : (p.data as DisplayRow as Item)?.['followUp' as keyof Item]
-            ? { backgroundColor: '#fff8e1' }
-            : undefined
-        }
-        isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
-      />
-    </Box>
+      >
+        <Box sx={{ flex: 1, position: 'relative' }} className="ag-theme-quartz custom-ag">
+          <AgGridReact<GridRow>
+            ref={gridRef}
+            rowData={displayRows}
+            getRowId={(p) => getRowKey(p.data as DisplayRow)}
+            columnDefs={columnDefs}
+            defaultColDef={defaultColDef}
+            rowSelection="multiple"
+            rowMultiSelectWithClick
+            suppressRowClickSelection={false}
+            animateRows
+            onGridReady={handleGridReady}
+            onFirstDataRendered={handleFirstDataRendered}
+            embedFullWidthRows={false}
+            isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) =>
+              isDetailRow(p.rowNode?.data as DisplayRow | undefined)
+            }
+            fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => {
+              const d = p.data as DisplayRow | undefined;
+              if (!isDetailRow(d)) return null;
+              const parent = itemById.get(d.parentId);
+              return (
+                <div className="full-width-detail-wrapper">
+                  <AccordionDetail item={parent} />
+                </div>
+              );
+            }}
+            getRowHeight={(p) => (isDetailRow(p.data as DisplayRow) ? 300 : undefined)}
+            getRowStyle={(p) =>
+              isDetailRow(p.data as DisplayRow)
+                ? { backgroundColor: '#f5f6f8' }
+                : (p.data as DisplayRow as Item)?.['followUp' as keyof Item]
+                ? { backgroundColor: '#fff8e1' }
+                : undefined
+            }
+            isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
+          />
+        </Box>
+        <SideFilterPanel />
+      </Box>
 
-    {/* ✅ Panel lateral integrado */}
-    <SideFilterPanel />
-  </Box>
-);
+      {/* Modal */}
+      <Modal open={openModal} onClose={handleCloseModal}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 600,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            borderRadius: 2,
+            p: 3,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Detalle del ítem
+          </Typography>
+          {selectedItem && (
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="body2"><strong>Número:</strong> {selectedItem.numero}</Typography>
+                <Typography variant="body2"><strong>Estado:</strong> {selectedItem.estado}</Typography>
+                <Typography variant="body2"><strong>Resumen:</strong> {selectedItem.resumen}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2"><strong>Prioridad:</strong> {selectedItem.prioridad}</Typography>
+                <Typography variant="body2"><strong>Puntuación:</strong> {selectedItem.puntuacionRiesgo}</Typography>
+                <Typography variant="body2"><strong>Asignado a:</strong> {selectedItem.asignadoA}</Typography>
+              </Grid>
+            </Grid>
+          )}
+          <Paper
+            sx={{
+              mt: 3,
+              height: 150,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#888',
+            }}
+          >
+            Aquí irá el grid de componentes relacionados
+          </Paper>
+        </Box>
+      </Modal>
+    </>
+  );
 }

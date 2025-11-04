@@ -4,6 +4,8 @@ import Title from '../Title';
 import FilterBar from './FilterBar';
 import DisplayTable from './DisplayTable';
 import useDisplayData from '../../hooks/useDisplayData';
+import { useState } from 'react';
+import LatchWidget from './Widgets/LatchWidget';
 
 export default function DisplayWrapper({
   refreshKey,
@@ -11,30 +13,43 @@ export default function DisplayWrapper({
   selectedItemId,
   customFlagFilter,
   onResetView,
-  setShowUploadModal,
 }: {
   refreshKey: number;
   priorityFilter?: string | null;
   selectedItemId?: string | null;
   customFlagFilter?: 'followUp' | 'soonDue' | null;
   onResetView?: () => void;
-  setShowUploadModal: (val: boolean) => void;
 }) {
-  const { rows, visibleColumns, showFilterPanel, setShowFilterPanel, handleDownload } =
+  const { rows, visibleColumns, showFilterPanel, handleDownload } =
     useDisplayData({ refreshKey, priorityFilter, selectedItemId, customFlagFilter });
+
+  const [viewType, setViewType] = useState<'Tshirt' | 'Soup'>('Tshirt');
+
+  const handleUpload = (type: 'Tshirt' | 'Soup') => {
+    console.log(`Uploading file for ${type}`);
+    // Lógica real de upload
+  };
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Title>Vulnerability list</Title>
+      {/* Cabecera */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2, position: 'relative' }}>
+        <Title>{viewType === 'Tshirt' ? 'TSHIRT view' : 'SOUP view'}</Title>
+
+        {/* LatchWidget centrado */}
+        <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          <LatchWidget viewType={viewType} onSwitchView={(type) => setViewType(type)} />
+        </Box>
+
+        {/* Barra de filtros a la derecha */}
         <FilterBar
-          togglePanel={() => setShowFilterPanel(!showFilterPanel)}
           handleDownload={handleDownload}
           onResetView={onResetView}
-          onShowUploadModal={() => setShowUploadModal(true)}
+          onUpload={handleUpload}
         />
-      </Box>
+        </Box>
 
+      {/* Tabla */}
       <DisplayTable rows={rows} visibleColumns={visibleColumns} showFilterPanel={showFilterPanel} />
     </>
   );

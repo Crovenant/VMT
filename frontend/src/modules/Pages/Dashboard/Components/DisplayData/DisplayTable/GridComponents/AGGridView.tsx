@@ -17,14 +17,13 @@ const AGGridView: React.FC<Props> = ({ items, columnDefs }) => {
     () => ({
       resizable: true,
       filter: 'agTextColumnFilter',
-      floatingFilter: false,    // una sola barra de filtro (en header)
+      floatingFilter: false, // solo barra de filtro en header
       sortable: true,
       suppressHeaderMenuButton: false,
     }),
     []
   );
 
-  // Si algún día quieres retocar anchos por campo, hazlo aquí:
   const adjustedColumnDefs = useMemo<ColDef[]>(
     () =>
       columnDefs.map((col) => {
@@ -51,7 +50,10 @@ const AGGridView: React.FC<Props> = ({ items, columnDefs }) => {
   );
 
   return (
-    <div style={{ height: 600, width: '100%', overflow: 'hidden' }} className="ag-theme-alpine">
+    <div
+      style={{ height: 600, width: '100%', overflow: 'hidden' }}
+      className="ag-theme-alpine custom-ag-theme custom-ag"
+    >
       <AgGridReact
         rowData={rowData}
         columnDefs={adjustedColumnDefs}
@@ -64,3 +66,4 @@ const AGGridView: React.FC<Props> = ({ items, columnDefs }) => {
 };
 
 export default AGGridView;
+
