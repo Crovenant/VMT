@@ -26,11 +26,27 @@ export default function DisplayWrapper({
   customFlagFilter,
   onResetView,
 }: Props) {
-  const { rows, visibleColumns, showFilterPanel } = useDisplayData({
+  const { rows, showFilterPanel } = useDisplayData({
     refreshKey,
     priorityFilter,
     selectedItemId,
     customFlagFilter,
+  });
+
+  // ✅ Estado real para columnas visibles
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    const saved = localStorage.getItem('displayData.visibleColumns');
+    return saved
+      ? JSON.parse(saved)
+      : [
+          'Número',
+          'Estado',
+          'Resumen',
+          'Prioridad',
+          'Puntuación de riesgo',
+          'Asignado a',
+          'Actualizado',
+        ];
   });
 
   const [viewType, setViewType] = useState<ViewType>('Tshirt');
@@ -88,6 +104,7 @@ export default function DisplayWrapper({
       <DisplayTable
         rows={rows}
         visibleColumns={visibleColumns}
+        setVisibleColumns={setVisibleColumns}  /* ✅ Ahora sí */
         showFilterPanel={showFilterPanel}
       />
 

@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, TextField, InputAdornment, Checkbox, FormControlLabel } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import useItems from '../../../../../../Shared/hooks/useItems'; // Ajusta la ruta según tu estructura
 
-// ✅ Mapeo amigable (igual que en columnDefs, sin "id")
 const headerMap: Record<string, string> = {
   nombre: 'Nombre',
   numero: 'Número',
@@ -24,23 +22,34 @@ const headerMap: Record<string, string> = {
   actualizado: 'Actualizado',
 };
 
-const SideFilterPanel: React.FC<{ refreshKey?: number }> = ({ refreshKey }) => {
-  const [isOpen, setIsOpen] = useState(false);
+type Props = {
+  visibleColumns: string[];
+  setVisibleColumns: (cols: string[]) => void;
+  allHeaders: string[];
+};
+
+const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, allHeaders }) => {
+  const [isOpen, setIsOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sideFilterPanel.isOpen');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [search, setSearch] = useState('');
 
-  const { items } = useItems(refreshKey ?? 0);
-  const headers = items.length > 0 ? Object.keys(items[0]).filter((h) => h !== 'id') : [];
+  useEffect(() => {
+    localStorage.setItem('sideFilterPanel.isOpen', JSON.stringify(isOpen));
+  }, [isOpen]);
 
-  const [visibleFields, setVisibleFields] = useState<string[]>(headers);
-
-  const filteredFields = headers.filter((f) =>
+  const filteredFields = allHeaders.filter((f) =>
     (headerMap[f] || f).toLowerCase().includes(search.toLowerCase())
   );
 
   const handleToggle = (field: string) => {
-    setVisibleFields((prev) =>
-      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
-    );
+    const updated = visibleColumns.includes(field)
+      ? visibleColumns.filter((c) => c !== field)
+      : [...visibleColumns, field];
+
+    setVisibleColumns(updated);
+    localStorage.setItem('displayData.visibleColumns', JSON.stringify(updated));
   };
 
   return (
@@ -49,11 +58,12 @@ const SideFilterPanel: React.FC<{ refreshKey?: number }> = ({ refreshKey }) => {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        width: isOpen ? '350px' : '40px', // ✅ más ancho
+        width: isOpen ? '350px' : '40px',
         backgroundColor: '#f5f6f8',
         border: '1px solid rgba(31, 45, 90, 0.25)',
         transition: 'width 0.3s ease',
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
       {/* Botón vertical */}
@@ -86,57 +96,67 @@ const SideFilterPanel: React.FC<{ refreshKey?: number }> = ({ refreshKey }) => {
         </Box>
       </Box>
 
-      {/* Contenido */}
-      {isOpen && (
-        <Box sx={{ p: 2, ml: '40px', overflowY: 'auto' }}>
-          {/* Buscador */}
-          <TextField
-            size="small"
-            placeholder="Search..."
-            fullWidth
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: '4px',
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: 'rgba(31, 45, 90, 0.25)',
-                },
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" sx={{ color: '#1f2d5a' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          {/* Lista con checkbox */}
-          {filteredFields.map((field) => (
-            <FormControlLabel
-              key={field}
-              control={
-                <Checkbox
-                  checked={visibleFields.includes(field)}
-                  onChange={() => handleToggle(field)}
-                  size="small"
-                />
-              }
-              label={headerMap[field] || field}
+      {/* Contenido con animación */}
+      <Box
+        sx={{
+          opacity: isOpen ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          p: isOpen ? 2 : 0,
+          ml: isOpen ? '40px' : 0,
+          overflowY: 'auto',
+        }}
+      >
+        {isOpen && (
+          <>
+            {/* Buscador */}
+            <TextField
+              size="small"
+              placeholder="Search..."
+              fullWidth
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               sx={{
-                display: 'block',
-                color: '#1f2d5a',
-                fontSize: '13px', // ✅ más pequeño
-                mb: 0.5,
+                backgroundColor: '#ffffff',
+                borderRadius: '4px',
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'rgba(31, 45, 90, 0.25)',
+                  },
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: '#1f2d5a' }} />
+                  </InputAdornment>
+                ),
               }}
             />
-          ))}
-        </Box>
-      )}
+
+            {/* Lista con checkbox */}
+            {filteredFields.map((field) => (
+              <FormControlLabel
+                key={field}
+                control={
+                  <Checkbox
+                    checked={visibleColumns.includes(field)}
+                    onChange={() => handleToggle(field)}
+                    size="small"
+                  />
+                }
+                label={headerMap[field] || field}
+                sx={{
+                  display: 'block',
+                  color: '#1f2d5a',
+                  fontSize: '13px',
+                  mb: 0.5,
+                }}
+              />
+            ))}
+          </>
+        )}
+      </Box>
     </Box>
   );
 };

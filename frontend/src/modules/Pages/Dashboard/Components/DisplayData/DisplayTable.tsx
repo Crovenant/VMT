@@ -105,14 +105,15 @@ function buildDisplayRows(items: Item[], expanded: Set<string>): DisplayRow[] {
 export default function DisplayTable({
   rows,
   visibleColumns,
+  setVisibleColumns,
   showFilterPanel,
 }: {
   rows: Item[];
   visibleColumns: string[];
+  setVisibleColumns: (cols: string[]) => void;
   showFilterPanel: boolean;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
-
   const itemById = useMemo(() => {
     const m = new Map<string, Item>();
     for (const it of rows) m.set(String(it.id ?? it.numero), it);
@@ -121,7 +122,6 @@ export default function DisplayTable({
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
-
   const toggleExpand = useCallback((id: string) => {
     setExpanded((old) => {
       const next = new Set(old);
@@ -139,7 +139,7 @@ export default function DisplayTable({
       if (selectedRows.length > 0) {
         exportSelectionToExcel(selectedRows, visibleColumns);
       } else {
-        exportFullJsonToExcel(rows); // Exporta todo el JSON sin ID
+        exportFullJsonToExcel(rows);
       }
     };
     window.clearAllFilters = () => {
@@ -149,12 +149,10 @@ export default function DisplayTable({
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-
   const handleOpenModal = (item: Item) => {
     setSelectedItem(item);
     setOpenModal(true);
   };
-
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedItem(null);
@@ -263,9 +261,9 @@ export default function DisplayTable({
     [expanded, toggleExpand],
   );
 
+  // ✅ Columnas dinámicas según visibleColumns
   const businessColDefs: ColDef<GridRow>[] = useMemo(() => {
-    const defs: ColDef<GridRow>[] = [];
-    visibleColumns.forEach((col) => {
+    return visibleColumns.map((col) => {
       const key = columnKeyMap[col];
       const baseDef: ColDef<GridRow> = {
         headerName: col,
@@ -302,15 +300,21 @@ export default function DisplayTable({
         baseDef.headerName = 'Puntuación\nde riesgo';
         Object.assign(baseDef, { minWidth: 110, maxWidth: 140 });
       }
-      defs.push(baseDef);
+      return baseDef;
     });
-    return defs;
   }, [visibleColumns]);
 
   const columnDefs: ColDef<GridRow>[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
     [selectionColDef, eyeColDef, toggleColDef, businessColDefs],
   );
+
+  // ✅ Actualiza columnas cuando cambia visibleColumns
+  useEffect(() => {
+    if (gridRef.current?.api) {
+      gridRef.current.api.setColumnDefs(columnDefs);
+    }
+  }, [columnDefs]);
 
   const tightenColumns = useCallback((api: GridApi<GridRow>) => {
     const ids = (api.getColumns() as Column[] | null | undefined)?.map((c) => c.getColId()) ?? [];
@@ -324,7 +328,6 @@ export default function DisplayTable({
   const handleGridReady = (params: GridReadyEvent) => {
     tightenColumns(params.api as GridApi<GridRow>);
   };
-
   const handleFirstDataRendered = (e: FirstDataRenderedEvent) => {
     tightenColumns(e.api as GridApi<GridRow>);
   };
@@ -380,7 +383,28 @@ export default function DisplayTable({
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
           />
         </Box>
-        <SideFilterPanel />
+        {/* ✅ SideFilterPanel vinculado */}
+        <SideFilterPanel
+          visibleColumns={visibleColumns}
+          setVisibleColumns={setVisibleColumns}
+          allHeaders={[
+            'Número',
+            'ID externo',
+            'Estado',
+            'Resumen',
+            'Breve descripción',
+            'Elemento de configuración',
+            'Prioridad',
+            'Puntuación de riesgo',
+            'Grupo de asignación',
+            'Asignado a',
+            'Creado',
+            'Actualizado',
+            'Sites',
+            'Vulnerability solution',
+            'Vulnerabilidad',
+          ]}
+        />
       </Box>
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box
