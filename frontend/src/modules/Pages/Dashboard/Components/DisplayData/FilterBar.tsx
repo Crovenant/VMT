@@ -41,6 +41,9 @@ export default function FilterBar({
           size="small"
           onClick={() => {
             if (onResetView) onResetView();
+            if (typeof window.clearAllFilters === 'function') {
+              window.clearAllFilters();
+            }
           }}
           sx={{ fontSize: '16px' }}
         >
@@ -78,7 +81,7 @@ export default function FilterBar({
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'center', horizontal: 'right' }} // Se abre lateralmente
+        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
         transformOrigin={{ vertical: 'center', horizontal: 'left' }}
       >
         <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>

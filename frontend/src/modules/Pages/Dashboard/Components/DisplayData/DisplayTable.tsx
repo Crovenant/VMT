@@ -1,4 +1,3 @@
-// src/modules/Main/Components/DisplayData/DisplayTable.tsx
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { Box, Modal, Typography, Grid, Paper } from '@mui/material';
@@ -20,13 +19,14 @@ import type {
 } from 'ag-grid-community';
 import AccordionDetail from './DisplayTable/Renderers/AccordionDetail';
 import { exportFilteredDataToExcel } from './Export/exportExcel';
-import { exportSelectionToExcel } from './Export/exportSelection'; // ✅ Nuevo módulo
+import { exportSelectionToExcel } from './Export/exportSelection';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 declare global {
   interface Window {
     exportFilteredDataToExcel: () => void;
+    clearAllFilters: () => void;
   }
 }
 
@@ -112,6 +112,7 @@ export default function DisplayTable({
   showFilterPanel: boolean;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
+
   const itemById = useMemo(() => {
     const m = new Map<string, Item>();
     for (const it of rows) m.set(String(it.id ?? it.numero), it);
@@ -120,6 +121,7 @@ export default function DisplayTable({
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
+
   const toggleExpand = useCallback((id: string) => {
     setExpanded((old) => {
       const next = new Set(old);
@@ -129,25 +131,31 @@ export default function DisplayTable({
     });
   }, []);
 
-  // ✅ ÚNICO CAMBIO: lógica para exportar selección si existe
-useEffect(() => {
-  window.exportFilteredDataToExcel = () => {
-    const selectedNodes = gridRef.current?.api.getSelectedNodes() || [];
-    const selectedRows = selectedNodes.map(node => node.data as Item);
-    if (selectedRows.length > 0) {
-      exportSelectionToExcel(selectedRows, visibleColumns);
-    } else {
-      exportFilteredDataToExcel(rows, visibleColumns);
-    }
-  };
-}, [rows, visibleColumns]);
+  // ✅ Export + Clear Filters
+  useEffect(() => {
+    window.exportFilteredDataToExcel = () => {
+      const selectedNodes = gridRef.current?.api.getSelectedNodes() ?? [];
+      const selectedRows = selectedNodes.map((node) => node.data as Item);
+      if (selectedRows.length > 0) {
+        exportSelectionToExcel(selectedRows, visibleColumns);
+      } else {
+        exportFilteredDataToExcel(rows, visibleColumns);
+      }
+    };
+
+    window.clearAllFilters = () => {
+      gridRef.current?.api.setFilterModel(null);
+    };
+  }, [rows, visibleColumns]);
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+
   const handleOpenModal = (item: Item) => {
     setSelectedItem(item);
     setOpenModal(true);
   };
+
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedItem(null);
@@ -171,7 +179,6 @@ useEffect(() => {
     [showFilterPanel],
   );
 
-  
   const selectionColDef: ColDef<GridRow> = useMemo(
     () => ({
       headerName: '',
@@ -242,7 +249,7 @@ useEffect(() => {
         const Icon = open ? ExpandMore : ChevronRight;
         return (
           <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer', paddingTop: "6px" }}
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer', paddingTop: '6px' }}
             onClick={(e) => {
               e.stopPropagation();
               toggleExpand(id);
@@ -318,6 +325,7 @@ useEffect(() => {
   const handleGridReady = (params: GridReadyEvent) => {
     tightenColumns(params.api as GridApi<GridRow>);
   };
+
   const handleFirstDataRendered = (e: FirstDataRenderedEvent) => {
     tightenColumns(e.api as GridApi<GridRow>);
   };
@@ -373,7 +381,7 @@ useEffect(() => {
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
           />
         </Box>
-        <SideFilterPanel/>
+        <SideFilterPanel />
       </Box>
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box
