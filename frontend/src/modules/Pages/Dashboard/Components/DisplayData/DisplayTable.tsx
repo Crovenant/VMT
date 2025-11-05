@@ -20,6 +20,7 @@ import type {
 } from 'ag-grid-community';
 import AccordionDetail from './DisplayTable/Renderers/AccordionDetail';
 import { exportFilteredDataToExcel } from './Export/exportExcel';
+import { exportSelectionToExcel } from './Export/exportSelection'; // ✅ Nuevo módulo
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
@@ -29,7 +30,6 @@ declare global {
   }
 }
 
-/* -------------------- Tipos -------------------- */
 type DetailRow = { _kind: 'detail'; parentId: string };
 type DisplayRow = Item | DetailRow;
 type GridRow = Record<string, unknown>;
@@ -102,7 +102,6 @@ function buildDisplayRows(items: Item[], expanded: Set<string>): DisplayRow[] {
   return out;
 }
 
-/* -------------------- Componente -------------------- */
 export default function DisplayTable({
   rows,
   visibleColumns,
@@ -130,33 +129,38 @@ export default function DisplayTable({
     });
   }, []);
 
-  useEffect(() => {
-    window.exportFilteredDataToExcel = () => exportFilteredDataToExcel(rows, visibleColumns);
-  }, [rows, visibleColumns]);
+  // ✅ ÚNICO CAMBIO: lógica para exportar selección si existe
+useEffect(() => {
+  window.exportFilteredDataToExcel = () => {
+    const selectedNodes = gridRef.current?.api.getSelectedNodes() || [];
+    const selectedRows = selectedNodes.map(node => node.data as Item);
+    if (selectedRows.length > 0) {
+      exportSelectionToExcel(selectedRows, visibleColumns);
+    } else {
+      exportFilteredDataToExcel(rows, visibleColumns);
+    }
+  };
+}, [rows, visibleColumns]);
 
-  /* Estado para el modal */
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-
   const handleOpenModal = (item: Item) => {
     setSelectedItem(item);
     setOpenModal(true);
   };
-
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedItem(null);
   };
 
-  /* defaultColDef */
   const defaultColDef: ColDef<GridRow> = useMemo(
     () => ({
       resizable: true,
       sortable: true,
       filter: 'agTextColumnFilter',
       floatingFilter: false,
-      wrapHeaderText: true,      // <-- ya lo tienes: habilita wrap en header
-      autoHeaderHeight: true,    // <-- y ajusta la altura automáticamente
+      wrapHeaderText: true,
+      autoHeaderHeight: true,
       wrapText: false,
       autoHeight: true,
       headerClass: 'custom-header',
@@ -167,7 +171,7 @@ export default function DisplayTable({
     [showFilterPanel],
   );
 
-  /* selección */
+  
   const selectionColDef: ColDef<GridRow> = useMemo(
     () => ({
       headerName: '',
@@ -187,7 +191,6 @@ export default function DisplayTable({
     [],
   );
 
-  /* ojo */
   const eyeColDef: ColDef<GridRow> = useMemo(
     () => ({
       headerName: '',
@@ -209,7 +212,7 @@ export default function DisplayTable({
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer' }}
             onClick={() => handleOpenModal(item)}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#1976d2" aria-hidden>
+            <svg width="26" height="26" viewBox="0 0 24 6" fill="#1976d2" aria-hidden>
               <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 13a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0-9a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" />
             </svg>
           </Box>
@@ -219,7 +222,6 @@ export default function DisplayTable({
     [],
   );
 
-  /* toggle */
   const toggleColDef: ColDef<GridRow> = useMemo(
     () => ({
       headerName: '',
@@ -240,7 +242,7 @@ export default function DisplayTable({
         const Icon = open ? ExpandMore : ChevronRight;
         return (
           <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer' }}
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer', paddingTop: "6px" }}
             onClick={(e) => {
               e.stopPropagation();
               toggleExpand(id);
@@ -255,7 +257,6 @@ export default function DisplayTable({
     [expanded, toggleExpand],
   );
 
-  /* columnas de negocio */
   const businessColDefs: ColDef<GridRow>[] = useMemo(() => {
     const defs: ColDef<GridRow>[] = [];
     visibleColumns.forEach((col) => {
@@ -274,12 +275,9 @@ export default function DisplayTable({
           return (item as Record<string, unknown>)[key] ?? null;
         },
       };
-
       const noWrap = { cellStyle: { whiteSpace: 'nowrap' as const } };
-
       if (key === 'numero') Object.assign(baseDef, { width: 110 }, noWrap);
       if (key === 'estado') Object.assign(baseDef, { width: 120 }, noWrap);
-
       if (key === 'prioridad') {
         Object.assign(baseDef, { width: 120 }, noWrap);
         baseDef.cellRenderer = (params: ICellRendererParams<GridRow>) => {
@@ -294,14 +292,10 @@ export default function DisplayTable({
           );
         };
       }
-
-      // ←↓↓ NUEVO: encabezado en dos líneas para "Puntuación de riesgo"
       if (key === 'puntuacionRiesgo') {
         baseDef.headerName = 'Puntuación\nde riesgo';
-        // Ya tienes wrapHeaderText/autoHeaderHeight en defaultColDef
         Object.assign(baseDef, { minWidth: 110, maxWidth: 140 });
       }
-
       defs.push(baseDef);
     });
     return defs;
@@ -324,7 +318,6 @@ export default function DisplayTable({
   const handleGridReady = (params: GridReadyEvent) => {
     tightenColumns(params.api as GridApi<GridRow>);
   };
-
   const handleFirstDataRendered = (e: FirstDataRenderedEvent) => {
     tightenColumns(e.api as GridApi<GridRow>);
   };
@@ -351,7 +344,7 @@ export default function DisplayTable({
             defaultColDef={defaultColDef}
             rowSelection="multiple"
             rowMultiSelectWithClick
-            suppressRowClickSelection={false}
+            suppressRowClickSelection={true}
             animateRows
             onGridReady={handleGridReady}
             onFirstDataRendered={handleFirstDataRendered}
@@ -380,10 +373,8 @@ export default function DisplayTable({
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
           />
         </Box>
-        <SideFilterPanel />
+        <SideFilterPanel/>
       </Box>
-
-      {/* Modal */}
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box
           sx={{

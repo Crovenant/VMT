@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/DisplayWrapper.tsx
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
@@ -27,8 +26,12 @@ export default function DisplayWrapper({
   customFlagFilter,
   onResetView,
 }: Props) {
-  const { rows, visibleColumns, showFilterPanel, handleDownload } =
-    useDisplayData({ refreshKey, priorityFilter, selectedItemId, customFlagFilter });
+  const { rows, visibleColumns, showFilterPanel } = useDisplayData({
+    refreshKey,
+    priorityFilter,
+    selectedItemId,
+    customFlagFilter,
+  });
 
   const [viewType, setViewType] = useState<ViewType>('Tshirt');
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -57,12 +60,12 @@ export default function DisplayWrapper({
         columnGap={2}
         mb={0.5}
       >
-        {/* Izquierda: título pegado al card (sin margen extra) */}
+        {/* Izquierda: título */}
         <Box>
           <Title>{viewType.toUpperCase()} view</Title>
         </Box>
 
-        {/* Centro: toggle centrado respecto al ancho del card */}
+        {/* Centro: toggle */}
         <Box display="flex" justifyContent="center">
           <LatchWidget viewType={viewType} onSwitchView={(v: ViewType) => setViewType(v)} />
         </Box>
@@ -70,7 +73,11 @@ export default function DisplayWrapper({
         {/* Derecha: iconos/acciones */}
         <Box display="flex" justifyContent="flex-end">
           <FilterBar
-            handleDownload={handleDownload}
+            handleDownload={() => {
+              if (typeof window.exportFilteredDataToExcel === 'function') {
+                window.exportFilteredDataToExcel();
+              }
+            }}
             onResetView={onResetView}
             onUpload={handleUploadByKind}
           />
