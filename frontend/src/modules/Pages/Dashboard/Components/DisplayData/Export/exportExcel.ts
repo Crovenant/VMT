@@ -17,6 +17,7 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Vulnerability solution': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
+  'Due date': 'dueDate', // ✅ Nuevo campo
 };
 
 export async function exportFullJsonToExcel(data: Item[]) {
@@ -44,7 +45,7 @@ export async function exportFullJsonToExcel(data: Item[]) {
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: '00B0F0' }, // Aqua
+      fgColor: { argb: '00B0F0' },
     };
     cell.font = { bold: true, color: { argb: 'FFFFFF' } };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -56,7 +57,6 @@ export async function exportFullJsonToExcel(data: Item[]) {
     };
   });
 
-  // Bandas alternas + bordes
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1) {
       const isEven = rowNumber % 2 === 0;
@@ -77,25 +77,22 @@ export async function exportFullJsonToExcel(data: Item[]) {
     }
   });
 
-  // Ajustar ancho automáticamente (con verificación)
-(worksheet.columns || []).forEach((col) => {
-  if (col && typeof col.eachCell === 'function') {
-    let maxLength = 10;
-    col.eachCell({ includeEmpty: true }, (cell) => {
-      const len = cell.value ? String(cell.value).length : 0;
-      if (len > maxLength) maxLength = len;
-    });
-    col.width = maxLength + 2;
-  }
-});
+  (worksheet.columns || []).forEach((col) => {
+    if (col && typeof col.eachCell === 'function') {
+      let maxLength = 10;
+      col.eachCell({ includeEmpty: true }, (cell) => {
+        const len = cell.value ? String(cell.value).length : 0;
+        if (len > maxLength) maxLength = len;
+      });
+      col.width = maxLength + 2;
+    }
+  });
 
-  // Filtros en cabecera
   worksheet.autoFilter = {
     from: { row: 1, column: 1 },
     to: { row: 1, column: headers.length },
   };
 
-  // Descargar archivo
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);

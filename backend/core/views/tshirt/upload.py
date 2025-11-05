@@ -13,7 +13,7 @@ from django.apps import apps
 from core.views.common.utils import add_cors_headers
 from core.views.tshirt.normalize import normalize_headers
 from core.views.tshirt.duplicates import detect_duplicates
-from core.views.tshirt.risk_logic import assign_ids_and_merge
+from core.views.tshirt.risk_logic import assign_ids_and_merge, calculate_due_date
 
 # Localización del JSON dentro del app 'core': backend/core/data/tshirt_Data.json
 CORE_DIR = Path(apps.get_app_config("core").path)      # .../backend/core
@@ -41,6 +41,11 @@ def upload_data(request):
         df = normalize_headers(df)
 
         new_entries = df.to_dict(orient="records")
+
+        # ✅ Calcula Due Date para cada nueva entrada
+        for entry in new_entries:
+            if "fechaCreacion" in entry and "prioridad" in entry:
+                entry["dueDate"] = calculate_due_date(entry["fechaCreacion"], entry["prioridad"])
 
         # Carga datos existentes (si no existe, lista vacía)
         if JSON_PATH.exists():

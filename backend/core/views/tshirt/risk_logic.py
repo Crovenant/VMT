@@ -1,7 +1,7 @@
-# backend/core/views/tshirt/risk_logic.py
 from typing import List, Dict, Tuple
 from collections import OrderedDict
 import unicodedata
+from datetime import datetime, timedelta
 
 def _norm(s: str) -> str:
     if s is None:
@@ -26,15 +26,30 @@ def _collect_used_ids(rows: List[Dict]) -> Tuple[set, int]:
     next_id = (max(used) + 1) if used else 1
     return used, next_id
 
+# ✅ NUEVO: Calcula Due Date según prioridad y fechaCreacion
+def calculate_due_date(fecha_creacion: str, prioridad: str) -> str:
+    try:
+        base_date = datetime.strptime(fecha_creacion, "%Y-%m-%d")
+    except ValueError:
+        return ""  # Si la fecha no es válida, devolvemos vacío
+    prioridad_norm = prioridad.strip().lower()
+    if prioridad_norm in ["crítico", "critica", "critical"]:
+        delta = timedelta(days=30)
+    elif prioridad_norm in ["alto", "alta", "high"]:
+        delta = timedelta(days=90)
+    else:  # medio, baja, low
+        delta = timedelta(days=365)
+    return (base_date + delta).strftime("%Y-%m-%d")
+
 def assign_ids_and_merge(existing_data: List[Dict], unique_new_entries: List[Dict]) -> List[Dict]:
-    """
-    Caso sin duplicados: añade nuevas entradas asignando IDs únicos incrementales.
-    """
     merged = list(existing_data)
     used_ids, next_id = _collect_used_ids(existing_data)
 
     for entry in unique_new_entries:
-        # Garantiza que el id no esté usado
+        # ✅ Calcula Due Date antes de guardar
+        if "fechaCreacion" in entry and "prioridad" in entry:
+            entry["dueDate"] = calculate_due_date(entry["fechaCreacion"], entry["prioridad"])
+
         while next_id in used_ids:
             next_id += 1
 
@@ -56,10 +71,6 @@ def update_selected_entries(
     selected_entries: List[Dict],
     lookup: Dict[Tuple[str, str], Dict],
 ) -> List[Dict]:
-    """
-    Caso con duplicados: resuelve según la selección del usuario.
-    Mantiene IDs existentes cuando corresponde; crea IDs nuevos cuando no hay coincidencia.
-    """
     by_both = {_key(r): r for r in existing_data}
     by_idext = {_norm(r.get("idExterno", "")): r for r in existing_data if r.get("idExterno")}
     by_num = {_norm(r.get("numero", "")): r for r in existing_data if r.get("numero")}
@@ -69,6 +80,10 @@ def update_selected_entries(
     keys_to_remove = set()
 
     for entry in selected_entries:
+        # ✅ Calcula Due Date antes de guardar
+        if "fechaCreacion" in entry and "prioridad" in entry:
+            entry["dueDate"] = calculate_due_date(entry["fechaCreacion"], entry["prioridad"])
+
         k_both = _key(entry)
         k_id = _norm(entry.get("idExterno", ""))
         k_num = _norm(entry.get("numero", ""))
@@ -83,7 +98,6 @@ def update_selected_entries(
 
         od = OrderedDict()
 
-        # Reutiliza ID si existe en un registro ya presente
         if chosen and chosen.get("id") is not None:
             try:
                 od["id"] = int(chosen["id"])
@@ -91,14 +105,12 @@ def update_selected_entries(
                 od["id"] = chosen["id"]
             keys_to_remove.add(_key(chosen))
         else:
-            # Asigna un ID nuevo
             while next_id in used_ids:
                 next_id += 1
             od["id"] = next_id
             used_ids.add(next_id)
             next_id += 1
 
-        # Copia el resto de campos desde la entrada seleccionada
         for field, val in entry.items():
             if field != "id":
                 od[field] = val
@@ -106,7 +118,6 @@ def update_selected_entries(
         updated_rows.append(od)
         keys_to_remove.add(k_both)
 
-    # Elimina antiguos que fueron reemplazados y añade los actualizados
     final_data = [row for row in existing_data if _key(row) not in keys_to_remove]
     final_data.extend(updated_rows)
     return final_data

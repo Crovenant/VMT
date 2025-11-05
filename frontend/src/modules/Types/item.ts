@@ -1,4 +1,3 @@
-// src/modules/Main/types/item.ts
 export type Item = {
   id: string;
   nombre: string;
@@ -18,6 +17,7 @@ export type Item = {
   sites: string;
   vulnerabilidad: string;
   vulnerabilitySolution: string;
+  dueDate: string; // ✅ Nuevo campo
 
   comentarios?: string;
   logHistory?: string;
@@ -26,7 +26,7 @@ export type Item = {
 };
 
 export interface Entry {
-  [key: string]: string | number | boolean | null; // Sustituido any
+  [key: string]: string | number | boolean | null;
 }
 
 export interface DuplicatePair {

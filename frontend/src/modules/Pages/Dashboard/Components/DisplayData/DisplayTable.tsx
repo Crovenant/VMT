@@ -50,6 +50,7 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Vulnerability solution': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
+  'Due date': 'dueDate', // ✅ Nuevo campo
 };
 
 const norm = (v: unknown) =>
@@ -131,13 +132,12 @@ export default function DisplayTable({
     });
   }, []);
 
-  // ✅ Export + Clear Filters
   useEffect(() => {
     window.exportFilteredDataToExcel = () => {
       const selectedNodes = gridRef.current?.api.getSelectedNodes() ?? [];
       const selectedRows = selectedNodes.map((node) => node.data as Item);
       if (selectedRows.length > 0) {
-        exportSelectionToExcel(selectedRows, visibleColumns);
+        exportSelectionToExcel(selectedRows);
       } else {
         exportFullJsonToExcel(rows);
       }
@@ -261,7 +261,6 @@ export default function DisplayTable({
     [expanded, toggleExpand],
   );
 
-  // ✅ Columnas dinámicas según visibleColumns
   const businessColDefs: ColDef<GridRow>[] = useMemo(() => {
     return visibleColumns.map((col) => {
       const key = columnKeyMap[col];
@@ -296,10 +295,6 @@ export default function DisplayTable({
           );
         };
       }
-      if (key === 'puntuacionRiesgo') {
-        baseDef.headerName = 'Puntuación\nde riesgo';
-        Object.assign(baseDef, { minWidth: 110, maxWidth: 140 });
-      }
       return baseDef;
     });
   }, [visibleColumns]);
@@ -309,7 +304,6 @@ export default function DisplayTable({
     [selectionColDef, eyeColDef, toggleColDef, businessColDefs],
   );
 
-  // ✅ Actualiza columnas cuando cambia visibleColumns
   useEffect(() => {
     if (gridRef.current?.api) {
       gridRef.current.api.setColumnDefs(columnDefs);
@@ -334,17 +328,7 @@ export default function DisplayTable({
 
   return (
     <>
-      <Box
-        sx={{
-          display: 'flex',
-          height: '70vh',
-          width: '100%',
-          backgroundColor: '#f5f6f8',
-          border: '1px solid rgba(31, 45, 90, 0.25)',
-          borderRadius: '15px 0 0 15px',
-          overflow: 'hidden',
-        }}
-      >
+      <Box sx={{ display: 'flex', height: '70vh', width: '100%', backgroundColor: '#f5f6f8', border: '1px solid rgba(31, 45, 90, 0.25)', borderRadius: '15px 0 0 15px', overflow: 'hidden' }}>
         <Box sx={{ flex: 1, position: 'relative' }} className="ag-theme-quartz custom-ag">
           <AgGridReact<GridRow>
             ref={gridRef}
@@ -359,9 +343,7 @@ export default function DisplayTable({
             onGridReady={handleGridReady}
             onFirstDataRendered={handleFirstDataRendered}
             embedFullWidthRows={false}
-            isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) =>
-              isDetailRow(p.rowNode?.data as DisplayRow | undefined)
-            }
+            isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) => isDetailRow(p.rowNode?.data as DisplayRow | undefined)}
             fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => {
               const d = p.data as DisplayRow | undefined;
               if (!isDetailRow(d)) return null;
@@ -383,7 +365,6 @@ export default function DisplayTable({
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
           />
         </Box>
-        {/* ✅ SideFilterPanel vinculado */}
         <SideFilterPanel
           visibleColumns={visibleColumns}
           setVisibleColumns={setVisibleColumns}
@@ -403,23 +384,12 @@ export default function DisplayTable({
             'Sites',
             'Vulnerability solution',
             'Vulnerabilidad',
+            'Due date' // ✅ Nuevo
           ]}
         />
       </Box>
       <Modal open={openModal} onClose={handleCloseModal}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 600,
-            bgcolor: 'background.paper',
-            boxShadow: 24,
-            borderRadius: 2,
-            p: 3,
-          }}
-        >
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, bgcolor: 'background.paper', boxShadow: 24, borderRadius: 2, p: 3 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
             Detalle del ítem
           </Typography>
@@ -434,19 +404,11 @@ export default function DisplayTable({
                 <Typography variant="body2"><strong>Prioridad:</strong> {selectedItem.prioridad}</Typography>
                 <Typography variant="body2"><strong>Puntuación:</strong> {selectedItem.puntuacionRiesgo}</Typography>
                 <Typography variant="body2"><strong>Asignado a:</strong> {selectedItem.asignadoA}</Typography>
+                <Typography variant="body2"><strong>Due date:</strong> {selectedItem.dueDate}</Typography>
               </Grid>
             </Grid>
           )}
-          <Paper
-            sx={{
-              mt: 3,
-              height: 150,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#888',
-            }}
-          >
+          <Paper sx={{ mt: 3, height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
             Aquí irá el grid de componentes relacionados
           </Paper>
         </Box>

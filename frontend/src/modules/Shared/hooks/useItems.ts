@@ -1,4 +1,3 @@
-// src/modules/Shared/hooks/useItems.ts
 import { useEffect, useState } from 'react';
 import type { Item } from '../../Types/item';
 
@@ -59,6 +58,7 @@ function normalizeItem(entry: Record<string, unknown>): Item {
     vulnerabilitySolution: String(entry.vulnerabilitySolution ?? ''),
     creado: String(creado),
     actualizado: String(actualizado),
+    dueDate: String(entry.dueDate ?? ''), // ✅ Nuevo campo
   };
 }
 
@@ -66,7 +66,6 @@ export default function useItems(refreshKey: number) {
   const [items, setItems] = useState<Item[]>([]);
 
   useEffect(() => {
-    // Ruta relativa al backend (mantiene /risk-data/ exactamente como en urls.py)
     fetch('/risk-data/')
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -88,15 +87,21 @@ export default function useItems(refreshKey: number) {
         const now = new Date();
 
         const withFlags = normalized.map((item) => {
-          const created = new Date(item.fechaCreacion);
-          if (isNaN(created.getTime())) {
+          let expiry: Date;
+
+          if (item.dueDate) {
+            expiry = new Date(item.dueDate);
+          } else {
+            const created = new Date(item.fechaCreacion);
+            const horizonDays = horizonDaysByPriority[item.prioridad] ?? 365;
+            expiry = new Date(created.getTime() + horizonDays * msPerDay);
+          }
+
+          if (isNaN(expiry.getTime())) {
             return { ...item, followUp: false, soonDue: false };
           }
 
-          const horizonDays = horizonDaysByPriority[item.prioridad] ?? 365;
-          const expiry = new Date(created.getTime() + horizonDays * msPerDay);
           const daysToExpiry = Math.floor((expiry.getTime() - now.getTime()) / msPerDay);
-
           const followUp = daysToExpiry < 0;
           const soonDue = !followUp && daysToExpiry <= 7;
 
