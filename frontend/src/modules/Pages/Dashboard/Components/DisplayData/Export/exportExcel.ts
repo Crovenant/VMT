@@ -1,5 +1,4 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/Export/exportExcel.ts
-import { utils, writeFileXLSX } from 'xlsx';
+import ExcelJS from 'exceljs';
 import type { Item } from '../../../../../Types/item';
 
 const columnKeyMap: Record<string, keyof Item> = {
@@ -20,55 +19,88 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Vulnerabilidad': 'vulnerabilidad',
 };
 
-export function exportFilteredDataToExcel(data: Item[], visibleColumns: string[]) {
+export async function exportFullJsonToExcel(data: Item[]) {
   if (!data || data.length === 0) return;
 
-  const filtered = data.map((item: Item) => {
-    const out: Record<string, unknown> = {};
-    visibleColumns.forEach((col) => {
-      const key = columnKeyMap[col];
-      if (key && item[key] !== undefined) {
-        out[col] = item[key];
-      }
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Vulnerability list');
+
+  // Cabeceras
+  const headers = Object.keys(columnKeyMap);
+  worksheet.addRow(headers);
+
+  // Datos
+  data.forEach((item) => {
+    const rowData = headers.map((header) => {
+      const key = columnKeyMap[header];
+      return key && key !== 'id' ? item[key] ?? '' : '';
     });
-    return out;
+    worksheet.addRow(rowData);
   });
 
-  const ws = utils.json_to_sheet(filtered);
-  const range = utils.decode_range(ws['!ref'] ?? '');
-  ws['!autofilter'] = { ref: utils.encode_range(range) };
+  // Estilo cabecera
+  const headerRow = worksheet.getRow(1);
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '00B0F0' }, // Aqua
+    };
+    cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+  });
 
-  const cols: { wch: number }[] = [];
-  for (let C = range.s.c; C <= range.e.c; ++C) {
+  // Bandas alternas + bordes
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1) {
+      const isEven = rowNumber % 2 === 0;
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEven ? 'EAF2F8' : 'FFFFFF' },
+        };
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
+      });
+    }
+  });
+
+  // Ajustar ancho automáticamente (con verificación)
+(worksheet.columns || []).forEach((col) => {
+  if (col && typeof col.eachCell === 'function') {
     let maxLength = 10;
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      const cellAddress = utils.encode_cell({ r: R, c: C });
-      const cell = ws[cellAddress];
-      if (cell && cell.v) {
-        const len = String(cell.v).length;
-        if (len > maxLength) maxLength = len;
-      }
-    }
-    cols.push({ wch: maxLength + 2 });
+    col.eachCell({ includeEmpty: true }, (cell) => {
+      const len = cell.value ? String(cell.value).length : 0;
+      if (len > maxLength) maxLength = len;
+    });
+    col.width = maxLength + 2;
   }
-  ws['!cols'] = cols;
+});
 
-  for (let C = range.s.c; C <= range.e.c; ++C) {
-    const cellAddress = utils.encode_cell({ r: range.s.r, c: C });
-    const cell = ws[cellAddress];
-    if (cell && !cell.s) cell.s = {};
-    if (cell?.s) {
-      cell.s.fill = {
-        fgColor: { rgb: '4472C4' },
-      };
-      cell.s.font = {
-        bold: true,
-        color: { rgb: 'FFFFFF' },
-      };
-    }
-  }
+  // Filtros en cabecera
+  worksheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: headers.length },
+  };
 
-  const wb = utils.book_new();
-  utils.book_append_sheet(wb, ws, 'Vulnerability list');
-  writeFileXLSX(wb, 'vulnerability_list_export.xlsx');
+  // Descargar archivo
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'vulnerability_list_export.xlsx';
+  link.click();
 }

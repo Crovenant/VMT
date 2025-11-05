@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import useItems from '../../../Shared/hooks/useItems';
 import type { Item } from '../../../Types/item';
-import { exportFilteredDataToExcel } from '../Components/DisplayData/Export/exportExcel';
+import { exportFullJsonToExcel } from '../Components/DisplayData/Export/exportExcel';
 
 const STORAGE_KEY = 'displayData.visibleColumns';
 const DEFAULT_VISIBLE_COLUMNS = [
@@ -53,7 +53,7 @@ export default function useDisplayData({
     : items;
 
   const handleDownload = () => {
-    exportFilteredDataToExcel(rows, visibleColumns);
+    exportFullJsonToExcel(rows); // Exporta todo el JSON sin ID
   };
 
   return {

@@ -18,7 +18,7 @@ import type {
   ValueGetterParams,
 } from 'ag-grid-community';
 import AccordionDetail from './DisplayTable/Renderers/AccordionDetail';
-import { exportFilteredDataToExcel } from './Export/exportExcel';
+import { exportFullJsonToExcel } from './Export/exportExcel';
 import { exportSelectionToExcel } from './Export/exportSelection';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
@@ -139,10 +139,9 @@ export default function DisplayTable({
       if (selectedRows.length > 0) {
         exportSelectionToExcel(selectedRows, visibleColumns);
       } else {
-        exportFilteredDataToExcel(rows, visibleColumns);
+        exportFullJsonToExcel(rows); // Exporta todo el JSON sin ID
       }
     };
-
     window.clearAllFilters = () => {
       gridRef.current?.api.setFilterModel(null);
     };

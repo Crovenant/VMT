@@ -5,6 +5,7 @@ export function formatExcelSheet(ws: WorkSheet) {
   const range = utils.decode_range(ws['!ref'] || '');
   ws['!autofilter'] = { ref: utils.encode_range(range) };
 
+  // Ajustar ancho dinámico
   const cols: { wch: number }[] = [];
   for (let C = range.s.c; C <= range.e.c; ++C) {
     let maxLength = 10;
@@ -20,17 +21,31 @@ export function formatExcelSheet(ws: WorkSheet) {
   }
   ws['!cols'] = cols;
 
+  // Cabecera: Aqua + texto blanco + negrita
   for (let C = range.s.c; C <= range.e.c; ++C) {
     const cellAddress = utils.encode_cell({ r: range.s.r, c: C });
     const cell = ws[cellAddress];
-    if (cell && !cell.s) cell.s = {};
-    if (cell?.s) {
-      cell.s.fill = {
-        fgColor: { rgb: 'FFF9C4' },
+    if (cell) {
+      cell.s = {
+        fill: { fgColor: { rgb: '00B0F0' } },
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
       };
-      cell.s.font = {
-        bold: true,
-      };
+    }
+  }
+
+  // Bandas alternas en filas
+  for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+    const isEven = (R - range.s.r) % 2 === 0;
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellAddress = utils.encode_cell({ r: R, c: C });
+      const cell = ws[cellAddress];
+      if (cell) {
+        cell.s = {
+          fill: { fgColor: { rgb: isEven ? 'EAF2F8' : 'FFFFFF' } },
+          alignment: { horizontal: 'left', vertical: 'center' },
+        };
+      }
     }
   }
 }
