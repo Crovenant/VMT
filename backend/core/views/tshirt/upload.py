@@ -1,5 +1,4 @@
 # backend/core/views/tshirt/upload.py
-
 import json
 import pandas as pd
 from pathlib import Path
@@ -42,10 +41,10 @@ def upload_data(request):
 
         new_entries = df.to_dict(orient="records")
 
-        # ✅ Calcula Due Date para cada nueva entrada
+        # ✅ Calcula Due Date para cada nueva entrada (clave de fecha: 'creado')
         for entry in new_entries:
-            if "fechaCreacion" in entry and "prioridad" in entry:
-                entry["dueDate"] = calculate_due_date(entry["fechaCreacion"], entry["prioridad"])
+            if isinstance(entry, dict) and not entry.get("dueDate"):
+                entry["dueDate"] = calculate_due_date(entry.get("creado"), entry.get("prioridad"))
 
         # Carga datos existentes (si no existe, lista vacía)
         if JSON_PATH.exists():
@@ -57,14 +56,14 @@ def upload_data(request):
         if not isinstance(existing_data, list):
             existing_data = [existing_data]
 
-        # Detecta duplicados con tu clave compuesta normalizada
+        # Detecta duplicados por clave compuesta
         duplicates, unique_new_entries = detect_duplicates(existing_data, new_entries)
 
         if not duplicates:
             # Todo nuevo → merge con asignación de IDs únicos incrementales
             updated_data = assign_ids_and_merge(existing_data, unique_new_entries)
 
-            # Escritura atómica para evitar corrupción
+            # Escritura atómica
             with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
                 json.dump(updated_data, tmp, ensure_ascii=False, indent=2)
                 tmp_name = tmp.name
@@ -76,7 +75,7 @@ def upload_data(request):
                 "duplicates": []
             })
         else:
-            # Si hay duplicados no persistimos aún (resuelve en el paso posterior)
+            # Hay duplicados → se resuelven en el paso posterior
             response = JsonResponse({
                 "message": "Duplicates detected",
                 "new": unique_new_entries,

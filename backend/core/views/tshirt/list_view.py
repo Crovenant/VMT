@@ -1,5 +1,4 @@
 # backend/core/views/tshirt/list_view.py
-
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -15,7 +14,7 @@ def get_risk_data(request):
         return add_cors_headers(JsonResponse({"error": "Método no permitido"}, status=405))
 
     try:
-        data = load_json_data()  # lee de backend/core/data/tshirt_Data.json (compat actual)
+        data = load_json_data()  # lee de backend/core/data/tshirt_Data.json
         response = JsonResponse(data, safe=False)
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=500)

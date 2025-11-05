@@ -1,5 +1,4 @@
 # backend/core/views/tshirt/save_selection.py
-
 import json
 import os
 from pathlib import Path
@@ -11,7 +10,7 @@ from django.apps import apps
 
 from core.views.common.utils import add_cors_headers
 from core.views.tshirt.duplicates import build_lookup
-from core.views.tshirt.risk_logic import update_selected_entries
+from core.views.tshirt.risk_logic import update_selected_entries, calculate_due_date
 
 # Localización del JSON dentro del app 'core': backend/core/data/tshirt_Data.json
 CORE_DIR = Path(apps.get_app_config("core").path)      # .../backend/core
@@ -39,6 +38,11 @@ def save_selection(request):
 
         if not isinstance(selected_entries, list):
             raise ValueError("Invalid data format: 'entries' must be a list.")
+
+        # Asegurar dueDate en la selección entrante
+        for e in selected_entries:
+            if isinstance(e, dict) and not e.get("dueDate"):
+                e["dueDate"] = calculate_due_date(e.get("creado"), e.get("prioridad"))
 
         # Carga datos existentes
         if JSON_PATH.exists():

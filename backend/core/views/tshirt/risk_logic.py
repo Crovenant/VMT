@@ -1,8 +1,10 @@
+# backend/core/views/tshirt/risk_logic.py
 from typing import List, Dict, Tuple
 from collections import OrderedDict
 import unicodedata
 from datetime import datetime, timedelta
 
+# ---------- Normalización ----------
 def _norm(s: str) -> str:
     if s is None:
         return ""
@@ -26,29 +28,56 @@ def _collect_used_ids(rows: List[Dict]) -> Tuple[set, int]:
     next_id = (max(used) + 1) if used else 1
     return used, next_id
 
-# ✅ NUEVO: Calcula Due Date según prioridad y fechaCreacion
-def calculate_due_date(fecha_creacion: str, prioridad: str) -> str:
-    try:
-        base_date = datetime.strptime(fecha_creacion, "%Y-%m-%d")
-    except ValueError:
-        return ""  # Si la fecha no es válida, devolvemos vacío
-    prioridad_norm = prioridad.strip().lower()
-    if prioridad_norm in ["crítico", "critica", "critical"]:
-        delta = timedelta(days=30)
-    elif prioridad_norm in ["alto", "alta", "high"]:
-        delta = timedelta(days=90)
-    else:  # medio, baja, low
-        delta = timedelta(days=365)
-    return (base_date + delta).strftime("%Y-%m-%d")
+# ---------- Due Date ----------
+_HORIZON_BY_PRIORITY = {
+    "critico": 30, "crítico": 30, "critical": 30,
+    "alto": 90, "alta": 90, "high": 90,
+    "medio": 365, "media": 365, "medium": 365,
+    "bajo": 365, "baja": 365, "low": 365,
+}
 
+def _parse_date_loose(s: str | None) -> datetime | None:
+    if not s:
+        return None
+    s = str(s).strip()
+    # Intentos comunes
+    formats = [
+        "%Y-%m-%d", "%Y/%m/%d",
+        "%d/%m/%Y", "%d-%m-%Y",
+        "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f",
+    ]
+    for fmt in formats:
+        try:
+            return datetime.strptime(s, fmt)
+        except Exception:
+            pass
+    # Último recurso: sólo año-mes o ISO laxo
+    try:
+        return datetime.fromisoformat(s)
+    except Exception:
+        return None
+
+def calculate_due_date(creado: str | None, prioridad: str | None) -> str | None:
+    base = _parse_date_loose(creado)
+    if not base:
+        return None
+    horizon = _HORIZON_BY_PRIORITY.get(_norm(prioridad or ""), 365)
+    return (base + timedelta(days=horizon)).strftime("%Y-%m-%d")
+
+def _ensure_due(entry: Dict) -> Dict:
+    """Idempotente: rellena entry['dueDate'] si falta, usando 'creado' y 'prioridad'."""
+    if isinstance(entry, dict) and not entry.get("dueDate"):
+        entry["dueDate"] = calculate_due_date(entry.get("creado"), entry.get("prioridad"))
+    return entry
+
+# ---------- Merge/Update ----------
 def assign_ids_and_merge(existing_data: List[Dict], unique_new_entries: List[Dict]) -> List[Dict]:
     merged = list(existing_data)
     used_ids, next_id = _collect_used_ids(existing_data)
 
     for entry in unique_new_entries:
-        # ✅ Calcula Due Date antes de guardar
-        if "fechaCreacion" in entry and "prioridad" in entry:
-            entry["dueDate"] = calculate_due_date(entry["fechaCreacion"], entry["prioridad"])
+        entry = _ensure_due(entry)
 
         while next_id in used_ids:
             next_id += 1
@@ -80,9 +109,7 @@ def update_selected_entries(
     keys_to_remove = set()
 
     for entry in selected_entries:
-        # ✅ Calcula Due Date antes de guardar
-        if "fechaCreacion" in entry and "prioridad" in entry:
-            entry["dueDate"] = calculate_due_date(entry["fechaCreacion"], entry["prioridad"])
+        entry = _ensure_due(entry)
 
         k_both = _key(entry)
         k_id = _norm(entry.get("idExterno", ""))
