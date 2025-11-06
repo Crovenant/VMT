@@ -1,35 +1,42 @@
 // src/modules/Pages/Dashboard/Components/DisplayData/FilterBar.tsx
-import { useState } from 'react';
-import {
-  Box,
-  IconButton,
-  Tooltip,
-  Popover,
-  Button,
-} from '@mui/material';
+import { useState, useCallback } from 'react';
+import { Box, IconButton, Tooltip, Popover, Button } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
+type ViewKind = 'Tshirt' | 'Soup';
+
 type Props = {
   handleDownload: () => void;
   onResetView?: () => void;
-  onUpload: (type: 'Tshirt' | 'Soup') => void;
+  onUpload: (type: ViewKind) => void;
 };
 
-export default function FilterBar({
-  handleDownload,
-  onResetView,
-  onUpload,
-}: Props) {
+export default function FilterBar({ handleDownload, onResetView, onUpload }: Props) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-
-  const handleUploadClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
+
+  const toggleUploadMenu = useCallback((e?: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(prev => (prev ? null : (e?.currentTarget ?? null)));
+  }, []);
+
+  const closeMenu = useCallback(() => setAnchorEl(null), []);
+
+  const handleRefresh = useCallback(() => {
+    onResetView?.();
+    if (typeof window.clearAllFilters === 'function') {
+      window.clearAllFilters();
+    }
+  }, [onResetView]);
+
+  const handleKeyActivate = useCallback(
+    (kind: ViewKind) => {
+      onUpload(kind);
+      closeMenu();
+    },
+    [onUpload, closeMenu],
+  );
 
   return (
     <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
@@ -39,13 +46,8 @@ export default function FilterBar({
           aria-label="Reset view"
           color="primary"
           size="small"
-          onClick={() => {
-            if (onResetView) onResetView();
-            if (typeof window.clearAllFilters === 'function') {
-              window.clearAllFilters();
-            }
-          }}
-          sx={{ fontSize: '16px' }}
+          onClick={handleRefresh}
+          sx={{ fontSize: 16 }}
         >
           <RefreshIcon fontSize="small" />
         </IconButton>
@@ -58,20 +60,20 @@ export default function FilterBar({
           color="primary"
           size="small"
           onClick={handleDownload}
-          sx={{ fontSize: '16px' }}
+          sx={{ fontSize: 16 }}
         >
           <DownloadIcon fontSize="small" />
         </IconButton>
       </Tooltip>
 
-      {/* Upload con popover */}
+      {/* Upload (popover con dos opciones) */}
       <Tooltip title="Upload file">
         <IconButton
           aria-label="Upload file"
           color="primary"
           size="small"
-          onClick={handleUploadClick}
-          sx={{ fontSize: '16px' }}
+          onClick={toggleUploadMenu}
+          sx={{ fontSize: 16 }}
         >
           <CloudUploadIcon fontSize="small" />
         </IconButton>
@@ -80,34 +82,42 @@ export default function FilterBar({
       <Popover
         open={open}
         anchorEl={anchorEl}
-        onClose={handleClose}
+        onClose={closeMenu}
         anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
         transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        keepMounted
       >
-        <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box
+          sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 180 }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') closeMenu();
+          }}
+        >
           <Button
             variant="contained"
             color="primary"
             size="small"
-            sx={{ fontSize: '12px', textTransform: 'uppercase' }}
-            onClick={() => {
-              onUpload('Tshirt');
-              handleClose();
+            sx={{ fontSize: 12, textTransform: 'uppercase' }}
+            onClick={() => handleKeyActivate('Tshirt')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') handleKeyActivate('Tshirt');
             }}
+            autoFocus
           >
-            Upload Tshirt
+            Upload TSHIRT
           </Button>
+
           <Button
             variant="contained"
             color="secondary"
             size="small"
-            sx={{ fontSize: '12px', textTransform: 'uppercase' }}
-            onClick={() => {
-              onUpload('Soup');
-              handleClose();
+            sx={{ fontSize: 12, textTransform: 'uppercase' }}
+            onClick={() => handleKeyActivate('Soup')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') handleKeyActivate('Soup');
             }}
           >
-            Upload Soup
+            Upload SOUP
           </Button>
         </Box>
       </Popover>

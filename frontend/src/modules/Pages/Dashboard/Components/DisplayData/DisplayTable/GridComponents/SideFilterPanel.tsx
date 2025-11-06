@@ -48,8 +48,8 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
       ? visibleColumns.filter((c) => c !== field)
       : [...visibleColumns, field];
 
+    // Deja que DisplayWrapper persista por vista (Tshirt/Soup).
     setVisibleColumns(updated);
-    localStorage.setItem('displayData.visibleColumns', JSON.stringify(updated));
   };
 
   return (

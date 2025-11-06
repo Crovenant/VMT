@@ -4,37 +4,74 @@ import DuplicateResolver from '../../Pages/Dashboard/Components/DuplicateResolve
 import { useUploadFile } from '../hooks/useUploadFile';
 import type { DuplicatePair } from '../../Types/uploadTypes';
 
-interface UploadFileProps { onClose: (success: boolean) => void; }
+interface UploadFileProps {
+  onClose: (success: boolean) => void;
+  uploadUrl: string;
+  saveUrl: string;
+  listUrlForMutate?: string;
+}
 
-export default function UploadFileWrapper({ onClose }: UploadFileProps) {
+export default function UploadFileWrapper({
+  onClose,
+  uploadUrl,
+  saveUrl,
+  listUrlForMutate,
+}: UploadFileProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const {
-    mensaje, resolverOpen, duplicates, selectedOptions, setSelectedOptions,
-    handleFileUpload, handleConfirmDuplicates, closeResolver,
-  } = useUploadFile(onClose);
+    mensaje,
+    resolverOpen,
+    duplicates,
+    selectedOptions,
+    setSelectedOptions,
+    handleFileUpload,
+    handleConfirmDuplicates,
+    closeResolver,
+  } = useUploadFile(onClose, { uploadUrl, saveUrl, listUrlForMutate });
 
   return (
     <div style={{ textAlign: 'center' }}>
       <h3>Selecciona un archivo Excel</h3>
-      <input type="file" ref={fileInputRef} accept=".xls,.xlsx,.csv" onChange={handleFileUpload}/>
-      <br/>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".xls,.xlsx,.csv"
+        onChange={handleFileUpload}
+      />
+      <br />
+
       <button
-        onClick={() => { if (fileInputRef.current) fileInputRef.current.value = ''; onClose(false); }}
+        onClick={() => {
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          onClose(false);
+        }}
         style={{ marginTop: '1rem' }}
       >
         Cancelar
       </button>
+
       {mensaje && (
-        <div style={{ marginTop: '1rem', color: mensaje.startsWith('✅') ? 'green' : 'red' }}>
+        <div
+          style={{
+            marginTop: '1rem',
+            color: mensaje.startsWith('✅') ? 'green' : 'red',
+          }}
+        >
           {mensaje}
         </div>
       )}
+
       <DuplicateResolver
         open={resolverOpen}
         duplicates={duplicates as DuplicatePair[]}
         selectedOptions={selectedOptions}
         setSelectedOptions={setSelectedOptions}
-        onClose={() => { closeResolver(); setSelectedOptions([]); }}
+        onClose={() => {
+          closeResolver();
+          setSelectedOptions([]);
+        }}
         onConfirm={handleConfirmDuplicates}
       />
     </div>

@@ -1,9 +1,17 @@
+// src/modules/Pages/Dashboard/DashboardWrapper.tsx
 import React from 'react';
 import { Box, CssBaseline, Popover, Typography, Grid } from '@mui/material';
 import useItems from '../../Shared/hooks/useItems';
-import UploadFile from './Components/uploadFile';
+import UploadFileWrapper from '../../Shared/Components/UploadFileWrapper';
 import DashboardHeader from './Components/Dashboard/DashboardHeader';
 import DashboardContent from './Components/Dashboard/DashboardContent';
+
+// Endpoints por defecto para la subida (Tshirt view)
+const TSHIRT_ENDPOINTS = {
+  uploadUrl: 'http://localhost:8000/upload_data/',
+  saveUrl:   'http://localhost:8000/save_selection/',
+  listUrl:   'http://localhost:8000/risk-data/',
+};
 
 export default function DashboardWrapper() {
   const [showUploadModal, setShowUploadModal] = React.useState(false);
@@ -63,7 +71,14 @@ export default function DashboardWrapper() {
     setRefreshKey((prev) => prev + 1);
   };
 
-  const { items } = useItems(refreshKey);
+  /**
+   * ⬅️ ARREGLO: el segundo parámetro de useItems es la listUrl (string).
+   * Antes: useItems(refreshKey, undefined, TSHIRT_ENDPOINTS.listUrl)
+   * Ahora: useItems(refreshKey, TSHIRT_ENDPOINTS.listUrl)
+   * (si el hook tiene un tercer parámetro opcional, lo omitimos)
+   */
+  const { items } = useItems(refreshKey, TSHIRT_ENDPOINTS.listUrl, 'Tshirt');
+
   const followUpItems = items.filter((item) => item.followUp);
   const soonDueItems = items.filter((item) => item.soonDue);
   const followUpCount = followUpItems.length + soonDueItems.length;
@@ -113,7 +128,12 @@ export default function DashboardWrapper() {
           }}
         >
           <Box sx={{ backgroundColor: '#fff', padding: 2, borderRadius: 4, boxShadow: 5 }}>
-            <UploadFile onClose={handleUploadClose} />
+            <UploadFileWrapper
+              onClose={handleUploadClose}
+              uploadUrl={TSHIRT_ENDPOINTS.uploadUrl}
+              saveUrl={TSHIRT_ENDPOINTS.saveUrl}
+              listUrlForMutate={TSHIRT_ENDPOINTS.listUrl}
+            />
           </Box>
         </Box>
       )}

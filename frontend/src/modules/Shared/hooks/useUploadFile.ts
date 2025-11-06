@@ -2,16 +2,18 @@
 import { useState } from 'react';
 import { mutate } from 'swr';
 
-interface Entry {
-  [key: string]: unknown; // Sustituido any por unknown
-}
+export interface Entry { [key: string]: unknown; }
+export interface DuplicatePair { existing: Entry; incoming: Entry; }
 
-interface DuplicatePair {
-  existing: Entry;
-  incoming: Entry;
-}
+type Endpoints = {
+  uploadUrl: string;         // endpoint POST para subir Excel
+  saveUrl: string;           // endpoint POST para guardar selección
+  listUrlForMutate?: string; // opcional: invalidar cache SWR
+};
 
-export function useUploadFile(onClose: (success: boolean) => void) {
+export function useUploadFile(onClose: (success: boolean) => void, endpoints: Endpoints) {
+  const { uploadUrl, saveUrl, listUrlForMutate } = endpoints;
+
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [duplicates, setDuplicates] = useState<DuplicatePair[]>([]);
   const [resolverOpen, setResolverOpen] = useState(false);
@@ -30,11 +32,7 @@ export function useUploadFile(onClose: (success: boolean) => void) {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/upload_data/', {
-        method: 'POST',
-        body: formData,
-      });
-
+      const response = await fetch(uploadUrl, { method: 'POST', body: formData });
       const result = await response.json();
 
       if (result.duplicates && result.duplicates.length > 0) {
@@ -44,11 +42,10 @@ export function useUploadFile(onClose: (success: boolean) => void) {
         setResolverOpen(true);
         setMensaje('⚠️ Se detectaron duplicados. Elige qué líneas guardar.');
       } else {
-        console.log('🧾 Array sin duplicados que se va a postear:', result.new || []);
         await guardarFinal(result.new || []);
         setMensaje('✅ Archivo subido correctamente sin duplicados.');
         onClose(true);
-        mutate('/risk-data/'); // clave alineada con el GET
+        if (listUrlForMutate) mutate(listUrlForMutate);
       }
     } catch (error) {
       console.error('Error al subir el archivo:', error);
@@ -59,7 +56,7 @@ export function useUploadFile(onClose: (success: boolean) => void) {
 
   const guardarFinal = async (finalEntries: Entry[]) => {
     try {
-      await fetch('/save_selection/', {
+      await fetch(saveUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entries: finalEntries }),
@@ -75,13 +72,12 @@ export function useUploadFile(onClose: (success: boolean) => void) {
     );
 
     const finalEntries = [...newEntries, ...seleccionadas];
-    console.log('🧾 Array con selección de duplicados que se va a postear:', finalEntries);
     await guardarFinal(finalEntries);
 
     setResolverOpen(false);
     setMensaje('✅ Selección guardada correctamente.');
     onClose(true);
-    mutate('/risk-data/'); // clave alineada con el GET
+    if (listUrlForMutate) mutate(listUrlForMutate);
   };
 
   return {
@@ -92,7 +88,6 @@ export function useUploadFile(onClose: (success: boolean) => void) {
     setSelectedOptions,
     handleFileUpload,
     handleConfirmDuplicates,
-    closeResolver: () => setResolverOpen(false), // ← añadir
+    closeResolver: () => setResolverOpen(false),
   };
-
 }

@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable.tsx
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { Box, Modal, Typography, Grid, Paper } from '@mui/material';
@@ -18,47 +19,17 @@ import type {
   ValueGetterParams,
 } from 'ag-grid-community';
 import AccordionDetail from './DisplayTable/Renderers/AccordionDetail';
-import { exportFullJsonToExcel } from './Export/exportExcel';
-import { exportSelectionToExcel } from './Export/exportSelection';
+import * as ExcelExport from './Export/exportExcel';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
-declare global {
-  interface Window {
-    exportFilteredDataToExcel: () => void;
-    clearAllFilters: () => void;
-  }
-}
-
+type ViewType = 'Tshirt' | 'Soup';
 type DetailRow = { _kind: 'detail'; parentId: string };
 type DisplayRow = Item | DetailRow;
 type GridRow = Record<string, unknown>;
 
-const columnKeyMap: Record<string, keyof Item> = {
-  'Número': 'numero',
-  'ID externo': 'idExterno',
-  'Estado': 'estado',
-  'Resumen': 'resumen',
-  'Breve descripción': 'breveDescripcion',
-  'Elemento de configuración': 'elementoConfiguracion',
-  'Prioridad': 'prioridad',
-  'Puntuación de riesgo': 'puntuacionRiesgo',
-  'Grupo de asignación': 'grupoAsignacion',
-  'Asignado a': 'asignadoA',
-  'Creado': 'creado',
-  'Actualizado': 'actualizado',
-  'Sites': 'sites',
-  'Vulnerability solution': 'vulnerabilitySolution',
-  'Vulnerabilidad': 'vulnerabilidad',
-  'Due date': 'dueDate', // ✅ Nuevo campo
-};
-
 const norm = (v: unknown) =>
-  String(v ?? '')
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .trim();
+  String(v ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 
 const getWarningColor = (priority: unknown) => {
   switch (norm(priority)) {
@@ -86,13 +57,11 @@ const getWarningColor = (priority: unknown) => {
 function isDetailRow(r: DisplayRow | undefined): r is DetailRow {
   return !!r && (r as DetailRow)._kind === 'detail';
 }
-
 function getRowKey(r: DisplayRow): string {
   if (isDetailRow(r)) return `detail:${r.parentId}`;
   const it = r as Item;
   return String(it.id ?? it.numero);
 }
-
 function buildDisplayRows(items: Item[], expanded: Set<string>): DisplayRow[] {
   const out: DisplayRow[] = [];
   for (const it of items) {
@@ -103,16 +72,54 @@ function buildDisplayRows(items: Item[], expanded: Set<string>): DisplayRow[] {
   return out;
 }
 
+/* ===== mapping por vista ===== */
+const TSHIRT_MAP: Record<string, keyof Item> = {
+  'Número': 'numero',
+  'ID externo': 'idExterno',
+  'Estado': 'estado',
+  'Resumen': 'resumen',
+  'Breve descripción': 'breveDescripcion',
+  'Elemento de configuración': 'elementoConfiguracion',
+  'Prioridad': 'prioridad',
+  'Puntuación de riesgo': 'puntuacionRiesgo',
+  'Grupo de asignación': 'grupoAsignacion',
+  'Asignado a': 'asignadoA',
+  'Creado': 'creado',
+  'Actualizado': 'actualizado',
+  'Sites': 'sites',
+  'Vulnerability solution': 'vulnerabilitySolution',
+  'Vulnerabilidad': 'vulnerabilidad',
+  'Due date': 'dueDate',
+};
+const SOUP_MAP: Record<string, keyof Item> = {
+  'Número': 'numero',
+  'Estado': 'estado',
+  'Resumen': 'resumen',
+  'Asignado a': 'asignadoA',
+  'Creado': 'creado',
+  'Actualizado': 'actualizado',
+  'Due date': 'dueDate',
+};
+function useColumnMap(viewType: ViewType) {
+  return useMemo(() => {
+    if (viewType === 'Soup') return { map: SOUP_MAP, allColumns: Object.keys(SOUP_MAP) };
+    return { map: TSHIRT_MAP, allColumns: Object.keys(TSHIRT_MAP) };
+  }, [viewType]);
+}
+
+/* ===== componente ===== */
 export default function DisplayTable({
   rows,
   visibleColumns,
   setVisibleColumns,
   showFilterPanel,
+  viewType,
 }: {
   rows: Item[];
   visibleColumns: string[];
   setVisibleColumns: (cols: string[]) => void;
   showFilterPanel: boolean;
+  viewType: ViewType;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
   const itemById = useMemo(() => {
@@ -120,6 +127,8 @@ export default function DisplayTable({
     for (const it of rows) m.set(String(it.id ?? it.numero), it);
     return m;
   }, [rows]);
+
+  const { map: columnKeyMap, allColumns } = useColumnMap(viewType);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
@@ -132,31 +141,17 @@ export default function DisplayTable({
     });
   }, []);
 
+  // Export genérico
   useEffect(() => {
     window.exportFilteredDataToExcel = () => {
-      const selectedNodes = gridRef.current?.api.getSelectedNodes() ?? [];
-      const selectedRows = selectedNodes.map((node) => node.data as Item);
-      if (selectedRows.length > 0) {
-        exportSelectionToExcel(selectedRows);
-      } else {
-        exportFullJsonToExcel(rows);
-      }
-    };
-    window.clearAllFilters = () => {
-      gridRef.current?.api.setFilterModel(null);
+      const expFn =
+        (ExcelExport as any).exportFilteredDataToExcel ||
+        (ExcelExport as any).exportFullJsonToExcel ||
+        (ExcelExport as any).exportToExcel ||
+        (ExcelExport as any).default;
+      if (typeof expFn === 'function') expFn(rows, visibleColumns);
     };
   }, [rows, visibleColumns]);
-
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const handleOpenModal = (item: Item) => {
-    setSelectedItem(item);
-    setOpenModal(true);
-  };
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedItem(null);
-  };
 
   const defaultColDef: ColDef<GridRow> = useMemo(
     () => ({
@@ -181,8 +176,7 @@ export default function DisplayTable({
       headerName: '',
       field: '__sel__',
       headerCheckboxSelection: true,
-      checkboxSelection: (p: CheckboxSelectionCallbackParams<GridRow>) =>
-        !isDetailRow(p?.data as DisplayRow),
+      checkboxSelection: (p: CheckboxSelectionCallbackParams<GridRow>) => !isDetailRow(p?.data as DisplayRow),
       width: 42,
       minWidth: 42,
       maxWidth: 42,
@@ -216,7 +210,7 @@ export default function DisplayTable({
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer' }}
             onClick={() => handleOpenModal(item)}
           >
-            <svg width="26" height="26" viewBox="0 0 24 6" fill="#1976d2" aria-hidden>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#1976d2" aria-hidden>
               <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 13a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0-9a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" />
             </svg>
           </Box>
@@ -246,7 +240,7 @@ export default function DisplayTable({
         const Icon = open ? ExpandMore : ChevronRight;
         return (
           <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer', paddingTop: '6px' }}
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', cursor: 'pointer' }}
             onClick={(e) => {
               e.stopPropagation();
               toggleExpand(id);
@@ -262,8 +256,11 @@ export default function DisplayTable({
   );
 
   const businessColDefs: ColDef<GridRow>[] = useMemo(() => {
-    return visibleColumns.map((col) => {
+    const defs: ColDef<GridRow>[] = [];
+    visibleColumns.forEach((col) => {
       const key = columnKeyMap[col];
+      if (!key) return;
+
       const baseDef: ColDef<GridRow> = {
         headerName: col,
         field: key as unknown as string,
@@ -278,9 +275,12 @@ export default function DisplayTable({
           return (item as Record<string, unknown>)[key] ?? null;
         },
       };
+
       const noWrap = { cellStyle: { whiteSpace: 'nowrap' as const } };
+
       if (key === 'numero') Object.assign(baseDef, { width: 110 }, noWrap);
       if (key === 'estado') Object.assign(baseDef, { width: 120 }, noWrap);
+
       if (key === 'prioridad') {
         Object.assign(baseDef, { width: 120 }, noWrap);
         baseDef.cellRenderer = (params: ICellRendererParams<GridRow>) => {
@@ -295,20 +295,16 @@ export default function DisplayTable({
           );
         };
       }
-      return baseDef;
+
+      defs.push(baseDef);
     });
-  }, [visibleColumns]);
+    return defs;
+  }, [visibleColumns, columnKeyMap]);
 
   const columnDefs: ColDef<GridRow>[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
     [selectionColDef, eyeColDef, toggleColDef, businessColDefs],
   );
-
-  useEffect(() => {
-    if (gridRef.current?.api) {
-      gridRef.current.api.setColumnDefs(columnDefs);
-    }
-  }, [columnDefs]);
 
   const tightenColumns = useCallback((api: GridApi<GridRow>) => {
     const ids = (api.getColumns() as Column[] | null | undefined)?.map((c) => c.getColId()) ?? [];
@@ -321,14 +317,41 @@ export default function DisplayTable({
 
   const handleGridReady = (params: GridReadyEvent) => {
     tightenColumns(params.api as GridApi<GridRow>);
+    window.clearAllFilters = () => {
+      params.api.setFilterModel(null);
+      params.api.onFilterChanged();
+    };
   };
+
   const handleFirstDataRendered = (e: FirstDataRenderedEvent) => {
     tightenColumns(e.api as GridApi<GridRow>);
   };
 
+  /* modal de detalle */
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const handleOpenModal = (item: Item) => {
+    setSelectedItem(item);
+    setOpenModal(true);
+  };
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedItem(null);
+  };
+
   return (
     <>
-      <Box sx={{ display: 'flex', height: '70vh', width: '100%', backgroundColor: '#f5f6f8', border: '1px solid rgba(31, 45, 90, 0.25)', borderRadius: '15px 0 0 15px', overflow: 'hidden' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          height: '70vh',
+          width: '100%',
+          backgroundColor: '#f5f6f8',
+          border: '1px solid rgba(31, 45, 90, 0.25)',
+          borderRadius: '15px 0 0 15px',
+          overflow: 'hidden',
+        }}
+      >
         <Box sx={{ flex: 1, position: 'relative' }} className="ag-theme-quartz custom-ag">
           <AgGridReact<GridRow>
             ref={gridRef}
@@ -338,12 +361,14 @@ export default function DisplayTable({
             defaultColDef={defaultColDef}
             rowSelection="multiple"
             rowMultiSelectWithClick
-            suppressRowClickSelection={true}
+            suppressRowClickSelection={false}
             animateRows
             onGridReady={handleGridReady}
             onFirstDataRendered={handleFirstDataRendered}
             embedFullWidthRows={false}
-            isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) => isDetailRow(p.rowNode?.data as DisplayRow | undefined)}
+            isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) =>
+              isDetailRow(p.rowNode?.data as DisplayRow | undefined)
+            }
             fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => {
               const d = p.data as DisplayRow | undefined;
               if (!isDetailRow(d)) return null;
@@ -359,56 +384,74 @@ export default function DisplayTable({
               isDetailRow(p.data as DisplayRow)
                 ? { backgroundColor: '#f5f6f8' }
                 : (p.data as DisplayRow as Item)?.['followUp' as keyof Item]
-                ? { backgroundColor: '#fff8e1' }
-                : undefined
+                  ? { backgroundColor: '#fff8e1' }
+                  : undefined
             }
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
           />
         </Box>
+
+        {/* panel lateral: columnas por vista */}
         <SideFilterPanel
+          allHeaders={allColumns}
           visibleColumns={visibleColumns}
           setVisibleColumns={setVisibleColumns}
-          allHeaders={[
-            'Número',
-            'ID externo',
-            'Estado',
-            'Resumen',
-            'Breve descripción',
-            'Elemento de configuración',
-            'Prioridad',
-            'Puntuación de riesgo',
-            'Grupo de asignación',
-            'Asignado a',
-            'Creado',
-            'Actualizado',
-            'Sites',
-            'Vulnerability solution',
-            'Vulnerabilidad',
-            'Due date' // ✅ Nuevo
-          ]}
         />
       </Box>
+
       <Modal open={openModal} onClose={handleCloseModal}>
-        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, bgcolor: 'background.paper', boxShadow: 24, borderRadius: 2, p: 3 }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 600,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            borderRadius: 2,
+            p: 3,
+          }}
+        >
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
             Detalle del ítem
           </Typography>
           {selectedItem && (
             <Grid container spacing={2}>
               <Grid item xs={6}>
-                <Typography variant="body2"><strong>Número:</strong> {selectedItem.numero}</Typography>
-                <Typography variant="body2"><strong>Estado:</strong> {selectedItem.estado}</Typography>
-                <Typography variant="body2"><strong>Resumen:</strong> {selectedItem.resumen}</Typography>
+                <Typography variant="body2">
+                  <strong>Número:</strong> {selectedItem.numero}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Estado:</strong> {selectedItem.estado}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Resumen:</strong> {selectedItem.resumen}
+                </Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography variant="body2"><strong>Prioridad:</strong> {selectedItem.prioridad}</Typography>
-                <Typography variant="body2"><strong>Puntuación:</strong> {selectedItem.puntuacionRiesgo}</Typography>
-                <Typography variant="body2"><strong>Asignado a:</strong> {selectedItem.asignadoA}</Typography>
-                <Typography variant="body2"><strong>Due date:</strong> {selectedItem.dueDate}</Typography>
+                <Typography variant="body2">
+                  <strong>Prioridad:</strong> {selectedItem.prioridad}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Puntuación:</strong> {selectedItem.puntuacionRiesgo}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Asignado a:</strong> {selectedItem.asignadoA}
+                </Typography>
               </Grid>
             </Grid>
           )}
-          <Paper sx={{ mt: 3, height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
+          <Paper
+            sx={{
+              mt: 3,
+              height: 150,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#888',
+            }}
+          >
             Aquí irá el grid de componentes relacionados
           </Paper>
         </Box>
