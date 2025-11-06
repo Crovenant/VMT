@@ -1,4 +1,5 @@
 export type Item = {
+  // Campos comunes y TSHIRT
   id: string;
   nombre: string;
   numero: string;
@@ -17,8 +18,73 @@ export type Item = {
   sites: string;
   vulnerabilidad: string;
   vulnerabilitySolution: string;
-  dueDate: string; // ✅ Nuevo campo
+  dueDate: string;
 
+  // Campos SOUP
+  tratada: string;
+  accionNotas: string;
+  actualizacionEstado: string;
+  subidaProduccion: string;
+  nombreAplicacion: string;
+  application: string;
+  vulnerabilityId: string;
+  hostname: string;
+  ab: string;
+  itDevelopmentArea: string;
+  coe: string;
+  state: string;
+  stateCso: string;
+  service: string;
+  origin: string;
+  network: string;
+  type: string;
+  vulnerabilityTitle: string;
+  severity: string;
+  domain: string;
+  categoryAsvs: string;
+  asvsId: string;
+  owaspTop10: string;
+  pciStatus: string;
+  threatDescription: string;
+  details: string;
+  target: string;
+  numOcurrences: string;
+  detectionDate: string;
+  newCode: string;
+  productionDate: string;
+  deadline: string;
+  daysOpen: string;
+  countermeasure: string;
+  environment: string;
+  referencesCwe: string;
+  cvssBase: string;
+  cvssOverall: string;
+  cvssRescored: string;
+  epss: string;
+  easyOfExploit: string;
+  cvssVersion: string;
+  cvssVector: string;
+  resolutionDate: string;
+  idTest: string;
+  deployedInProduction: string;
+  duplicates: string;
+  detectionTeam: string;
+  observations: string;
+  itOwner: string;
+  swProvider: string;
+  vulCode: string;
+  vitCode: string;
+  ap: string;
+  criticalCase: string;
+  fechaComunicacionSwf: string;
+  huJira: string;
+  certificacionPedida: string;
+  numeroPeticionCertificacion: string;
+  certificado: string;
+  fechaMitigacion: string;
+  fechaCertificacion: string;
+
+  // Campos opcionales
   comentarios?: string;
   logHistory?: string;
   followUp?: boolean;

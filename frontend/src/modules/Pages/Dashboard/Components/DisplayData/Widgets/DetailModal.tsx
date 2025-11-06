@@ -1,17 +1,11 @@
 // src/modules/Main/Components/DisplayData/Widgets/DetailModal.tsx
 import { Box, Modal, Typography, Grid, Paper } from '@mui/material';
+import type { Item } from '../../../../../Types/item';
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  item: {
-    numero: string;
-    estado: string;
-    resumen: string;
-    prioridad: string;
-    puntuacionRiesgo: number;
-    asignadoA: string;
-  } | null;
+  item: Item | null; // Ahora usamos el tipo completo
 };
 
 export default function DetailModal({ open, onClose, item }: Props) {
