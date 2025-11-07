@@ -46,8 +46,9 @@ interface Props {
   selectedItemId?: string | null;
   customFlagFilter?: 'followUp' | 'soonDue' | null | undefined;
   onResetView?: () => void;
-  setShowUploadModal: (val: boolean) => void; // ✅ Añadido
+  setShowUploadModal?: (val: boolean) => void; // ✅ Ahora opcional
 }
+
 
 export default function DisplayWrapper({
   refreshKey,
@@ -130,12 +131,12 @@ export default function DisplayWrapper({
   const handleUploadByKind = (kind: ViewType) => {
     setUploadTarget(kind);
     setUploadOpen(true);
-    setShowUploadModal(true); // ✅ Activamos modal externo si aplica
+    setShowUploadModal?.(true); // ✅ Activamos modal externo si aplica
   };
 
   const handleUploadClose = (success: boolean) => {
     setUploadOpen(false);
-    setShowUploadModal(false); // ✅ Cerramos modal externo
+    setShowUploadModal?.(false); // ✅ Cerramos modal externo
     if (success) {
       if (uploadTarget !== viewType) setViewType(uploadTarget);
       onResetView?.();
