@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
 
-import Title from '../Title';
+import Title from '../Title/Title';
 import FilterBar from './FilterBar';
 import DisplayTable from './DisplayTable';
 import useDisplayData from '../../hooks/useDisplayData';
@@ -46,6 +46,7 @@ interface Props {
   selectedItemId?: string | null;
   customFlagFilter?: 'followUp' | 'soonDue' | null | undefined;
   onResetView?: () => void;
+  setShowUploadModal: (val: boolean) => void; // ✅ Añadido
 }
 
 export default function DisplayWrapper({
@@ -54,6 +55,7 @@ export default function DisplayWrapper({
   selectedItemId,
   customFlagFilter,
   onResetView,
+  setShowUploadModal, // ✅ Añadido
 }: Props) {
   // Vista persistida
   const [viewType, _setViewType] = useState<ViewType>(() => {
@@ -128,10 +130,12 @@ export default function DisplayWrapper({
   const handleUploadByKind = (kind: ViewType) => {
     setUploadTarget(kind);
     setUploadOpen(true);
+    setShowUploadModal(true); // ✅ Activamos modal externo si aplica
   };
 
   const handleUploadClose = (success: boolean) => {
     setUploadOpen(false);
+    setShowUploadModal(false); // ✅ Cerramos modal externo
     if (success) {
       if (uploadTarget !== viewType) setViewType(uploadTarget);
       onResetView?.();
@@ -163,6 +167,7 @@ export default function DisplayWrapper({
         setVisibleColumns={setVisibleColumns}
         showFilterPanel={showFilterPanel}
         viewType={viewType}
+        setShowUploadModal={setShowUploadModal} // ✅ Prop pasada a DisplayTable
       />
 
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>

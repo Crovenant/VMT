@@ -1,3 +1,3 @@
 // modules/components/FocusItems.tsx
-import FocusWrapper from './FocusItems/FocusWrapper';
+import FocusWrapper from './FocusWrapper';
 export default FocusWrapper;

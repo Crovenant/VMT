@@ -1,6 +1,6 @@
 // src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Dashboard from './modules/Pages/Dashboard/Dashboard';
+import Dashboard from './modules/Pages/Dashboard/Main/Dashboard';
 import Reports from './modules/Pages/Reports/Reports'; // crea este componente vacío por ahora
 import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
 

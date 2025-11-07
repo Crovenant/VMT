@@ -1,4 +1,4 @@
-import DisplayWrapper from './DisplayData/DisplayWrapper';
+import DisplayWrapper from './DisplayWrapper';
 
 export default function DisplayData(props: {
   refreshKey: number;

@@ -1,4 +1,4 @@
-import Title from '../Title';
+import Title from '../Title/Title';
 import FocusPanel from './FocusPanel';
 import useItems from '../../../../Shared/hooks/useItems';
 

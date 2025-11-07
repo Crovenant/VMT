@@ -1,4 +1,4 @@
 // modules/components/Chart.tsx
-import ChartWrapper from './Chart/ChartWrapper';
+import ChartWrapper from './ChartWrapper';
 
 export default ChartWrapper;

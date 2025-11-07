@@ -1,4 +1,4 @@
-import Title from '../Title';
+import Title from '../Title/Title';
 import { ResponsiveContainer } from 'recharts';
 import ChartBar from './ChartBar';
 import useItems from '../../../../Shared/hooks/useItems';

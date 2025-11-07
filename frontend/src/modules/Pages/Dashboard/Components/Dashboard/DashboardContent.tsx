@@ -2,7 +2,7 @@ import {
   Container, Grid, Paper, Box, Toolbar, Drawer,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import Chart from '../Chart';
+import Chart from '../Chart/Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
 import ChartPieWrapper from '../Chart/ChartPieWrapper';

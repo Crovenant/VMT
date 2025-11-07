@@ -1,10 +1,10 @@
 // src/modules/Pages/Dashboard/DashboardWrapper.tsx
 import React from 'react';
 import { Box, CssBaseline, Popover, Typography, Grid } from '@mui/material';
-import useItems from '../../Shared/hooks/useItems';
-import UploadFileWrapper from '../../Shared/Components/UploadFileWrapper';
-import DashboardHeader from './Components/Dashboard/DashboardHeader';
-import DashboardContent from './Components/Dashboard/DashboardContent';
+import useItems from '../../../Shared/hooks/useItems';
+import UploadFileWrapper from '../../../Shared/Components/UploadFileWrapper';
+import DashboardHeader from '../Components/Dashboard/DashboardHeader';
+import DashboardContent from '../Components/Dashboard/DashboardContent';
 
 // Endpoints por defecto para la subida (Tshirt view)
 const TSHIRT_ENDPOINTS = {

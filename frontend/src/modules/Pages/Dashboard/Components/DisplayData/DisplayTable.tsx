@@ -1,7 +1,7 @@
 import { useMemo, useRef, useCallback, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { Box } from '@mui/material';
-import SideFilterPanel from './DisplayTable/GridComponents/SideFilterPanel';
+import SideFilterPanel from './DisplayTable/GridComponents/components/SideFilterPanel';
 import type { Item } from '../../../../Types/item';
 import type { ColDef, IsFullWidthRowParams, ICellRendererParams } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -27,12 +27,14 @@ export default function DisplayTable({
   setVisibleColumns,
   showFilterPanel,
   viewType,
+  setShowUploadModal, // ✅ Añadido
 }: {
   rows: Item[];
   visibleColumns: string[];
   setVisibleColumns: (cols: string[]) => void;
   showFilterPanel: boolean;
   viewType: ViewType;
+  setShowUploadModal?: (val: boolean) => void;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
 
@@ -98,7 +100,17 @@ export default function DisplayTable({
 
   return (
     <>
-      <Box sx={{ display: 'flex', height: '70vh', width: '100%', backgroundColor: '#f5f6f8', border: '1px solid rgba(31, 45, 90, 0.25)', borderRadius: '15px 0 0 15px', overflow: 'hidden' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          height: '70vh',
+          width: '100%',
+          backgroundColor: '#f5f6f8',
+          border: '1px solid rgba(31, 45, 90, 0.25)',
+          borderRadius: '15px 0 0 15px',
+          overflow: 'hidden',
+        }}
+      >
         <Box sx={{ flex: 1, position: 'relative' }} className="ag-theme-quartz custom-ag">
           <AgGridReact<GridRow>
             ref={gridRef}
