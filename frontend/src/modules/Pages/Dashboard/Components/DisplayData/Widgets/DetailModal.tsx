@@ -1,64 +1,133 @@
-// src/modules/Main/Components/DisplayData/Widgets/DetailModal.tsx
-import { Box, Modal, Typography, Grid, Paper } from '@mui/material';
+// src/modules/Pages/Dashboard/Components/DisplayData/Widgets/DetailModal.tsx
+import { useMemo } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
+  Box,
+  Grid,
+  Typography,
+  Divider,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef } from 'ag-grid-community';
+
 import type { Item } from '../../../../../Types/item';
+import { TSHIRT_MAP, SOUP_MAP } from '../DisplayTable/constants/columnMaps';
+
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  item: Item | null; // Ahora usamos el tipo completo
+  item: Item | null;
 };
 
 export default function DetailModal({ open, onClose, item }: Props) {
+  // Columnas SOUP (estructura, sin datos aún)
+  const soupColumnDefs = useMemo<ColDef[]>(
+    () =>
+      Object.keys(SOUP_MAP).map((header) => ({
+        headerName: header,
+        field: header, // datos vendrán después; ahora solo estructura
+        resizable: true,
+        sortable: true,
+        filter: 'agTextColumnFilter',
+        minWidth: 120,
+        wrapHeaderText: true,
+        autoHeaderHeight: true,
+      })),
+    [],
+  );
+
+  const relatedRows: Record<string, unknown>[] = useMemo(() => [], []);
+
+  // Pares etiqueta/valor para TODOS los campos TSHIRT (en orden de TSHIRT_MAP)
+  const tshirtPairs = useMemo(() => {
+    if (!item) return [];
+    return Object.entries(TSHIRT_MAP).map(([label, key]) => {
+      const value = (item as any)[key];
+      return { label, value: value ?? '' };
+    });
+  }, [item]);
+
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 600,
-          bgcolor: 'background.paper',
-          boxShadow: 24,
-          borderRadius: 2,
-          p: 3,
-        }}
-      >
-        {/* Título */}
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Detalle del ítem
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 2 } }}
+    >
+      <DialogTitle sx={{ pr: 6 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+          Tshirt item.
         </Typography>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{ position: 'absolute', right: 8, top: 8 }}
+          size="small"
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-        {/* Dos columnas con datos */}
-        {item && (
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <Typography variant="body2"><strong>Número:</strong> {item.numero}</Typography>
-              <Typography variant="body2"><strong>Estado:</strong> {item.estado}</Typography>
-              <Typography variant="body2"><strong>Resumen:</strong> {item.resumen}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="body2"><strong>Prioridad:</strong> {item.prioridad}</Typography>
-              <Typography variant="body2"><strong>Puntuación:</strong> {item.puntuacionRiesgo}</Typography>
-              <Typography variant="body2"><strong>Asignado a:</strong> {item.asignadoA}</Typography>
-            </Grid>
+      <DialogContent dividers sx={{ bgcolor: '#fafbfc' }}>
+        {/* Bloque de campos TSHIRT */}
+        <Box sx={{ mb: 2 }}>
+          <Grid container spacing={1.5}>
+            {tshirtPairs.map(({ label, value }) => (
+              <Grid key={label} item xs={12} sm={6}>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {label}:
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {String(value)}
+                </Typography>
+              </Grid>
+            ))}
           </Grid>
-        )}
+        </Box>
 
-        {/* Cuadro para grid relacionado */}
-        <Paper
+        <Divider sx={{ my: 2 }} />
+
+        {/* Subtítulo sección SOUP */}
+        <Typography
+          variant="subtitle1"
           sx={{
-            mt: 3,
-            height: 150,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#888',
+            fontWeight: 700,
+            color: 'primary.main',
+            mb: 1.5,
           }}
         >
-          Aquí irá el grid de componentes relacionados
-        </Paper>
-      </Box>
-    </Modal>
+          Soup items.
+        </Typography>
+
+        {/* Grid de componentes relacionados (estructura SOUP completa) */}
+        <Box
+          sx={{
+            borderRadius: 1,
+            border: '1px solid rgba(31,45,90,0.2)',
+            bgcolor: 'white',
+            p: 1,
+          }}
+        >
+          <Box className="ag-theme-quartz" sx={{ height: 300, width: '100%' }}>
+            <AgGridReact
+              rowData={relatedRows}
+              columnDefs={soupColumnDefs}
+              suppressMovableColumns={false}
+              animateRows
+              rowSelection="multiple"
+              domLayout="normal"
+            />
+          </Box>
+        </Box>
+      </DialogContent>
+    </Dialog>
   );
 }

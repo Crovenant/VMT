@@ -9,6 +9,8 @@ import DisplayTable from './DisplayTable';
 import useDisplayData from '../../hooks/useDisplayData';
 import LatchWidget from './Widgets/LatchWidget';
 import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
+// ⭐ Usamos el hook para conocer TODAS las columnas permitidas por vista
+import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 
 type ViewType = 'Tshirt' | 'Soup';
 
@@ -25,8 +27,13 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
     listUrl: 'http://localhost:8000/soup/risk-data/',
     uploadUrl: 'http://localhost:8000/soup/upload_data/',
     saveUrl: 'http://localhost:8000/soup/save_selection/',
+    // Defaults mínimos para SOUP
     defaultColumns: [
-      'Número','Estado','Resumen','Asignado a','Creado','Actualizado','Due date',
+      'Vulnerability ID',
+      'State',
+      'Severity',
+      'VUL Code',
+      'VIT Code',
     ],
   },
 };
@@ -46,9 +53,8 @@ interface Props {
   selectedItemId?: string | null;
   customFlagFilter?: 'followUp' | 'soonDue' | null | undefined;
   onResetView?: () => void;
-  setShowUploadModal?: (val: boolean) => void; // ✅ Ahora opcional
+  setShowUploadModal?: (val: boolean) => void;
 }
-
 
 export default function DisplayWrapper({
   refreshKey,
@@ -56,7 +62,7 @@ export default function DisplayWrapper({
   selectedItemId,
   customFlagFilter,
   onResetView,
-  setShowUploadModal, // ✅ Añadido
+  setShowUploadModal,
 }: Props) {
   // Vista persistida
   const [viewType, _setViewType] = useState<ViewType>(() => {
@@ -67,6 +73,9 @@ export default function DisplayWrapper({
     localStorage.setItem(LS_VIEW, v);
     _setViewType(v);
   };
+
+  // ⭐ Columnas permitidas (todas) según la vista
+  const { allColumns: allowedColumns } = useColumnMap(viewType);
 
   // Modal de subida
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -84,25 +93,13 @@ export default function DisplayWrapper({
     listUrl: schema.listUrl,
   });
 
-  // === columnas visibles por vista, con VALIDACIÓN contra el "allowed set" ===
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
-    const allowed = new Set(SCHEMA[viewType].defaultColumns);
-    const saved = localStorage.getItem(LS_COLS(viewType));
-    if (saved) {
-      try {
-        const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const filtered = parsed.filter((c) => allowed.has(String(c)));
-          if (filtered.length) return filtered;
-        }
-      } catch {}
-    }
-    return SCHEMA[viewType].defaultColumns;
-  });
+  // === columnas visibles por vista ===
+  // Inicializa con defaults; la carga desde localStorage se hace en el efecto de abajo
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
-  // Al cambiar de vista: cargar y validar; si no cuadra, defaults de esa vista
+  // ⭐ Al cambiar de vista (o de set permitido): cargar de localStorage y VALIDAR contra TODAS las columnas permitidas
   useEffect(() => {
-    const allowed = new Set(SCHEMA[viewType].defaultColumns);
+    const allowed = new Set(allowedColumns); // ← TODAS para esa vista
     const saved = localStorage.getItem(LS_COLS(viewType));
     if (saved) {
       try {
@@ -115,28 +112,28 @@ export default function DisplayWrapper({
       } catch {}
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
-  }, [viewType]);
+  }, [viewType, allowedColumns]);
 
-  // Guardar SIEMPRE filtrando (evita contaminar SOUP con columnas TSHIRT y viceversa)
+  // ⭐ Guardar SIEMPRE filtrando contra TODAS las columnas permitidas (no solo defaults)
   useEffect(() => {
-    const allowed = new Set(SCHEMA[viewType].defaultColumns);
+    const allowed = new Set(allowedColumns);
     const filtered = visibleColumns.filter((c) => allowed.has(String(c)));
     localStorage.setItem(
       LS_COLS(viewType),
       JSON.stringify(filtered.length ? filtered : SCHEMA[viewType].defaultColumns),
     );
-  }, [viewType, visibleColumns]);
+  }, [viewType, visibleColumns, allowedColumns]);
 
   // Abrir modal especificando a qué vista subimos
   const handleUploadByKind = (kind: ViewType) => {
     setUploadTarget(kind);
     setUploadOpen(true);
-    setShowUploadModal?.(true); // ✅ Activamos modal externo si aplica
+    setShowUploadModal?.(true);
   };
 
   const handleUploadClose = (success: boolean) => {
     setUploadOpen(false);
-    setShowUploadModal?.(false); // ✅ Cerramos modal externo
+    setShowUploadModal?.(false);
     if (success) {
       if (uploadTarget !== viewType) setViewType(uploadTarget);
       onResetView?.();
@@ -168,7 +165,7 @@ export default function DisplayWrapper({
         setVisibleColumns={setVisibleColumns}
         showFilterPanel={showFilterPanel}
         viewType={viewType}
-        setShowUploadModal={setShowUploadModal} // ✅ Prop pasada a DisplayTable
+        setShowUploadModal={setShowUploadModal}
       />
 
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>

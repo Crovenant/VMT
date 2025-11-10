@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Item } from '../../../Types/item';
+// ⬇️ Importamos el mapa de columnas para poder rellenar TODOS los campos de SOUP
+import { SOUP_MAP } from '../Components/DisplayData/DisplayTable/constants/columnMaps';
 
 type ViewType = 'Tshirt' | 'Soup';
 
@@ -40,7 +42,7 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
 /* ======================================================================
    Mapeadores
 ====================================================================== */
-/** Mapea una fila SOUP a tu modelo Item */
+/** Mapea una fila SOUP a tu modelo Item (genérico: rellena TODO el SOUP_MAP) */
 function soupToItem(row: Record<string, unknown>): Item {
   const numero = pick(row, ['Vulnerability ID', 'ID Test', 'VUL Code', 'VIT Code']);
   const resumen = pick(row, ['Vulnerability Title', 'Threat Description', 'Details']);
@@ -52,7 +54,7 @@ function soupToItem(row: Record<string, unknown>): Item {
   const elementoConfiguracion = pick(row, ['Hostname', 'Application', 'Nombre Aplicación']);
   const creado = pick(row, ['Detection Date', 'Actualizacion estado', 'Fecha comunicación SWF']);
   const actualizado = pick(row, ['Resolution Date', 'Production Date', 'Fecha mitigacion']);
-  const dueDate = pick(row, ['Due date', 'Due Date', 'dueDate']); // claves habituales
+  const dueDate = pick(row, ['Due date', 'Due Date', 'dueDate']);
 
   const id =
     numero ||
@@ -60,7 +62,8 @@ function soupToItem(row: Record<string, unknown>): Item {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
-  return {
+  // 1) Base mínimo para que el UI funcione
+  const base: Partial<Item> = {
     id: String(id),
     nombre: resumen,
     numero: String(numero),
@@ -80,7 +83,31 @@ function soupToItem(row: Record<string, unknown>): Item {
     creado: String(creado),
     actualizado: String(actualizado),
     dueDate,
-  } as Item;
+
+    // Campos que seguro usas como mínimos por defecto
+    vulnerabilityId: String(row['Vulnerability ID'] ?? ''),
+    state: String(row['State'] ?? row['State CSO'] ?? ''),
+    severity: String(row['Severity'] ?? ''),
+    vulCode: String(row['VUL Code'] ?? ''),
+    vitCode: String(row['VIT Code'] ?? ''),
+  };
+
+  // 2) Relleno genérico: para CADA encabezado de SOUP_MAP, si existe en la fila
+  //    lo copio a la clave de Item correspondiente, sin machacar si ya hay valor.
+  for (const [header, itemKey] of Object.entries(SOUP_MAP)) {
+    const raw = row[header as keyof typeof row];
+    if (raw === undefined || raw === null) continue;
+
+    const key = itemKey as keyof Item;
+    const current = (base as any)[key];
+    const next = String(raw);
+
+    if (current === undefined || current === null || String(current) === '') {
+      (base as any)[key] = next;
+    }
+  }
+
+  return base as Item;
 }
 
 /** TSHIRT ya viene casi alineado con Item; normalizamos y rellenamos huecos */

@@ -1,10 +1,18 @@
 // src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable.tsx
-import { useMemo, useRef, useCallback, useState } from 'react';
+import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { Box } from '@mui/material';
 import SideFilterPanel from './DisplayTable/GridComponents/components/SideFilterPanel';
 import type { Item } from '../../../../Types/item';
-import type { ColDef, IsFullWidthRowParams, ICellRendererParams } from 'ag-grid-community';
+import type {
+  ColDef,
+  IsFullWidthRowParams,
+  ICellRendererParams,
+  RowStyle,
+  RowClassParams,
+  ColumnMovedEvent,
+  ColumnResizedEvent,
+} from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
@@ -21,6 +29,7 @@ import FullWidthRenderer from './DisplayTable/Renderers/FullWidthRenderer';
 
 /* ===== tipos ===== */
 type ViewType = 'Tshirt' | 'Soup';
+const LS_COLUMN_STATE = (v: ViewType) => `displayData.columnState.${v}`;
 
 export default function DisplayTable({
   rows,
@@ -28,7 +37,8 @@ export default function DisplayTable({
   setVisibleColumns,
   showFilterPanel,
   viewType,
-  setShowUploadModal, // ✅ Añadido
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setShowUploadModal: _setShowUploadModal, // opcional (no usado aún)
 }: {
   rows: Item[];
   visibleColumns: string[];
@@ -99,6 +109,76 @@ export default function DisplayTable({
     [selectionColDef, eyeColDef, toggleColDef, businessColDefs],
   );
 
+  // ===== Estilos de fila (amarillo suave, sin barra) =====
+  const getRowStyle = useCallback(
+    (p: RowClassParams<GridRow, any>): RowStyle | undefined => {
+      const data = p?.data as DisplayRow | undefined;
+
+      // Fila de detalle
+      if (isDetailRow(data)) {
+        const st: RowStyle = {};
+        st.backgroundColor = '#f5f6f8';
+        return st;
+      }
+
+      const it = (data as unknown as Item) ?? ({} as Item);
+
+      // Amarillo suave para "Crítico" o followUp
+      if (it.prioridad === 'Crítico' || (it as any).followUp) {
+        const st: RowStyle = {};
+        st.backgroundColor = '#fff8e1';
+        return st;
+      }
+
+      return undefined;
+    },
+    [],
+  );
+
+  /* ============================
+     Persistencia: orden y ancho
+  ============================ */
+  const persistColumnState = useCallback(() => {
+    const colApi = gridRef.current?.columnApi;
+    if (!colApi) return;
+    const state = colApi.getColumnState();
+    localStorage.setItem(LS_COLUMN_STATE(viewType), JSON.stringify(state));
+  }, [viewType]);
+
+  const applySavedColumnState = useCallback(() => {
+    const colApi = gridRef.current?.columnApi;
+    if (!colApi) return;
+    const raw = localStorage.getItem(LS_COLUMN_STATE(viewType));
+    if (!raw) return;
+    try {
+      const state = JSON.parse(raw);
+      if (Array.isArray(state)) {
+        colApi.applyColumnState({ state, applyOrder: true });
+      }
+    } catch {
+      /* estado corrupto: ignorar */
+    }
+  }, [viewType]);
+
+  useEffect(() => {
+    const t = setTimeout(() => applySavedColumnState(), 0);
+    return () => clearTimeout(t);
+  }, [applySavedColumnState, columnDefs]);
+
+  const onColumnMoved = useCallback(
+    (e: ColumnMovedEvent) => {
+      if (e.finished) persistColumnState();
+    },
+    [persistColumnState],
+  );
+
+  const onColumnResized = useCallback(
+    (e: ColumnResizedEvent) => {
+      if (e.finished) persistColumnState();
+    },
+    [persistColumnState],
+  );
+
   return (
     <>
       <Box
@@ -129,18 +209,18 @@ export default function DisplayTable({
             isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) => isDetailRow(p.rowNode?.data as DisplayRow | undefined)}
             fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => <FullWidthRenderer params={p} itemById={itemById} />}
             getRowHeight={(p) => (isDetailRow(p.data as DisplayRow) ? 300 : undefined)}
-            getRowStyle={(p) =>
-              isDetailRow(p.data as DisplayRow)
-                ? { backgroundColor: '#f5f6f8' }
-                : (p.data as DisplayRow as Item)?.['followUp' as keyof Item]
-                ? { backgroundColor: '#fff8e1' }
-                : undefined
-            }
+            getRowStyle={getRowStyle}
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
+            onColumnMoved={onColumnMoved}
+            onColumnResized={onColumnResized}
           />
         </Box>
 
-        <SideFilterPanel allHeaders={allColumns} visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
+        <SideFilterPanel
+          allHeaders={allColumns}
+          visibleColumns={visibleColumns}
+          setVisibleColumns={setVisibleColumns}
+        />
       </Box>
 
       <DetailModal open={openModal} onClose={handleCloseModal} item={selectedItem} />
