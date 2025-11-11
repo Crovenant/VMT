@@ -25,9 +25,9 @@ export const VIEW_SCHEMAS: Record<ViewType, ViewSchema> = {
   },
   // placeholder hasta que fijemos contrato Cso
   Cso: {
-    listUrl: 'http://localhost:8000/Cso/risk-data/',
-    uploadUrl: 'http://localhost:8000/Cso/upload_data/',
-    saveUrl: 'http://localhost:8000/Cso/save_selection/',
+    listUrl: 'http://localhost:8000/soup/risk-data/',
+    uploadUrl: 'http://localhost:8000/soup/upload_data/',
+    saveUrl: 'http://localhost:8000/soup/save_selection/',
     visibleColumns: [
       'Número','Estado','Resumen','Asignado a','Creado','Actualizado','Due date',
     ],

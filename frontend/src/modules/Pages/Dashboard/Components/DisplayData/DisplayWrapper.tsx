@@ -24,9 +24,9 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
     ],
   },
   Cso: {
-    listUrl: 'http://localhost:8000/Cso/risk-data/',
-    uploadUrl: 'http://localhost:8000/Cso/upload_data/',
-    saveUrl: 'http://localhost:8000/Cso/save_selection/',
+    listUrl: 'http://localhost:8000/soup/risk-data/',
+    uploadUrl: 'http://localhost:8000/soup/upload_data/',
+    saveUrl: 'http://localhost:8000/soup/save_selection/',
     // Defaults mínimos para Cso
     defaultColumns: [
       'Vulnerability ID',
