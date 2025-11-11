@@ -8,6 +8,7 @@ import {
   Grid,
   Typography,
   Divider,
+  Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { AgGridReact } from 'ag-grid-react';
@@ -72,13 +73,13 @@ export default function DetailModal({ open, onClose, item }: Props) {
     });
   }, [item]);
 
-  // Filtrar pares Csirt según selección
   const filteredCsirtPairs = CsirtPairs.filter(p => selectedCsirtFields.includes(p.label));
-
-  // Filtrar columnas Cso según selección (corregido)
   const filteredCsoColumnDefs = CsoColumnDefs.filter(col =>
     selectedCsoFields.includes(col.headerName ?? '')
   );
+
+  // ✅ Extraer comments con tipado seguro
+  const comments: string[] = (item as Item & { comments?: string[] })?.comments ?? [];
 
   return (
     <Dialog
@@ -141,6 +142,41 @@ export default function DetailModal({ open, onClose, item }: Props) {
 
             <Divider sx={{ my: 2 }} />
 
+            {/* Bloque fijo Comments */}
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                  Comments:
+                </Typography>
+                <Button variant="text" size="small" sx={{ fontWeight: 700 }}>
+                  ADD COMMENT
+                </Button>
+              </Box>
+              <Box
+                sx={{
+                  border: '1px solid #ddd',
+                  borderRadius: 1,
+                  p: 1,
+                  bgcolor: '#f9f9f9',
+                  minHeight: 50,
+                }}
+              >
+                {comments.length > 0 ? (
+                  comments.map((comment: string, idx: number) => (
+                    <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
+                      {comment}
+                    </Typography>
+                  ))
+                ) : (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    No comments available
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
             {/* Subtítulo sección Cso */}
             <Typography
               variant="subtitle1"
@@ -169,6 +205,7 @@ export default function DetailModal({ open, onClose, item }: Props) {
                   suppressMovableColumns={false}
                   animateRows
                   rowSelection="multiple"
+                  suppressRowClickSelection={true}
                   domLayout="normal"
                 />
               </Box>
