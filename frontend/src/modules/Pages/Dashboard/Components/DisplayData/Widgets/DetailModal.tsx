@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   IconButton,
   Box,
@@ -78,7 +77,6 @@ export default function DetailModal({ open, onClose, item }: Props) {
     selectedCsoFields.includes(col.headerName ?? '')
   );
 
-  // ✅ Extraer comments con tipado seguro
   const comments: string[] = (item as Item & { comments?: string[] })?.comments ?? [];
 
   return (
@@ -89,41 +87,49 @@ export default function DetailModal({ open, onClose, item }: Props) {
       fullWidth
       PaperProps={{ sx: { borderRadius: 2 } }}
     >
-      <DialogTitle sx={{ pr: 6 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-          Csirt item.
-        </Typography>
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-          size="small"
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
       <DialogContent dividers sx={{ bgcolor: '#fafbfc', p: 0 }}>
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: `${isPanelOpen ? '350px' : '40px'} 1fr`,
+            gridTemplateRows: 'auto 1fr',
             transition: 'grid-template-columns 0.3s ease',
             height: '100%',
           }}
         >
           {/* Panel lateral */}
-          <DetailFilterPanel
-            isOpen={isPanelOpen}
-            setIsOpen={setIsPanelOpen}
-            selectedCsirtFields={selectedCsirtFields}
-            setSelectedCsirtFields={setSelectedCsirtFields}
-            selectedCsoFields={selectedCsoFields}
-            setSelectedCsoFields={setSelectedCsoFields}
-          />
+          <Box sx={{ gridRow: '1 / span 2', bgcolor: '#f5f6f8' }}>
+            <DetailFilterPanel
+              isOpen={isPanelOpen}
+              setIsOpen={setIsPanelOpen}
+              selectedCsirtFields={selectedCsirtFields}
+              setSelectedCsirtFields={setSelectedCsirtFields}
+              selectedCsoFields={selectedCsoFields}
+              setSelectedCsoFields={setSelectedCsoFields}
+            />
+          </Box>
+
+          {/* Título */}
+          <Box
+            sx={{
+              gridColumn: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              p: 2,
+              borderBottom: '1px solid #ddd',
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              Vul item
+            </Typography>
+            <IconButton aria-label="close" onClick={onClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
 
           {/* Contenido principal */}
-          <Box sx={{ p: 2, overflowY: 'auto' }}>
+          <Box sx={{ gridColumn: 2, p: 2, overflowY: 'auto' }}>
             {/* Bloque Csirt */}
             <Box sx={{ mb: 2 }}>
               <Grid container spacing={1.5}>
@@ -186,7 +192,7 @@ export default function DetailModal({ open, onClose, item }: Props) {
                 mb: 1.5,
               }}
             >
-              Cso items.
+              Vit item
             </Typography>
 
             {/* Grid Cso */}

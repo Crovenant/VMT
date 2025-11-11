@@ -131,7 +131,7 @@ export default function DetailSideFilterPanel({
             {/* Csirt Fields */}
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 600 }}>Csirt Fields</Typography>
+                <Typography sx={{ fontWeight: 600 }}>Vul Fields</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TextField
@@ -169,7 +169,7 @@ export default function DetailSideFilterPanel({
             {/* Cso Fields */}
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 600 }}>Cso Fields</Typography>
+                <Typography sx={{ fontWeight: 600 }}>Vit Fields</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TextField
