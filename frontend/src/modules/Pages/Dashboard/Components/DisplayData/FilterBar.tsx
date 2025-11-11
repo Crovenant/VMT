@@ -1,11 +1,10 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/FilterBar.tsx
 import { useState, useCallback } from 'react';
 import { Box, IconButton, Tooltip, Popover, Button } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
-type ViewKind = 'Tshirt' | 'Soup';
+type ViewKind = 'Tshirt' | 'Soup' | 'VulToVit';
 
 type Props = {
   handleDownload: () => void;
@@ -66,7 +65,7 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         </IconButton>
       </Tooltip>
 
-      {/* Upload (popover con dos opciones) */}
+      {/* Upload (popover con tres opciones) */}
       <Tooltip title="Upload file">
         <IconButton
           aria-label="Upload file"
@@ -88,7 +87,7 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         keepMounted
       >
         <Box
-          sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 180 }}
+          sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 160 }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') closeMenu();
           }}
@@ -97,12 +96,8 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
             variant="contained"
             color="primary"
             size="small"
-            sx={{ fontSize: 12, textTransform: 'uppercase' }}
+            sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
             onClick={() => handleKeyActivate('Tshirt')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') handleKeyActivate('Tshirt');
-            }}
-            autoFocus
           >
             Upload TSHIRT
           </Button>
@@ -111,13 +106,20 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
             variant="contained"
             color="secondary"
             size="small"
-            sx={{ fontSize: 12, textTransform: 'uppercase' }}
+            sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
             onClick={() => handleKeyActivate('Soup')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') handleKeyActivate('Soup');
-            }}
           >
             Upload SOUP
+          </Button>
+
+          <Button
+            variant="contained"
+            color="warning"
+            size="small"
+            sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
+            onClick={() => handleKeyActivate('VulToVit')}
+          >
+            Upload VUL TO VIT
           </Button>
         </Box>
       </Popover>
