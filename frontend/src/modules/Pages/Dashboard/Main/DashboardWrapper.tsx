@@ -6,8 +6,8 @@ import UploadFileWrapper from '../../../Shared/Components/UploadFileWrapper';
 import DashboardHeader from '../Components/Dashboard/DashboardHeader';
 import DashboardContent from '../Components/Dashboard/DashboardContent';
 
-// Endpoints por defecto para la subida (Tshirt view)
-const TSHIRT_ENDPOINTS = {
+// Endpoints por defecto para la subida (Csirt view)
+const Csirt_ENDPOINTS = {
   uploadUrl: 'http://localhost:8000/upload_data/',
   saveUrl:   'http://localhost:8000/save_selection/',
   listUrl:   'http://localhost:8000/risk-data/',
@@ -73,11 +73,11 @@ export default function DashboardWrapper() {
 
   /**
    * ⬅️ ARREGLO: el segundo parámetro de useItems es la listUrl (string).
-   * Antes: useItems(refreshKey, undefined, TSHIRT_ENDPOINTS.listUrl)
-   * Ahora: useItems(refreshKey, TSHIRT_ENDPOINTS.listUrl)
+   * Antes: useItems(refreshKey, undefined, Csirt_ENDPOINTS.listUrl)
+   * Ahora: useItems(refreshKey, Csirt_ENDPOINTS.listUrl)
    * (si el hook tiene un tercer parámetro opcional, lo omitimos)
    */
-  const { items } = useItems(refreshKey, TSHIRT_ENDPOINTS.listUrl, 'Tshirt');
+  const { items } = useItems(refreshKey, Csirt_ENDPOINTS.listUrl, 'Csirt');
 
   const followUpItems = items.filter((item) => item.followUp);
   const soonDueItems = items.filter((item) => item.soonDue);
@@ -130,9 +130,9 @@ export default function DashboardWrapper() {
           <Box sx={{ backgroundColor: '#fff', padding: 2, borderRadius: 4, boxShadow: 5 }}>
             <UploadFileWrapper
               onClose={handleUploadClose}
-              uploadUrl={TSHIRT_ENDPOINTS.uploadUrl}
-              saveUrl={TSHIRT_ENDPOINTS.saveUrl}
-              listUrlForMutate={TSHIRT_ENDPOINTS.listUrl}
+              uploadUrl={Csirt_ENDPOINTS.uploadUrl}
+              saveUrl={Csirt_ENDPOINTS.saveUrl}
+              listUrlForMutate={Csirt_ENDPOINTS.listUrl}
             />
           </Box>
         </Box>

@@ -15,7 +15,7 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
 
 import type { Item } from '../../../../../Types/item';
-import { TSHIRT_MAP, SOUP_MAP } from '../DisplayTable/constants/columnMaps';
+import { CSIRT_MAP, CSO_MAP } from '../DisplayTable/constants/columnMaps';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
@@ -27,10 +27,10 @@ type Props = {
 };
 
 export default function DetailModal({ open, onClose, item }: Props) {
-  // Columnas SOUP (estructura, sin datos aún)
-  const soupColumnDefs = useMemo<ColDef[]>(
+  // Columnas Cso (estructura, sin datos aún)
+  const CsoColumnDefs = useMemo<ColDef[]>(
     () =>
-      Object.keys(SOUP_MAP).map((header) => ({
+      Object.keys(CSO_MAP).map((header) => ({
         headerName: header,
         field: header, // datos vendrán después; ahora solo estructura
         resizable: true,
@@ -45,10 +45,10 @@ export default function DetailModal({ open, onClose, item }: Props) {
 
   const relatedRows: Record<string, unknown>[] = useMemo(() => [], []);
 
-  // Pares etiqueta/valor para TODOS los campos TSHIRT (en orden de TSHIRT_MAP)
-  const tshirtPairs = useMemo(() => {
+  // Pares etiqueta/valor para TODOS los campos Csirt (en orden de CSIRT_MAP)
+  const CsirtPairs = useMemo(() => {
     if (!item) return [];
-    return Object.entries(TSHIRT_MAP).map(([label, key]) => {
+    return Object.entries(CSIRT_MAP).map(([label, key]) => {
       const value = (item as any)[key];
       return { label, value: value ?? '' };
     });
@@ -64,7 +64,7 @@ export default function DetailModal({ open, onClose, item }: Props) {
     >
       <DialogTitle sx={{ pr: 6 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-          Tshirt item.
+          Csirt item.
         </Typography>
         <IconButton
           aria-label="close"
@@ -77,10 +77,10 @@ export default function DetailModal({ open, onClose, item }: Props) {
       </DialogTitle>
 
       <DialogContent dividers sx={{ bgcolor: '#fafbfc' }}>
-        {/* Bloque de campos TSHIRT */}
+        {/* Bloque de campos Csirt */}
         <Box sx={{ mb: 2 }}>
           <Grid container spacing={1.5}>
-            {tshirtPairs.map(({ label, value }) => (
+            {CsirtPairs.map(({ label, value }) => (
               <Grid key={label} item xs={12} sm={6}>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
                   {label}:
@@ -95,7 +95,7 @@ export default function DetailModal({ open, onClose, item }: Props) {
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Subtítulo sección SOUP */}
+        {/* Subtítulo sección Cso */}
         <Typography
           variant="subtitle1"
           sx={{
@@ -104,10 +104,10 @@ export default function DetailModal({ open, onClose, item }: Props) {
             mb: 1.5,
           }}
         >
-          Soup items.
+          Cso items.
         </Typography>
 
-        {/* Grid de componentes relacionados (estructura SOUP completa) */}
+        {/* Grid de componentes relacionados (estructura Cso completa) */}
         <Box
           sx={{
             borderRadius: 1,
@@ -119,7 +119,7 @@ export default function DetailModal({ open, onClose, item }: Props) {
           <Box className="ag-theme-quartz" sx={{ height: 300, width: '100%' }}>
             <AgGridReact
               rowData={relatedRows}
-              columnDefs={soupColumnDefs}
+              columnDefs={CsoColumnDefs}
               suppressMovableColumns={false}
               animateRows
               rowSelection="multiple"

@@ -2,15 +2,15 @@
 import { Box } from '@mui/material';
 
 type Props = {
-  viewType: 'Tshirt' | 'Soup';
-  onSwitchView: (type: 'Tshirt' | 'Soup') => void;
+  viewType: 'Csirt' | 'Cso';
+  onSwitchView: (type: 'Csirt' | 'Cso') => void;
 };
 
 export default function LatchWidget({ viewType, onSwitchView }: Props) {
-  const isTshirt = viewType === 'Tshirt';
+  const isCsirt = viewType === 'Csirt';
 
   const handleToggle = () => {
-    onSwitchView(isTshirt ? 'Soup' : 'Tshirt');
+    onSwitchView(isCsirt ? 'Cso' : 'Csirt');
   };
 
   return (
@@ -31,11 +31,11 @@ export default function LatchWidget({ viewType, onSwitchView }: Props) {
       onClick={handleToggle}
     >
       {/* Texto */}
-      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: isTshirt ? '#fff' : '#333' }}>
-        TSHIRT
+      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: isCsirt ? '#fff' : '#333' }}>
+        Csirt
       </Box>
-      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: !isTshirt ? '#fff' : '#333' }}>
-        SOUP
+      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: !isCsirt ? '#fff' : '#333' }}>
+        Cso
       </Box>
 
       {/* Indicador */}
@@ -43,7 +43,7 @@ export default function LatchWidget({ viewType, onSwitchView }: Props) {
         sx={{
           position: 'absolute',
           top: 2,
-          left: isTshirt ? 2 : 'calc(50% + 2px)',
+          left: isCsirt ? 2 : 'calc(50% + 2px)',
           width: 'calc(55% - 3px)',
           height: '24px',
           backgroundColor: '#008cffff', // Verde oscuro

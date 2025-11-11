@@ -12,10 +12,10 @@ import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 // ⭐ Usamos el hook para conocer TODAS las columnas permitidas por vista
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 
-type ViewType = 'Tshirt' | 'Soup';
+type ViewType = 'Csirt' | 'Cso';
 
 const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }> = {
-  Tshirt: {
+  Csirt: {
     listUrl: 'http://localhost:8000/risk-data/',
     uploadUrl: 'http://localhost:8000/upload_data/',
     saveUrl: 'http://localhost:8000/save_selection/',
@@ -23,11 +23,11 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
       'Número','Estado','Resumen','Prioridad','Puntuación de riesgo','Asignado a','Creado','Actualizado','Due date',
     ],
   },
-  Soup: {
-    listUrl: 'http://localhost:8000/soup/risk-data/',
-    uploadUrl: 'http://localhost:8000/soup/upload_data/',
-    saveUrl: 'http://localhost:8000/soup/save_selection/',
-    // Defaults mínimos para SOUP
+  Cso: {
+    listUrl: 'http://localhost:8000/Cso/risk-data/',
+    uploadUrl: 'http://localhost:8000/Cso/upload_data/',
+    saveUrl: 'http://localhost:8000/Cso/save_selection/',
+    // Defaults mínimos para Cso
     defaultColumns: [
       'Vulnerability ID',
       'State',
@@ -67,7 +67,7 @@ export default function DisplayWrapper({
   // Vista persistida
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
-    return saved === 'Soup' || saved === 'Tshirt' ? (saved as ViewType) : 'Tshirt';
+    return saved === 'Cso' || saved === 'Csirt' ? (saved as ViewType) : 'Csirt';
   });
   const setViewType = (v: ViewType) => {
     localStorage.setItem(LS_VIEW, v);

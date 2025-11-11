@@ -1,5 +1,5 @@
 export type Item = {
-  // Campos comunes y TSHIRT
+  // Campos comunes y Csirt
   id: string;
   nombre: string;
   numero: string;
@@ -20,7 +20,7 @@ export type Item = {
   vulnerabilitySolution: string;
   dueDate: string;
 
-  // Campos SOUP
+  // Campos Cso
   tratada: string;
   accionNotas: string;
   actualizacionEstado: string;

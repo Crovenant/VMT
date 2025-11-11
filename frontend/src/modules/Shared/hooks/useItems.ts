@@ -2,9 +2,9 @@
 import { useEffect, useState } from 'react';
 import type { Item } from '../../Types/item';
 
-type ViewType = 'Tshirt' | 'Soup';
+type ViewType = 'Csirt' | 'Cso';
 
-const DEFAULT_TSHIRT_LIST = 'http://localhost:8000/risk-data/';
+const DEFAULT_Csirt_LIST = 'http://localhost:8000/risk-data/';
 
 function norm(s: unknown) {
   return String(s ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
@@ -35,7 +35,7 @@ function pick<T extends object, K extends keyof T>(obj: T, keys: K[], fallback: 
 
 /* ---------- mapeos ---------- */
 
-function soupToItem(row: Record<string, unknown>): Item {
+function CsoToItem(row: Record<string, unknown>): Item {
   const numero = pick(row, ['Vulnerability ID', 'ID Test', 'VUL Code', 'VIT Code']);
   const resumen = pick(row, ['Vulnerability Title', 'Threat Description', 'Details']);
   const estado = pick(row, ['State', 'State CSO']);
@@ -75,7 +75,7 @@ function soupToItem(row: Record<string, unknown>): Item {
   } as Item;
 }
 
-function tshirtToItem(row: Record<string, unknown>): Item {
+function CsirtToItem(row: Record<string, unknown>): Item {
   const id =
     row['id'] ??
     row['numero'] ??
@@ -134,17 +134,17 @@ function computeFlags(items: Item[]): Item[] {
 /* ---------- HOOK ---------- */
 /**
  * Firma compatible hacia atrás:
- * - listUrl opcional (por defecto TSHIRT)
- * - viewType opcional (por defecto 'Tshirt')
+ * - listUrl opcional (por defecto Csirt)
+ * - viewType opcional (por defecto 'Csirt')
  */
 export default function useItems(
   refreshKey: number,
   listUrl?: string,
-  viewType: ViewType = 'Tshirt'
+  viewType: ViewType = 'Csirt'
 ): { items: Item[] } {
   const [items, setItems] = useState<Item[]>([]);
 
-  const effectiveList = listUrl ?? DEFAULT_TSHIRT_LIST;
+  const effectiveList = listUrl ?? DEFAULT_Csirt_LIST;
 
   useEffect(() => {
     let cancelled = false;
@@ -156,9 +156,9 @@ export default function useItems(
         const raw = (await res.json()) as unknown[];
 
         const mapped =
-          viewType === 'Soup'
-            ? (raw ?? []).map((r) => soupToItem(r as Record<string, unknown>))
-            : (raw ?? []).map((r) => tshirtToItem(r as Record<string, unknown>));
+          viewType === 'Cso'
+            ? (raw ?? []).map((r) => CsoToItem(r as Record<string, unknown>))
+            : (raw ?? []).map((r) => CsirtToItem(r as Record<string, unknown>));
 
         const withFlags = computeFlags(mapped);
         if (!cancelled) setItems(withFlags);

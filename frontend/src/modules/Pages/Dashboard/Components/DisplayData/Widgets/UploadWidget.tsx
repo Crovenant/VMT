@@ -4,7 +4,7 @@ import { IconButton, Popover, Button, Box } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 interface UploadWidgetProps {
-  onUpload: (type: 'Tshirt' | 'Soup') => void;
+  onUpload: (type: 'Csirt' | 'Cso') => void;
 }
 
 const UploadWidget: React.FC<UploadWidgetProps> = ({ onUpload }) => {
@@ -44,21 +44,21 @@ const UploadWidget: React.FC<UploadWidgetProps> = ({ onUpload }) => {
             variant="contained"
             sx={{ backgroundColor: '#4caf50', color: '#fff' }}
             onClick={() => {
-              onUpload('Tshirt');
+              onUpload('Csirt');
               handleClose();
             }}
           >
-            Tshirt
+            Csirt
           </Button>
           <Button
             variant="contained"
             sx={{ backgroundColor: '#4caf50', color: '#fff' }}
             onClick={() => {
-              onUpload('Soup');
+              onUpload('Cso');
               handleClose();
             }}
           >
-            Soup
+            Cso
           </Button>
         </Box>
       </Popover>

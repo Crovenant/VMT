@@ -28,7 +28,7 @@ import DetailModal from '../DisplayData/Widgets/DetailModal';
 import FullWidthRenderer from './DisplayTable/Renderers/FullWidthRenderer';
 
 /* ===== tipos ===== */
-type ViewType = 'Tshirt' | 'Soup';
+type ViewType = 'Csirt' | 'Cso';
 const LS_COLUMN_STATE = (v: ViewType) => `displayData.columnState.${v}`;
 
 export default function DisplayTable({

@@ -1,4 +1,4 @@
-export type ViewType = 'Tshirt' | 'Soup';
+export type ViewType = 'Csirt' | 'Cso';
 
 export type ViewSchema = {
   listUrl: string;          // GET (cargar tabla)
@@ -9,7 +9,7 @@ export type ViewSchema = {
 };
 
 export const VIEW_SCHEMAS: Record<ViewType, ViewSchema> = {
-  Tshirt: {
+  Csirt: {
     listUrl: 'http://localhost:8000/risk-data/',
     uploadUrl: 'http://localhost:8000/upload_data/',
     saveUrl: 'http://localhost:8000/save_selection/',
@@ -23,11 +23,11 @@ export const VIEW_SCHEMAS: Record<ViewType, ViewSchema> = {
       'Creado':'creado','Actualizado':'actualizado','Due date':'dueDate',
     },
   },
-  // placeholder hasta que fijemos contrato SOUP
-  Soup: {
-    listUrl: 'http://localhost:8000/soup/risk-data/',
-    uploadUrl: 'http://localhost:8000/soup/upload_data/',
-    saveUrl: 'http://localhost:8000/soup/save_selection/',
+  // placeholder hasta que fijemos contrato Cso
+  Cso: {
+    listUrl: 'http://localhost:8000/Cso/risk-data/',
+    uploadUrl: 'http://localhost:8000/Cso/upload_data/',
+    saveUrl: 'http://localhost:8000/Cso/save_selection/',
     visibleColumns: [
       'Número','Estado','Resumen','Asignado a','Creado','Actualizado','Due date',
     ],

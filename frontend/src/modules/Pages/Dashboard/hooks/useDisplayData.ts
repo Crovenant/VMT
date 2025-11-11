@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { Item } from '../../../Types/item';
-// ⬇️ Importamos el mapa de columnas para poder rellenar TODOS los campos de SOUP
-import { SOUP_MAP } from '../Components/DisplayData/DisplayTable/constants/columnMaps';
+// ⬇️ Importamos el mapa de columnas para poder rellenar TODOS los campos de Cso
+import { CSO_MAP } from '../Components/DisplayData/DisplayTable/constants/columnMaps';
 
-type ViewType = 'Tshirt' | 'Soup';
+type ViewType = 'Csirt' | 'Cso';
 
 /* ======================================================================
    Helpers
@@ -42,8 +42,8 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
 /* ======================================================================
    Mapeadores
 ====================================================================== */
-/** Mapea una fila SOUP a tu modelo Item (genérico: rellena TODO el SOUP_MAP) */
-function soupToItem(row: Record<string, unknown>): Item {
+/** Mapea una fila Cso a tu modelo Item (genérico: rellena TODO el CSO_MAP) */
+function CsoToItem(row: Record<string, unknown>): Item {
   const numero = pick(row, ['Vulnerability ID', 'ID Test', 'VUL Code', 'VIT Code']);
   const resumen = pick(row, ['Vulnerability Title', 'Threat Description', 'Details']);
   const estado = pick(row, ['State', 'State CSO']);
@@ -92,9 +92,9 @@ function soupToItem(row: Record<string, unknown>): Item {
     vitCode: String(row['VIT Code'] ?? ''),
   };
 
-  // 2) Relleno genérico: para CADA encabezado de SOUP_MAP, si existe en la fila
+  // 2) Relleno genérico: para CADA encabezado de CSO_MAP, si existe en la fila
   //    lo copio a la clave de Item correspondiente, sin machacar si ya hay valor.
-  for (const [header, itemKey] of Object.entries(SOUP_MAP)) {
+  for (const [header, itemKey] of Object.entries(CSO_MAP)) {
     const raw = row[header as keyof typeof row];
     if (raw === undefined || raw === null) continue;
 
@@ -110,8 +110,8 @@ function soupToItem(row: Record<string, unknown>): Item {
   return base as Item;
 }
 
-/** TSHIRT ya viene casi alineado con Item; normalizamos y rellenamos huecos */
-function tshirtToItem(row: Record<string, unknown>): Item {
+/** Csirt ya viene casi alineado con Item; normalizamos y rellenamos huecos */
+function CsirtToItem(row: Record<string, unknown>): Item {
   const prioridad = normalizePriority(row['prioridad']);
   const creado = String(row['creado'] ?? '');
   const actualizado = String(row['actualizado'] ?? '');
@@ -155,7 +155,7 @@ export default function useDisplayData({
   priorityFilter,
   selectedItemId,
   customFlagFilter,
-  viewType,         // 'Tshirt' | 'Soup'
+  viewType,         // 'Csirt' | 'Cso'
   listUrl,          // endpoint según vista
 }: {
   refreshKey: number;
@@ -190,7 +190,7 @@ export default function useDisplayData({
 
         const mapped: Item[] = array.map((entry) => {
           const row = entry as Record<string, unknown>;
-          return viewType === 'Soup' ? soupToItem(row) : tshirtToItem(row);
+          return viewType === 'Cso' ? CsoToItem(row) : CsirtToItem(row);
         });
 
         // flags followUp / soonDue

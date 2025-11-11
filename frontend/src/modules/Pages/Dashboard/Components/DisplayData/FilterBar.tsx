@@ -4,7 +4,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
-type ViewKind = 'Tshirt' | 'Soup' | 'VulToVit';
+type ViewKind = 'Csirt' | 'Cso' | 'VulToVit';
 
 type Props = {
   handleDownload: () => void;
@@ -97,9 +97,9 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
             color="primary"
             size="small"
             sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
-            onClick={() => handleKeyActivate('Tshirt')}
+            onClick={() => handleKeyActivate('Csirt')}
           >
-            Upload TSHIRT
+            Upload Csirt
           </Button>
 
           <Button
@@ -107,9 +107,9 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
             color="secondary"
             size="small"
             sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
-            onClick={() => handleKeyActivate('Soup')}
+            onClick={() => handleKeyActivate('Cso')}
           >
-            Upload SOUP
+            Upload Cso
           </Button>
 
           <Button

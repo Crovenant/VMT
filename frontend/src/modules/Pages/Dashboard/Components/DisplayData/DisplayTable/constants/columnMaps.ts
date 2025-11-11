@@ -4,16 +4,16 @@ import type { Item } from '../../../../../../Types/item';
  * Column header → Item key, per view.
  * IMPORTANT:
  *  - No bilingual duplicates here (to avoid double options in the side panel).
- *  - TSHIRT uses Spanish headers only.
- *  - SOUP uses English headers only.
- *  - The ES/EN normalization of values is handled in hooks (e.g., soupToItem),
+ *  - Csirt uses Spanish headers only.
+ *  - Cso uses English headers only.
+ *  - The ES/EN normalization of values is handled in hooks (e.g., CsoToItem),
  *    not by adding duplicate headers here.
  */
 
 /* ===========================
-   TSHIRT (Spanish UI labels)
+   Csirt (Spanish UI labels)
 =========================== */
-export const TSHIRT_MAP: Record<string, keyof Item> = {
+export const CSIRT_MAP: Record<string, keyof Item> = {
   // Identificación
   'Número': 'numero',
   'ID externo': 'idExterno',
@@ -46,9 +46,9 @@ export const TSHIRT_MAP: Record<string, keyof Item> = {
 };
 
 /* ===========================
-   SOUP (English UI labels)
+   Cso (English UI labels)
 =========================== */
-export const SOUP_MAP: Record<string, keyof Item> = {
+export const CSO_MAP: Record<string, keyof Item> = {
   // Identification / titles
   'Vulnerability ID': 'vulnerabilityId',
   'Vulnerability Title': 'vulnerabilityTitle',

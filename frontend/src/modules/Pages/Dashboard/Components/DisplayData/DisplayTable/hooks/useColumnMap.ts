@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { TSHIRT_MAP, SOUP_MAP } from '../constants/columnMaps';
+import { CSIRT_MAP, CSO_MAP } from '../constants/columnMaps';
 
-type ViewType = 'Tshirt' | 'Soup';
+type ViewType = 'Csirt' | 'Cso';
 
 export function useColumnMap(viewType: ViewType) {
   return useMemo(() => {
-    if (viewType === 'Soup') {
-      return { map: SOUP_MAP, allColumns: Object.keys(SOUP_MAP) };
+    if (viewType === 'Cso') {
+      return { map: CSO_MAP, allColumns: Object.keys(CSO_MAP) };
     }
-    return { map: TSHIRT_MAP, allColumns: Object.keys(TSHIRT_MAP) };
+    return { map: CSIRT_MAP, allColumns: Object.keys(CSIRT_MAP) };
   }, [viewType]);
 }
