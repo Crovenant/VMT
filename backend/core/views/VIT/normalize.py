@@ -1,9 +1,9 @@
-# backend/core/views/tshirt/normalize.py
+# backend/core/views/VIT/normalize.py
 import pandas as pd
 
 def normalize_headers(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Normaliza cabeceras del Excel a las claves usadas por el backend.
+    Normaliza cabeceras del Excel a las claves usadas por el backend VIT.
     Convierte 'puntuacionRiesgo' a numérico y fechas a str.
     """
     header_mapping = {
@@ -31,7 +31,7 @@ def normalize_headers(df: pd.DataFrame) -> pd.DataFrame:
     if "puntuacionRiesgo" in df.columns:
         df["puntuacionRiesgo"] = pd.to_numeric(df["puntuacionRiesgo"], errors="coerce")
 
-    # Fechas a string (mantén tu formato actual)
+    # Fechas a string (conserva formato actual)
     for col in ["creado", "actualizado"]:
         if col in df.columns:
             df[col] = df[col].astype(str)

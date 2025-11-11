@@ -1,16 +1,17 @@
-// src/modules/Main/Components/DisplayData/LatchWidget.tsx
 import { Box } from '@mui/material';
 
+type ViewType = 'VIT' | 'VUL';
+
 type Props = {
-  viewType: 'Csirt' | 'Cso';
-  onSwitchView: (type: 'Csirt' | 'Cso') => void;
+  viewType: ViewType;
+  onSwitchView: (type: ViewType) => void;
 };
 
 export default function LatchWidget({ viewType, onSwitchView }: Props) {
-  const isCsirt = viewType === 'Csirt';
+  const isVIT = viewType === 'VIT';
 
   const handleToggle = () => {
-    onSwitchView(isCsirt ? 'Cso' : 'Csirt');
+    onSwitchView(isVIT ? 'VUL' : 'VIT');
   };
 
   return (
@@ -27,15 +28,16 @@ export default function LatchWidget({ viewType, onSwitchView }: Props) {
         fontSize: '11px',
         fontWeight: 500,
         overflow: 'hidden',
+        userSelect: 'none',
       }}
       onClick={handleToggle}
     >
       {/* Texto */}
-      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: isCsirt ? '#fff' : '#333' }}>
-        Csirt
+      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: isVIT ? '#fff' : '#333' }}>
+        VIT
       </Box>
-      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: !isCsirt ? '#fff' : '#333' }}>
-        Cso
+      <Box sx={{ width: '50%', textAlign: 'center', zIndex: 1, color: !isVIT ? '#fff' : '#333' }}>
+        VUL
       </Box>
 
       {/* Indicador */}
@@ -43,12 +45,12 @@ export default function LatchWidget({ viewType, onSwitchView }: Props) {
         sx={{
           position: 'absolute',
           top: 2,
-          left: isCsirt ? 2 : 'calc(50% + 2px)',
-          width: 'calc(55% - 3px)',
+          left: isVIT ? 2 : 'calc(50% + 2px)',
+          width: 'calc(50% - 4px)',
           height: '24px',
-          backgroundColor: '#008cffff', // Verde oscuro
-          borderRadius: 'px',
-          transition: 'left 0.3s ease',
+          backgroundColor: '#1976d2',
+          borderRadius: '12px',
+          transition: 'left 0.25s ease',
           zIndex: 0,
         }}
       />

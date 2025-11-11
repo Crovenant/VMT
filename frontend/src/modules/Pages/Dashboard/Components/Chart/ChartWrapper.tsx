@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/Chart/ChartWrapper.tsx
 import Title from '../Title/Title';
 import { ResponsiveContainer } from 'recharts';
 import ChartBar from './ChartBar';
@@ -19,9 +20,9 @@ export default function ChartWrapper({
     Bajo: '#388e3c',
   };
 
-  const chartData = ['Crítico', 'Alto', 'Medio', 'Bajo'].map(prioridad => ({
+  const chartData = ['Crítico', 'Alto', 'Medio', 'Bajo'].map((prioridad) => ({
     prioridad,
-    cantidad: items.filter(i => i.prioridad === prioridad).length,
+    cantidad: items.filter((i) => i.prioridad === prioridad).length,
     color: priorityColors[prioridad],
   }));
 

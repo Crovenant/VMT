@@ -27,8 +27,7 @@ import { useGridUtils } from './DisplayTable/GridComponents/hooks/useGridUtils';
 import DetailModal from '../DisplayData/Widgets/DetailModal';
 import FullWidthRenderer from './DisplayTable/Renderers/FullWidthRenderer';
 
-/* ===== tipos ===== */
-type ViewType = 'Csirt' | 'Cso';
+type ViewType = 'VIT' | 'VUL';
 const LS_COLUMN_STATE = (v: ViewType) => `displayData.columnState.${v}`;
 
 export default function DisplayTable({
@@ -37,8 +36,7 @@ export default function DisplayTable({
   setVisibleColumns,
   showFilterPanel,
   viewType,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setShowUploadModal: _setShowUploadModal, // opcional (no usado aún)
+  setShowUploadModal: _setShowUploadModal,
 }: {
   rows: Item[];
   visibleColumns: string[];
@@ -59,6 +57,7 @@ export default function DisplayTable({
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
+
   const toggleExpand = useCallback((id: string) => {
     setExpanded((old) => {
       const next = new Set(old);
@@ -106,38 +105,28 @@ export default function DisplayTable({
   const eyeColDef = useMemo(() => createEyeColDef(handleOpenModal), [handleOpenModal]);
   const columnDefs: ColDef<GridRow>[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
-    [selectionColDef, eyeColDef, toggleColDef, businessColDefs],
+    [eyeColDef, toggleColDef, businessColDefs],
   );
 
-  // ===== Estilos de fila (amarillo suave, sin barra) =====
   const getRowStyle = useCallback(
     (p: RowClassParams<GridRow, any>): RowStyle | undefined => {
       const data = p?.data as DisplayRow | undefined;
-
-      // Fila de detalle
       if (isDetailRow(data)) {
         const st: RowStyle = {};
         st.backgroundColor = '#f5f6f8';
         return st;
       }
-
       const it = (data as unknown as Item) ?? ({} as Item);
-
-      // Amarillo suave para "Crítico" o followUp
       if (it.prioridad === 'Crítico' || (it as any).followUp) {
         const st: RowStyle = {};
         st.backgroundColor = '#fff8e1';
         return st;
       }
-
       return undefined;
     },
     [],
   );
 
-  /* ============================
-     Persistencia: orden y ancho
-  ============================ */
   const persistColumnState = useCallback(() => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return;
@@ -156,7 +145,7 @@ export default function DisplayTable({
         colApi.applyColumnState({ state, applyOrder: true });
       }
     } catch {
-      /* estado corrupto: ignorar */
+      /* ignore */
     }
   }, [viewType]);
 

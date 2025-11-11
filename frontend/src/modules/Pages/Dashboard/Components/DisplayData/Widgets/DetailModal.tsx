@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/Widgets/DetailModal.tsx
 import { useMemo, useState } from 'react';
 import {
   Dialog,
@@ -14,27 +15,11 @@ import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
 
 import type { Item } from '../../../../../Types/item';
-import { CSIRT_MAP, CSO_MAP } from '../DisplayTable/constants/columnMaps';
+import { VIT_MAP, VUL_MAP } from '../DisplayTable/constants/columnMaps';
 import DetailFilterPanel from './DetailFilterPanel';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-
-const csirtFields = [
-  'Número', 'Estado', 'Resumen', 'Breve descripción', 'Elemento de configuración',
-  'Prioridad', 'Puntuación de riesgo', 'Grupo de asignación', 'Asignado a',
-  'Creado', 'Actualizado', 'Due date', 'Sites', 'Solución'
-];
-
-const csoFields = [
-  'Severity', 'State', 'Category ASVS', 'ASVS ID', 'OWASP TOP 10', 'PCI Status',
-  'Threat Description', 'Details', 'Target', 'Detection Date', 'Deadline',
-  'Days Open', 'Countermeasure', 'Environment', 'References / CWE', 'CVSS Base',
-  'CVSS Overall', 'CVSS Rescored', 'EPSS', 'Easy of Exploit', 'CVSS Version',
-  'CVSS Vector', 'Resolution Date', 'IT Owner', 'SW Provider', 'Critical Case',
-  'Fecha comunicación SWF', 'Certificación pedida', 'Fecha mitigacion',
-  'Fecha certificación'
-];
 
 type Props = {
   open: boolean;
@@ -43,13 +28,16 @@ type Props = {
 };
 
 export default function DetailModal({ open, onClose, item }: Props) {
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [selectedCsirtFields, setSelectedCsirtFields] = useState(csirtFields);
-  const [selectedCsoFields, setSelectedCsoFields] = useState(csoFields);
+  const vitFields = useMemo(() => Object.keys(VIT_MAP), []);
+  const vulFields = useMemo(() => Object.keys(VUL_MAP), []);
 
-  const CsoColumnDefs = useMemo<ColDef[]>(
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [selectedVitFields, setSelectedVitFields] = useState<string[]>(vitFields);
+  const [selectedVulFields, setSelectedVulFields] = useState<string[]>(vulFields);
+
+  const vulColumnDefs = useMemo<ColDef[]>(
     () =>
-      Object.keys(CSO_MAP).map((header) => ({
+      Object.keys(VUL_MAP).map((header) => ({
         headerName: header,
         field: header,
         resizable: true,
@@ -64,17 +52,17 @@ export default function DetailModal({ open, onClose, item }: Props) {
 
   const relatedRows: Record<string, unknown>[] = useMemo(() => [], []);
 
-  const CsirtPairs = useMemo(() => {
+  const vitPairs = useMemo(() => {
     if (!item) return [];
-    return Object.entries(CSIRT_MAP).map(([label, key]) => {
+    return Object.entries(VIT_MAP).map(([label, key]) => {
       const value = (item as any)[key];
       return { label, value: value ?? '' };
     });
   }, [item]);
 
-  const filteredCsirtPairs = CsirtPairs.filter(p => selectedCsirtFields.includes(p.label));
-  const filteredCsoColumnDefs = CsoColumnDefs.filter(col =>
-    selectedCsoFields.includes(col.headerName ?? '')
+  const filteredVitPairs = vitPairs.filter((p) => selectedVitFields.includes(p.label));
+  const filteredVulColumnDefs = vulColumnDefs.filter((col) =>
+    selectedVulFields.includes(col.headerName ?? ''),
   );
 
   const comments: string[] = (item as Item & { comments?: string[] })?.comments ?? [];
@@ -97,19 +85,17 @@ export default function DetailModal({ open, onClose, item }: Props) {
             height: '100%',
           }}
         >
-          {/* Panel lateral */}
           <Box sx={{ gridRow: '1 / span 2', bgcolor: '#f5f6f8' }}>
             <DetailFilterPanel
               isOpen={isPanelOpen}
               setIsOpen={setIsPanelOpen}
-              selectedCsirtFields={selectedCsirtFields}
-              setSelectedCsirtFields={setSelectedCsirtFields}
-              selectedCsoFields={selectedCsoFields}
-              setSelectedCsoFields={setSelectedCsoFields}
+              selectedCsirtFields={selectedVitFields}
+              setSelectedCsirtFields={setSelectedVitFields}
+              selectedCsoFields={selectedVulFields}
+              setSelectedCsoFields={setSelectedVulFields}
             />
           </Box>
 
-          {/* Título */}
           <Box
             sx={{
               gridColumn: 2,
@@ -121,22 +107,20 @@ export default function DetailModal({ open, onClose, item }: Props) {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              Vul item
+              VIT item
             </Typography>
             <IconButton aria-label="close" onClick={onClose} size="small">
               <CloseIcon />
             </IconButton>
           </Box>
 
-          {/* Contenido principal */}
           <Box sx={{ gridColumn: 2, p: 2, overflowY: 'auto' }}>
-            {/* Bloque Csirt */}
             <Box sx={{ mb: 2 }}>
               <Grid container spacing={1.5}>
-                {filteredCsirtPairs.map(({ label, value }) => (
+                {filteredVitPairs.map(({ label, value }) => (
                   <Grid key={label} item xs={12} sm={6}>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {label}:
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                      {label}
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                       {String(value)}
@@ -148,11 +132,10 @@ export default function DetailModal({ open, onClose, item }: Props) {
 
             <Divider sx={{ my: 2 }} />
 
-            {/* Bloque fijo Comments */}
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                  Comments:
+                  Comments
                 </Typography>
                 <Button variant="text" size="small" sx={{ fontWeight: 700 }}>
                   ADD COMMENT
@@ -183,19 +166,10 @@ export default function DetailModal({ open, onClose, item }: Props) {
 
             <Divider sx={{ my: 2 }} />
 
-            {/* Subtítulo sección Cso */}
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontWeight: 700,
-                color: 'primary.main',
-                mb: 1.5,
-              }}
-            >
-              Vit item
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main', mb: 1.5 }}>
+              VUL columns
             </Typography>
 
-            {/* Grid Cso */}
             <Box
               sx={{
                 borderRadius: 1,
@@ -207,7 +181,7 @@ export default function DetailModal({ open, onClose, item }: Props) {
               <Box className="ag-theme-quartz" sx={{ height: 300, width: '100%' }}>
                 <AgGridReact
                   rowData={relatedRows}
-                  columnDefs={filteredCsoColumnDefs}
+                  columnDefs={filteredVulColumnDefs}
                   suppressMovableColumns={false}
                   animateRows
                   rowSelection="multiple"

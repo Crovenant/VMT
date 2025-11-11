@@ -1,3 +1,4 @@
+// src/components/TitleWrapper.tsx
 import React from 'react';
 import Typography from '@mui/material/Typography';
 import type { SxProps, Theme } from '@mui/material/styles';
@@ -9,12 +10,7 @@ interface TitleProps {
 
 export default function TitleWrapper({ children, sx }: TitleProps) {
   return (
-    <Typography
-      component="h2"
-      variant="h6"
-      color="primary"
-      sx={{ margin: 0, ...sx }}
-    >
+    <Typography component="h2" variant="h6" color="primary" sx={{ margin: 0, ...sx }}>
       {children}
     </Typography>
   );

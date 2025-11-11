@@ -1,13 +1,9 @@
+// src/modules/Pages/Dashboard/hooks/useDisplayData.ts
 import { useEffect, useState } from 'react';
 import type { Item } from '../../../Types/item';
-// ⬇️ Importamos el mapa de columnas para poder rellenar TODOS los campos de Cso
-import { CSO_MAP } from '../Components/DisplayData/DisplayTable/constants/columnMaps';
 
-type ViewType = 'Csirt' | 'Cso';
+type ViewType = 'VIT' | 'VUL';
 
-/* ======================================================================
-   Helpers
-====================================================================== */
 function norm(s: unknown) {
   return String(s ?? '')
     .normalize('NFD')
@@ -39,11 +35,7 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
   return fallback;
 }
 
-/* ======================================================================
-   Mapeadores
-====================================================================== */
-/** Mapea una fila Cso a tu modelo Item (genérico: rellena TODO el CSO_MAP) */
-function CsoToItem(row: Record<string, unknown>): Item {
+function mapVUL(row: Record<string, unknown>): Item {
   const numero = pick(row, ['Vulnerability ID', 'ID Test', 'VUL Code', 'VIT Code']);
   const resumen = pick(row, ['Vulnerability Title', 'Threat Description', 'Details']);
   const estado = pick(row, ['State', 'State CSO']);
@@ -62,8 +54,7 @@ function CsoToItem(row: Record<string, unknown>): Item {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
-  // 1) Base mínimo para que el UI funcione
-  const base: Partial<Item> = {
+  return {
     id: String(id),
     nombre: resumen,
     numero: String(numero),
@@ -83,35 +74,16 @@ function CsoToItem(row: Record<string, unknown>): Item {
     creado: String(creado),
     actualizado: String(actualizado),
     dueDate,
-
-    // Campos que seguro usas como mínimos por defecto
+    // claves habituales que usáis en columnas VUL
     vulnerabilityId: String(row['Vulnerability ID'] ?? ''),
     state: String(row['State'] ?? row['State CSO'] ?? ''),
     severity: String(row['Severity'] ?? ''),
     vulCode: String(row['VUL Code'] ?? ''),
     vitCode: String(row['VIT Code'] ?? ''),
-  };
-
-  // 2) Relleno genérico: para CADA encabezado de CSO_MAP, si existe en la fila
-  //    lo copio a la clave de Item correspondiente, sin machacar si ya hay valor.
-  for (const [header, itemKey] of Object.entries(CSO_MAP)) {
-    const raw = row[header as keyof typeof row];
-    if (raw === undefined || raw === null) continue;
-
-    const key = itemKey as keyof Item;
-    const current = (base as any)[key];
-    const next = String(raw);
-
-    if (current === undefined || current === null || String(current) === '') {
-      (base as any)[key] = next;
-    }
-  }
-
-  return base as Item;
+  } as Item;
 }
 
-/** Csirt ya viene casi alineado con Item; normalizamos y rellenamos huecos */
-function CsirtToItem(row: Record<string, unknown>): Item {
+function mapVIT(row: Record<string, unknown>): Item {
   const prioridad = normalizePriority(row['prioridad']);
   const creado = String(row['creado'] ?? '');
   const actualizado = String(row['actualizado'] ?? '');
@@ -147,16 +119,13 @@ function CsirtToItem(row: Record<string, unknown>): Item {
   } as Item;
 }
 
-/* ======================================================================
-   Hook principal
-====================================================================== */
 export default function useDisplayData({
   refreshKey,
   priorityFilter,
   selectedItemId,
   customFlagFilter,
-  viewType,         // 'Csirt' | 'Cso'
-  listUrl,          // endpoint según vista
+  viewType, // 'VIT' | 'VUL'
+  listUrl,
 }: {
   refreshKey: number;
   priorityFilter?: string | null;
@@ -165,20 +134,17 @@ export default function useDisplayData({
   viewType: ViewType;
   listUrl: string;
 }) {
-  // deja el panel visible por defecto (si lo quieres oculto, pon false)
   const [showFilterPanel, setShowFilterPanel] = useState<boolean>(true);
   const [rows, setRows] = useState<Item[]>([]);
 
   useEffect(() => {
     const ctrl = new AbortController();
-
     (async () => {
       try {
         const res = await fetch(listUrl, { signal: ctrl.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = (await res.json()) as unknown;
 
-        // soporta tanto [] como {data:[...]} o {results:[...]}
         const array: unknown[] =
           Array.isArray(raw)
             ? raw
@@ -190,10 +156,9 @@ export default function useDisplayData({
 
         const mapped: Item[] = array.map((entry) => {
           const row = entry as Record<string, unknown>;
-          return viewType === 'Cso' ? CsoToItem(row) : CsirtToItem(row);
+          return viewType === 'VUL' ? mapVUL(row) : mapVIT(row);
         });
 
-        // flags followUp / soonDue
         const msPerDay = 1000 * 60 * 60 * 24;
         const now = new Date();
         const horizonDaysByPriority: Record<Item['prioridad'], number> = {
@@ -204,13 +169,11 @@ export default function useDisplayData({
         };
 
         const withFlags = mapped.map((it) => {
-          // 1) dueDate manda si es válido
           const due = it.dueDate ? new Date(it.dueDate) : null;
           if (due && !Number.isNaN(due.getTime())) {
             const days = Math.floor((due.getTime() - now.getTime()) / msPerDay);
             return { ...it, followUp: days < 0, soonDue: days >= 0 && days <= 7 };
           }
-          // 2) si no hay dueDate, derivar desde fechaCreacion + prioridad
           const created = new Date(it.fechaCreacion);
           if (Number.isNaN(created.getTime())) return { ...it, followUp: false, soonDue: false };
           const horizonDays = horizonDaysByPriority[it.prioridad] ?? 365;
@@ -219,7 +182,6 @@ export default function useDisplayData({
           return { ...it, followUp: days < 0, soonDue: days >= 0 && days <= 7 };
         });
 
-        // filtros opcionales (en el mismo orden que usabas)
         let filtered = withFlags;
         if (selectedItemId) {
           const needle = String(selectedItemId);
@@ -240,11 +202,9 @@ export default function useDisplayData({
         }
       }
     })();
-
     return () => ctrl.abort();
   }, [refreshKey, priorityFilter, selectedItemId, customFlagFilter, viewType, listUrl]);
 
-  // Mantengo API previa por compatibilidad con tu FilterBar/Wrapper
   const handleDownload = () => {
     if (typeof window.exportFilteredDataToExcel === 'function') {
       window.exportFilteredDataToExcel();

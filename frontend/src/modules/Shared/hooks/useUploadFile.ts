@@ -1,14 +1,14 @@
-// src/modules/hooks/useUploadFile.ts
+// src/modules/Shared/hooks/useUploadFile.ts
 import { useState } from 'react';
 import { mutate } from 'swr';
 
-export interface Entry { [key: string]: unknown; }
-export interface DuplicatePair { existing: Entry; incoming: Entry; }
+export interface Entry { [key: string]: unknown }
+export interface DuplicatePair { existing: Entry; incoming: Entry }
 
 type Endpoints = {
-  uploadUrl: string;         // endpoint POST para subir Excel
-  saveUrl: string;           // endpoint POST para guardar selección
-  listUrlForMutate?: string; // opcional: invalidar cache SWR
+  uploadUrl: string;         // POST Excel
+  saveUrl: string;           // POST selección final
+  listUrlForMutate?: string; // SWR revalidate
 };
 
 export function useUploadFile(onClose: (success: boolean) => void, endpoints: Endpoints) {
@@ -19,65 +19,108 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
   const [resolverOpen, setResolverOpen] = useState(false);
   const [newEntries, setNewEntries] = useState<Entry[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<('existing' | 'incoming')[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const safeMutate = () => { if (listUrlForMutate) mutate(listUrlForMutate); };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+
+    // Permitir re-subir el mismo archivo
+    if (event.target) event.target.value = '';
+
     if (!file) {
       setMensaje('❌ No se seleccionó ningún archivo.');
       onClose(false);
       return;
     }
 
+    if (loading) return;
+    setLoading(true);
+
     const formData = new FormData();
     formData.append('file', file);
 
     try {
       const response = await fetch(uploadUrl, { method: 'POST', body: formData });
-      const result = await response.json();
 
-      if (result.duplicates && result.duplicates.length > 0) {
-        setDuplicates(result.duplicates);
-        setNewEntries(result.new || []);
+      // Acepta 200/201 y maneja payloads vacíos
+      let result: any = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        result = await response.json();
+      } else if (response.ok) {
+        result = {};
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      if (!response.ok) {
+        const msg = result?.error || result?.message || `Error HTTP ${response.status}`;
+        throw new Error(msg);
+      }
+
+      // Flujo con duplicados
+      if (Array.isArray(result?.duplicates) && result.duplicates.length > 0) {
+        setDuplicates(result.duplicates as DuplicatePair[]);
+        setNewEntries(Array.isArray(result?.new) ? (result.new as Entry[]) : []);
         setSelectedOptions(Array(result.duplicates.length).fill('incoming'));
         setResolverOpen(true);
         setMensaje('⚠️ Se detectaron duplicados. Elige qué líneas guardar.');
       } else {
-        await guardarFinal(result.new || []);
-        setMensaje('✅ Archivo subido correctamente sin duplicados.');
+        // Sin duplicados: enviamos directamente lo nuevo (o nada)
+        await guardarFinal(Array.isArray(result?.new) ? (result.new as Entry[]) : []);
+        setMensaje('✅ Archivo subido correctamente.');
         onClose(true);
-        if (listUrlForMutate) mutate(listUrlForMutate);
+        safeMutate();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al subir el archivo:', error);
-      setMensaje('❌ Error al subir el archivo');
+      setMensaje(`❌ Error al subir el archivo: ${error?.message ?? 'desconocido'}`);
       onClose(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   const guardarFinal = async (finalEntries: Entry[]) => {
-    try {
-      await fetch(saveUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entries: finalEntries }),
-      });
-    } catch (error) {
-      console.error('Error al guardar selección:', error);
+    const res = await fetch(saveUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: finalEntries }),
+    });
+
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try {
+        const j = await res.json();
+        msg = j?.error || j?.message || msg;
+      } catch { /* ignore */ }
+      throw new Error(`Error al guardar selección: ${msg}`);
     }
   };
 
   const handleConfirmDuplicates = async () => {
-    const seleccionadas = selectedOptions.map((choice, idx) =>
-      choice === 'incoming' ? duplicates[idx].incoming : duplicates[idx].existing
-    );
+    if (loading) return;
+    setLoading(true);
+    try {
+      const seleccionadas = selectedOptions.map((choice, idx) =>
+        choice === 'incoming' ? duplicates[idx].incoming : duplicates[idx].existing
+      );
+      const finalEntries = [...newEntries, ...seleccionadas];
+      await guardarFinal(finalEntries);
 
-    const finalEntries = [...newEntries, ...seleccionadas];
-    await guardarFinal(finalEntries);
-
-    setResolverOpen(false);
-    setMensaje('✅ Selección guardada correctamente.');
-    onClose(true);
-    if (listUrlForMutate) mutate(listUrlForMutate);
+      setResolverOpen(false);
+      setMensaje('✅ Selección guardada correctamente.');
+      onClose(true);
+      safeMutate();
+    } catch (e: any) {
+      console.error(e);
+      setMensaje(`❌ ${e?.message ?? 'Error al guardar selección'}`);
+      onClose(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
@@ -85,6 +128,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     resolverOpen,
     duplicates,
     selectedOptions,
+    loading,
     setSelectedOptions,
     handleFileUpload,
     handleConfirmDuplicates,

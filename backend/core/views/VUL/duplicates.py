@@ -1,18 +1,16 @@
-# backend/core/views/tshirt/duplicates.py
-from typing import List, Dict, Tuple
-import unicodedata
+# backend/core/views/VUL/duplicates.py
+from typing import List, Dict, Tuple, Any
 
-def _norm(s: str) -> str:
-    if s is None:
-        return ""
-    s = str(s).strip().lower()
-    # Quita acentos (NFD → sin marcas diacríticas)
-    s = "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
-    return s
+def _norm(val: Any) -> str:
+    return ("" if val is None else str(val)).strip().lower()
 
 def _key(item: Dict) -> Tuple[str, str]:
-    """Clave compuesta normalizada (numero, idExterno)."""
-    return (_norm(item.get("numero", "")), _norm(item.get("idExterno", "")))
+    """
+    Clave compuesta estable para VUL:
+    - Vulnerability ID
+    - VUL Code
+    """
+    return (_norm(item.get("Vulnerability ID", "")), _norm(item.get("VUL Code", "")))
 
 def build_lookup(existing_data: List[Dict]) -> Dict[Tuple[str, str], Dict]:
     """Índice rápido por clave compuesta normalizada."""
@@ -26,7 +24,7 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
     Devuelve (duplicates, unique_new_entries)
 
     - duplicates: lista de dicts {"existing": <fila_json>, "incoming": <fila_excel>}
-      cuando hay coincidencia exacta por (numero, idExterno) normalizados.
+      cuando hay coincidencia exacta por (Vulnerability ID, VUL Code).
 
     - unique_new_entries: filas del Excel que NO tienen match por la clave compuesta.
     """

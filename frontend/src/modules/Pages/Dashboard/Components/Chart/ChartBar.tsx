@@ -1,3 +1,4 @@
+// src/modules/Main/Components/Chart/ChartBar.tsx
 import {
   BarChart,
   Bar,
@@ -8,7 +9,12 @@ import {
   Cell,
 } from 'recharts';
 import { useTheme } from '@mui/material/styles';
-import type { ChartData } from '../../hooks/useChart';
+
+export type ChartData = {
+  prioridad: string;
+  cantidad: number;
+  color: string;
+};
 
 export default function ChartBar({
   data,
@@ -24,7 +30,7 @@ export default function ChartBar({
       <BarChart
         data={data}
         margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-        barCategoryGap="3%" // barras más anchas
+        barCategoryGap="3%"
       >
         <XAxis
           dataKey="prioridad"
@@ -32,17 +38,17 @@ export default function ChartBar({
           tick={{ fontSize: 12 }}
         />
         <YAxis
-           width={30} // controla el ancho del eje Y (antes era automático)
-          tickMargin={4} // separación mínima entre ticks y línea
+          width={30}
+          tickMargin={4}
           stroke={theme.palette.text.secondary}
           tick={{ fontSize: 10 }}
         />
         <Tooltip
-          cursor={false} // elimina el fondo gris en hover
+          cursor={false}
           formatter={(value, name) => [`${value}`, name]}
           labelFormatter={(label) => `Priority: ${label}`}
         />
-        <Bar dataKey="cantidad" name="Count" radius={[4, 4, 0, 0] } activeBar={false}>
+        <Bar dataKey="cantidad" name="Count" radius={[4, 4, 0, 0]} activeBar={false}>
           {data.map((entry) => (
             <Cell
               key={entry.prioridad}

@@ -4,7 +4,7 @@ import type { Item } from '../../Types/item';
 
 type ViewType = 'Csirt' | 'Cso';
 
-const DEFAULT_Csirt_LIST = 'http://localhost:8000/risk-data/';
+const DEFAULT_Csirt_LIST = 'http://localhost:8000/vit/risk-data/';
 
 function norm(s: unknown) {
   return String(s ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
@@ -132,11 +132,6 @@ function computeFlags(items: Item[]): Item[] {
 }
 
 /* ---------- HOOK ---------- */
-/**
- * Firma compatible hacia atrás:
- * - listUrl opcional (por defecto Csirt)
- * - viewType opcional (por defecto 'Csirt')
- */
 export default function useItems(
   refreshKey: number,
   listUrl?: string,

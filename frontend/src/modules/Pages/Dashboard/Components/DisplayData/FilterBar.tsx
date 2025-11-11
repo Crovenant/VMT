@@ -1,10 +1,11 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/FilterBar.tsx
 import { useState, useCallback } from 'react';
 import { Box, IconButton, Tooltip, Popover, Button } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
-type ViewKind = 'Csirt' | 'Cso' | 'VulToVit';
+type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT';
 
 type Props = {
   handleDownload: () => void;
@@ -17,7 +18,7 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
   const open = Boolean(anchorEl);
 
   const toggleUploadMenu = useCallback((e?: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(prev => (prev ? null : (e?.currentTarget ?? null)));
+    setAnchorEl((prev) => (prev ? null : (e?.currentTarget ?? null)));
   }, []);
 
   const closeMenu = useCallback(() => setAnchorEl(null), []);
@@ -39,7 +40,6 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
 
   return (
     <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-      {/* Refresh */}
       <Tooltip title="Refresh view">
         <IconButton
           aria-label="Reset view"
@@ -52,7 +52,6 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         </IconButton>
       </Tooltip>
 
-      {/* Download */}
       <Tooltip title="Export to Excel">
         <IconButton
           aria-label="Download Excel"
@@ -65,7 +64,6 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         </IconButton>
       </Tooltip>
 
-      {/* Upload (popover con tres opciones) */}
       <Tooltip title="Upload file">
         <IconButton
           aria-label="Upload file"
@@ -86,20 +84,15 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         transformOrigin={{ vertical: 'center', horizontal: 'left' }}
         keepMounted
       >
-        <Box
-          sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 160 }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') closeMenu();
-          }}
-        >
+        <Box sx={{ p: 1, display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 180 }}>
           <Button
             variant="contained"
             color="primary"
             size="small"
             sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
-            onClick={() => handleKeyActivate('Csirt')}
+            onClick={() => handleKeyActivate('VIT')}
           >
-            Upload Csirt
+            Upload VIT
           </Button>
 
           <Button
@@ -107,9 +100,9 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
             color="secondary"
             size="small"
             sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
-            onClick={() => handleKeyActivate('Cso')}
+            onClick={() => handleKeyActivate('VUL')}
           >
-            Upload Cso
+            Upload VUL
           </Button>
 
           <Button
@@ -117,9 +110,9 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
             color="warning"
             size="small"
             sx={{ fontSize: 11, textTransform: 'uppercase', padding: '4px 8px' }}
-            onClick={() => handleKeyActivate('VulToVit')}
+            onClick={() => handleKeyActivate('VUL_TO_VIT')}
           >
-            Upload VUL TO VIT
+            Upload VUL → VIT
           </Button>
         </Box>
       </Popover>

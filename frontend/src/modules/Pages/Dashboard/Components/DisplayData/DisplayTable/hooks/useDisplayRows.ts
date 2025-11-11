@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/hooks/useDisplayRows.ts
 import type { Item } from '../../../../../../Types/item';
 
 export type DetailRow = { _kind: 'detail'; parentId: string };

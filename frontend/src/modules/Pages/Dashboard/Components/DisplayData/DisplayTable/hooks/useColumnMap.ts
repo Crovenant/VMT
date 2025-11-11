@@ -1,13 +1,14 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/hooks/useColumnMap.ts
 import { useMemo } from 'react';
-import { CSIRT_MAP, CSO_MAP } from '../constants/columnMaps';
+import { VIT_MAP, VUL_MAP } from '../constants/columnMaps';
 
-type ViewType = 'Csirt' | 'Cso';
+type ViewType = 'VIT' | 'VUL';
 
 export function useColumnMap(viewType: ViewType) {
   return useMemo(() => {
-    if (viewType === 'Cso') {
-      return { map: CSO_MAP, allColumns: Object.keys(CSO_MAP) };
+    if (viewType === 'VUL') {
+      return { map: VUL_MAP, allColumns: Object.keys(VUL_MAP) };
     }
-    return { map: CSIRT_MAP, allColumns: Object.keys(CSIRT_MAP) };
+    return { map: VIT_MAP, allColumns: Object.keys(VIT_MAP) };
   }, [viewType]);
 }

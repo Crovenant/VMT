@@ -1,4 +1,4 @@
-# backend/core/views/tshirt/risk_logic.py
+# backend/core/views/VIT/risk_logic.py
 from typing import List, Dict, Tuple
 from collections import OrderedDict
 import unicodedata
@@ -52,7 +52,7 @@ def _parse_date_loose(s: str | None) -> datetime | None:
             return datetime.strptime(s, fmt)
         except Exception:
             pass
-    # Último recurso: sólo año-mes o ISO laxo
+    # Último recurso: ISO laxo
     try:
         return datetime.fromisoformat(s)
     except Exception:

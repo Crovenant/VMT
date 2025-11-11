@@ -10,33 +10,38 @@ import LatchWidget from './Widgets/LatchWidget';
 import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 
-type ViewType = 'Csirt' | 'Cso';
-type ViewKind = 'Csirt' | 'Cso' | 'VulToVit'; // ✅ corregido
+type ViewType = 'VIT' | 'VUL';
+type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT';
 
-const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }> = {
-  Csirt: {
-    listUrl: 'http://localhost:8000/risk-data/',
-    uploadUrl: 'http://localhost:8000/upload_data/',
-    saveUrl: 'http://localhost:8000/save_selection/',
+const SCHEMA: Record<
+  ViewType,
+  { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }
+> = {
+  VIT: {
+    listUrl: 'http://localhost:8000/vit/risk-data/',
+    uploadUrl: 'http://localhost:8000/vit/upload/',
+    saveUrl: 'http://localhost:8000/vit/save-selection/',
     defaultColumns: [
-      'Número','Estado','Resumen','Prioridad','Puntuación de riesgo','Asignado a','Creado','Actualizado','Due date',
+      'Número',
+      'Estado',
+      'Resumen',
+      'Prioridad',
+      'Puntuación de riesgo',
+      'Asignado a',
+      'Creado',
+      'Actualizado',
+      'Due date',
     ],
   },
-  Cso: {
-    listUrl: 'http://localhost:8000/soup/risk-data/',
-    uploadUrl: 'http://localhost:8000/soup/upload_data/',
-    saveUrl: 'http://localhost:8000/soup/save_selection/',
-    defaultColumns: [
-      'Vulnerability ID',
-      'State',
-      'Severity',
-      'VUL Code',
-      'VIT Code',
-    ],
+  VUL: {
+    listUrl: 'http://localhost:8000/vul/risk-data/',
+    uploadUrl: 'http://localhost:8000/vul/upload/',
+    saveUrl: 'http://localhost:8000/vul/save-selection/',
+    defaultColumns: ['Vulnerability ID', 'State', 'Severity', 'VUL Code', 'VIT Code'],
   },
 };
 
-const LS_VIEW = 'displayData.viewType';
+const LS_VIEW = 'displayData.viewType'; // 'VIT' | 'VUL'
 const LS_COLS = (v: ViewType) => `displayData.visibleColumns.${v}`;
 
 declare global {
@@ -62,21 +67,27 @@ export default function DisplayWrapper({
   onResetView,
   setShowUploadModal,
 }: Props) {
+  // Vista persistida (VIT/VUL)
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
-    return saved === 'Cso' || saved === 'Csirt' ? (saved as ViewType) : 'Csirt';
+    return saved === 'VUL' || saved === 'VIT' ? (saved as ViewType) : 'VIT';
   });
   const setViewType = (v: ViewType) => {
     localStorage.setItem(LS_VIEW, v);
     _setViewType(v);
   };
 
+  // Columnas permitidas por vista
   const { allColumns: allowedColumns } = useColumnMap(viewType);
 
+  // Modal Upload
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<ViewKind>(viewType);
-  useEffect(() => { setUploadTarget(viewType); }, [viewType]);
+  useEffect(() => {
+    setUploadTarget(viewType);
+  }, [viewType]);
 
+  // Datos
   const schema = SCHEMA[viewType];
   const { rows, showFilterPanel } = useDisplayData({
     refreshKey,
@@ -87,6 +98,7 @@ export default function DisplayWrapper({
     listUrl: schema.listUrl,
   });
 
+  // Columnas visibles + persistencia
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
   useEffect(() => {
@@ -100,7 +112,9 @@ export default function DisplayWrapper({
           setVisibleColumns(filtered.length ? filtered : SCHEMA[viewType].defaultColumns);
           return;
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
   }, [viewType, allowedColumns]);
@@ -114,6 +128,7 @@ export default function DisplayWrapper({
     );
   }, [viewType, visibleColumns, allowedColumns]);
 
+  // Upload según destino
   const handleUploadByKind = (kind: ViewKind) => {
     setUploadTarget(kind);
     setUploadOpen(true);
@@ -124,26 +139,33 @@ export default function DisplayWrapper({
     setUploadOpen(false);
     setShowUploadModal?.(false);
     if (success) {
-      if (uploadTarget !== viewType && uploadTarget !== 'VulToVit') {
+      if (uploadTarget !== viewType && uploadTarget !== 'VUL_TO_VIT') {
         setViewType(uploadTarget as ViewType);
       }
       onResetView?.();
     }
   };
 
-  const endpoints = SCHEMA[uploadTarget === 'VulToVit' ? 'Cso' : uploadTarget as ViewType]; // ✅ corregido
+  // Endpoints (VUL_TO_VIT usa los de VUL)
+  const endpoints = SCHEMA[uploadTarget === 'VUL_TO_VIT' ? 'VUL' : (uploadTarget as ViewType)];
   const current = SCHEMA[viewType];
 
   return (
     <>
       <Box display="grid" gridTemplateColumns="1fr auto auto" alignItems="center" columnGap={2} mb={0.5}>
-        <Box><Title>{viewType.toUpperCase()} view</Title></Box>
+        <Box>
+          <Title>{`${viewType} view`}</Title>
+        </Box>
+
         <Box display="flex" justifyContent="center">
           <LatchWidget viewType={viewType} onSwitchView={(v: ViewType) => setViewType(v)} />
         </Box>
+
         <Box display="flex" justifyContent="flex-end">
           <FilterBar
-            handleDownload={() => { if (typeof window.exportFilteredDataToExcel === 'function') window.exportFilteredDataToExcel(); }}
+            handleDownload={() => {
+              if (typeof window.exportFilteredDataToExcel === 'function') window.exportFilteredDataToExcel();
+            }}
             onResetView={onResetView}
             onUpload={handleUploadByKind}
           />
