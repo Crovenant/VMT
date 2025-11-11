@@ -201,7 +201,7 @@ export default function DisplayTable({
             defaultColDef={defaultColDef}
             rowSelection="multiple"
             rowMultiSelectWithClick
-            suppressRowClickSelection={false}
+            suppressRowClickSelection={true}
             animateRows
             onGridReady={handleGridReady}
             onFirstDataRendered={handleFirstDataRendered}
