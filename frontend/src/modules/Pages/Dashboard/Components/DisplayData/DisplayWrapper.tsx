@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
-
 import Title from '../Title/Title';
 import FilterBar from './FilterBar';
 import DisplayTable from './DisplayTable';
@@ -11,7 +10,8 @@ import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 
 type ViewType = 'VIT' | 'VUL';
-type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT';
+
+type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT' | 'VUL_CSIRT' | 'VUL_CSO';
 
 const SCHEMA: Record<
   ViewType,
@@ -21,15 +21,15 @@ const SCHEMA: Record<
     listUrl: 'http://localhost:8000/vit/risk-data/',
     uploadUrl: 'http://localhost:8000/vit/upload/',
     saveUrl: 'http://localhost:8000/vit/save-selection/',
+   
     defaultColumns: [
       'Número',
       'Estado',
-      'Resumen',
+      'Breve descripción',
+      'Elemento de configuración',
       'Prioridad',
-      'Puntuación de riesgo',
       'Asignado a',
       'Creado',
-      'Actualizado',
       'Due date',
     ],
   },
@@ -67,7 +67,7 @@ export default function DisplayWrapper({
   onResetView,
   setShowUploadModal,
 }: Props) {
-  // Vista persistida (VIT/VUL)
+
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
     return saved === 'VUL' || saved === 'VIT' ? (saved as ViewType) : 'VIT';
@@ -77,7 +77,6 @@ export default function DisplayWrapper({
     _setViewType(v);
   };
 
-  // Columnas permitidas por vista
   const { allColumns: allowedColumns } = useColumnMap(viewType);
 
   // Modal Upload
@@ -87,7 +86,7 @@ export default function DisplayWrapper({
     setUploadTarget(viewType);
   }, [viewType]);
 
-  // Datos
+
   const schema = SCHEMA[viewType];
   const { rows, showFilterPanel } = useDisplayData({
     refreshKey,
@@ -98,7 +97,7 @@ export default function DisplayWrapper({
     listUrl: schema.listUrl,
   });
 
-  // Columnas visibles + persistencia
+
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
   useEffect(() => {
@@ -128,7 +127,6 @@ export default function DisplayWrapper({
     );
   }, [viewType, visibleColumns, allowedColumns]);
 
-  // Upload según destino
   const handleUploadByKind = (kind: ViewKind) => {
     setUploadTarget(kind);
     setUploadOpen(true);
@@ -139,15 +137,21 @@ export default function DisplayWrapper({
     setUploadOpen(false);
     setShowUploadModal?.(false);
     if (success) {
+   
       if (uploadTarget !== viewType && uploadTarget !== 'VUL_TO_VIT') {
-        setViewType(uploadTarget as ViewType);
+     
+        if (uploadTarget === 'VUL' || uploadTarget === 'VUL_CSIRT' || uploadTarget === 'VUL_CSO') {
+          setViewType('VUL');
+        } else if (uploadTarget === 'VIT') {
+          setViewType('VIT');
+        }
       }
       onResetView?.();
     }
   };
 
-  // Endpoints (VUL_TO_VIT usa los de VUL)
-  const endpoints = SCHEMA[uploadTarget === 'VUL_TO_VIT' ? 'VUL' : (uploadTarget as ViewType)];
+  const endpoints =
+    uploadTarget === 'VIT' ? SCHEMA.VIT : SCHEMA.VUL;
   const current = SCHEMA[viewType];
 
   return (
@@ -167,6 +171,7 @@ export default function DisplayWrapper({
               if (typeof window.exportFilteredDataToExcel === 'function') window.exportFilteredDataToExcel();
             }}
             onResetView={onResetView}
+            // ✅ firma coincide con FilterBar: (type: ViewKind) => void
             onUpload={handleUploadByKind}
           />
         </Box>
