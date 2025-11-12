@@ -1,16 +1,16 @@
 // src/modules/Pages/Dashboard/DashboardWrapper.tsx
 import React from 'react';
 import { Box, CssBaseline, Popover, Typography, Grid } from '@mui/material';
-import useItems from '../../../Shared/hooks/useItems';
 import UploadFileWrapper from '../../../Shared/Components/UploadFileWrapper';
 import DashboardHeader from '../Components/Dashboard/DashboardHeader';
 import DashboardContent from '../Components/Dashboard/DashboardContent';
+import useDisplayData from '../hooks/useDisplayData'; // <-- un nivel más arriba
 
-// Endpoints por defecto para la subida (Csirt view)
-const Csirt_ENDPOINTS = {
-  uploadUrl: 'http://localhost:8000/upload_data/',
-  saveUrl:   'http://localhost:8000/save_selection/',
-  listUrl:   'http://localhost:8000/risk-data/',
+// Endpoints por defecto para la subida (VIT view)
+const VIT_ENDPOINTS = {
+  uploadUrl: 'http://localhost:8000/vit/upload/',
+  saveUrl:   'http://localhost:8000/vit/save-selection/',
+  listUrl:   'http://localhost:8000/vit/risk-data/',
 };
 
 export default function DashboardWrapper() {
@@ -19,7 +19,7 @@ export default function DashboardWrapper() {
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [priorityFilter, setPriorityFilter] = React.useState<string | null>(null);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [selectedItemId, setSelectedItemId] = React.useState<number | null>(null);
+  const [selectedItemId, setSelectedItemId] = React.useState<number | null>(null); // <- número
   const [customFlagFilter, setCustomFlagFilter] = React.useState<'followUp' | 'soonDue' | null>(null);
 
   // 🔁 Auto-refresh cada 30 min
@@ -71,16 +71,18 @@ export default function DashboardWrapper() {
     setRefreshKey((prev) => prev + 1);
   };
 
-  /**
-   * ⬅️ ARREGLO: el segundo parámetro de useItems es la listUrl (string).
-   * Antes: useItems(refreshKey, undefined, Csirt_ENDPOINTS.listUrl)
-   * Ahora: useItems(refreshKey, Csirt_ENDPOINTS.listUrl)
-   * (si el hook tiene un tercer parámetro opcional, lo omitimos)
-   */
-  const { items } = useItems(refreshKey, Csirt_ENDPOINTS.listUrl, 'Csirt');
+  // ✅ Datos para VIT
+  const { rows } = useDisplayData({
+    refreshKey,
+    priorityFilter: null,
+    selectedItemId: null,
+    customFlagFilter: null,
+    viewType: 'VIT',
+    listUrl: VIT_ENDPOINTS.listUrl,
+  });
 
-  const followUpItems = items.filter((item) => item.followUp);
-  const soonDueItems = items.filter((item) => item.soonDue);
+  const followUpItems = rows.filter((item) => item.followUp);
+  const soonDueItems = rows.filter((item) => item.soonDue);
   const followUpCount = followUpItems.length + soonDueItems.length;
 
   let bellColor: 'inherit' | 'default' | 'error' | 'warning' | 'info' | 'success' = 'inherit';
@@ -103,10 +105,10 @@ export default function DashboardWrapper() {
       <DashboardContent
         refreshKey={refreshKey}
         priorityFilter={priorityFilter}
-        selectedItemId={selectedItemId}
+        selectedItemId={selectedItemId}               // <- number | null
         customFlagFilter={customFlagFilter}
         setPriorityFilter={setPriorityFilter}
-        setSelectedItemId={setSelectedItemId}
+        setSelectedItemId={setSelectedItemId}         // <- (val: number | null) => void
         setCustomFlagFilter={setCustomFlagFilter}
         setShowUploadModal={setShowUploadModal}
         onResetView={handleResetView}
@@ -130,9 +132,9 @@ export default function DashboardWrapper() {
           <Box sx={{ backgroundColor: '#fff', padding: 2, borderRadius: 4, boxShadow: 5 }}>
             <UploadFileWrapper
               onClose={handleUploadClose}
-              uploadUrl={Csirt_ENDPOINTS.uploadUrl}
-              saveUrl={Csirt_ENDPOINTS.saveUrl}
-              listUrlForMutate={Csirt_ENDPOINTS.listUrl}
+              uploadUrl={VIT_ENDPOINTS.uploadUrl}
+              saveUrl={VIT_ENDPOINTS.saveUrl}
+              listUrlForMutate={VIT_ENDPOINTS.listUrl}
             />
           </Box>
         </Box>
@@ -188,7 +190,9 @@ export default function DashboardWrapper() {
                       gap: '8px',
                     }}
                     onClick={() => {
-                      setSelectedItemId(Number(item.id));
+                      // Convertimos el id a number para el DashboardContent (contrato actual)
+                      const n = Number(item.id);
+                      setSelectedItemId(Number.isFinite(n) ? n : null);
                       setAnchorEl(null);
                     }}
                   >

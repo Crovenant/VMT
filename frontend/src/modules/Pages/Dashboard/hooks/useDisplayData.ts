@@ -82,40 +82,152 @@ function mapVUL(row: Record<string, unknown>): Item {
   } as Item;
 }
 
+/**
+ * VIT: normaliza entradas a las claves de Item. Minimalista para hoy.
+ * Incluye los 22 campos del Excel (alias "Vulnerability solution" incluido).
+ */
 function mapVIT(row: Record<string, unknown>): Item {
-  const prioridad = normalizePriority(row['prioridad']);
-  const creado = String((row['creado'] as string) ?? '');
-  const actualizado = String((row['actualizado'] as string) ?? '');
-  const rawDue = row['dueDate'];
-  const dueDate = typeof rawDue === 'string' ? rawDue : '';
+  // Identificadores
+  const numero = pick(row, ['numero', 'Número', 'Num', 'number', 'id']);
+  const idExterno = pick(row, ['idExterno', 'ID externo', 'externalId', 'external_id']);
 
+  // Estado / textos
+  const estado = pick(row, ['estado', 'Estado', 'state', 'State']);
+  const resumen = pick(row, ['resumen', 'Resumen', 'summary', 'Summary', 'nombre']);
+
+  const breveDescripcion = pick(row, [
+    'breveDescripcion',
+    'Breve descripción',
+    'Breve descripcion',
+    'short_description',
+    'Short description',
+  ]);
+
+  const elementoConfiguracion = pick(row, [
+    'elementoConfiguracion',
+    'Elemento de configuración',
+    'Elemento de configuracion',
+    'cmdb_ci',
+    'CI',
+  ]);
+
+  // NUEVO: Dirección IP
+  const direccionIp = pick(row, [
+    'direccionIp',
+    'Dirección IP',
+    'Direccion IP',
+    'ip',
+    'ip_address',
+    'IP Address',
+  ]);
+
+  // Métricas / prioridad
+  const prioridad = normalizePriority(
+    pick(row, ['prioridad', 'Prioridad', 'severity', 'Severity', 'priority']),
+  );
+
+  const puntuacionRiesgo =
+    toNumber(
+      pick(row, [
+        'puntuacionRiesgo',
+        'Puntuación de riesgo',
+        'Puntuacion de riesgo',
+        'risk_score',
+        'Risk Score',
+      ]),
+    ) || 0;
+
+  // Asignación
+  const grupoAsignacion = pick(row, [
+    'grupoAsignacion',
+    'Grupo de asignación',
+    'Grupo de asignacion',
+    'assignment_group',
+    'Assignment group',
+  ]);
+
+  const asignadoA = pick(row, ['asignadoA', 'Asignado a', 'assigned_to', 'Assigned to']);
+
+  // Fechas
+  const creado = pick(row, ['creado', 'Creado', 'created', 'Created', 'sys_created_on']);
+  const actualizado = pick(row, ['actualizado', 'Actualizado', 'updated', 'Updated', 'sys_updated_on']);
+  const fechaCreacion = pick(row, [
+    'fechaCreacion',
+    'Fecha creación',
+    'Fecha creacion',
+    'created',
+    'Created',
+    'sys_created_on',
+    creado, // fallback
+  ]);
+  const dueDate = pick(row, ['dueDate', 'Due date', 'Due Date', 'deadline', 'Deadline']);
+
+  // Extras del VIT_MAP
+  const sites = pick(row, ['sites', 'Sites', 'Domain', 'Network']);
+  const vulnerabilidad = pick(row, [
+    'vulnerabilidad',
+    'Vulnerabilidad',
+    'Category ASVS',
+    'ASVS ID',
+    'OWASP TOP 10',
+  ]);
+  const vulnerabilitySolution = pick(row, [
+    'vulnerabilitySolution',
+    'Solución',
+    'Solucion',
+    'Vulnerability solution', // alias del Excel
+    'Solution',
+    'Countermeasure',
+  ]);
+  const comentarios = pick(row, ['comentarios', 'Comentarios', 'Comments', 'Observations']);
+
+  // NUEVOS (Excel VIT): Aplazamientos / SW / Resolución
+  const aplazadoPor = pick(row, ['aplazadoPor', 'Aplazado por']);
+  const fechaAplazamiento = pick(row, ['fechaAplazamiento', 'Fecha de aplazamiento']);
+  const notasAplazamiento = pick(row, ['notasAplazamiento', 'Notas de aplazamiento']);
+  const softwareVulnerable = pick(row, ['softwareVulnerable', 'Software vulnerable']);
+  const resolucion = pick(row, ['resolucion', 'Resolución', 'Resolution']);
+
+  // ID estable
   const id =
-    (row['id'] as string) ??
-    (row['numero'] as string) ??
+    numero ||
     (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
     id: String(id),
-    nombre: String((row['nombre'] as string) ?? (row['resumen'] as string) ?? ''),
-    numero: String((row['numero'] as string) ?? ''),
-    idExterno: String((row['idExterno'] as string) ?? ''),
-    estado: String((row['estado'] as string) ?? ''),
-    resumen: String((row['resumen'] as string) ?? ''),
-    breveDescripcion: String((row['breveDescripcion'] as string) ?? ''),
-    elementoConfiguracion: String((row['elementoConfiguracion'] as string) ?? ''),
-    fechaCreacion: String((row['fechaCreacion'] as string) ?? creado),
+    nombre: resumen || breveDescripcion || numero,
+    numero: String(numero),
+    idExterno: String(idExterno),
+    estado: String(estado),
+    resumen: String(resumen),
+    breveDescripcion: String(breveDescripcion),
+    elementoConfiguracion: String(elementoConfiguracion),
+
+    // nuevos del Excel
+    direccionIp: String(direccionIp),
+
+    fechaCreacion: String(fechaCreacion || creado),
     prioridad,
-    puntuacionRiesgo: toNumber((row['puntuacionRiesgo'] as number) ?? (row['riesgo'] as number)),
-    grupoAsignacion: String((row['grupoAsignacion'] as string) ?? ''),
-    asignadoA: String((row['asignadoA'] as string) ?? ''),
-    sites: String((row['sites'] as string) ?? ''),
-    vulnerabilidad: String((row['vulnerabilidad'] as string) ?? ''),
-    vulnerabilitySolution: String((row['vulnerabilitySolution'] as string) ?? ''),
-    creado,
-    actualizado,
-    dueDate,
+    puntuacionRiesgo,
+    grupoAsignacion: String(grupoAsignacion),
+    asignadoA: String(asignadoA),
+    sites: String(sites),
+    vulnerabilidad: String(vulnerabilidad),
+    vulnerabilitySolution: String(vulnerabilitySolution),
+
+    // nuevos del Excel
+    aplazadoPor: String(aplazadoPor),
+    fechaAplazamiento: String(fechaAplazamiento),
+    notasAplazamiento: String(notasAplazamiento),
+    softwareVulnerable: String(softwareVulnerable),
+    resolucion: String(resolucion),
+
+    comentarios: String(comentarios),
+    creado: String(creado),
+    actualizado: String(actualizado),
+    dueDate: String(dueDate),
   } as Item;
 }
 

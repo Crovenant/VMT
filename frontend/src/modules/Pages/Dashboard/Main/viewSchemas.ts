@@ -1,4 +1,4 @@
-export type ViewType = 'Csirt' | 'Cso';
+export type ViewType = 'VIT' | 'VUL';
 
 export type ViewSchema = {
   listUrl: string;          // GET (cargar tabla)
@@ -9,31 +9,49 @@ export type ViewSchema = {
 };
 
 export const VIEW_SCHEMAS: Record<ViewType, ViewSchema> = {
-  Csirt: {
-    listUrl: 'http://localhost:8000/risk-data/',
-    uploadUrl: 'http://localhost:8000/upload_data/',
-    saveUrl: 'http://localhost:8000/save_selection/',
+  VIT: {
+    listUrl: 'http://localhost:8000/vit/risk-data/',
+    uploadUrl: 'http://localhost:8000/vit/upload/',
+    saveUrl: 'http://localhost:8000/vit/save-selection/',
     visibleColumns: [
-      'Número','Estado','Resumen','Prioridad','Puntuación de riesgo',
-      'Asignado a','Creado','Actualizado','Due date',
+      'Número',
+      'Estado',
+      'Breve descripción',
+      'Elemento de configuración',
+      'Prioridad',
+      'Asignado a',
+      'Creado',
+      'Due date',
     ],
     columnKeyMap: {
-      'Número':'numero','Estado':'estado','Resumen':'resumen','Prioridad':'prioridad',
-      'Puntuación de riesgo':'puntuacionRiesgo','Asignado a':'asignadoA',
-      'Creado':'creado','Actualizado':'actualizado','Due date':'dueDate',
+      'Número': 'numero',
+      'Estado': 'estado',
+      'Breve descripción': 'breveDescripcion',
+      'Elemento de configuración': 'elementoConfiguracion',
+      'Prioridad': 'prioridad',
+      'Asignado a': 'asignadoA',
+      'Creado': 'creado',
+      'Due date': 'dueDate',
     },
   },
-  // placeholder hasta que fijemos contrato Cso
-  Cso: {
-    listUrl: 'http://localhost:8000/soup/risk-data/',
-    uploadUrl: 'http://localhost:8000/soup/upload_data/',
-    saveUrl: 'http://localhost:8000/soup/save_selection/',
+
+  VUL: {
+    listUrl: 'http://localhost:8000/vul/risk-data/',
+    uploadUrl: 'http://localhost:8000/vul/upload/',
+    saveUrl: 'http://localhost:8000/vul/save-selection/',
     visibleColumns: [
-      'Número','Estado','Resumen','Asignado a','Creado','Actualizado','Due date',
+      'Vulnerability ID',
+      'State',
+      'Severity',
+      'VUL Code',
+      'VIT Code',
     ],
     columnKeyMap: {
-      'Número':'numero','Estado':'estado','Resumen':'resumen',
-      'Asignado a':'asignadoA','Creado':'creado','Actualizado':'actualizado','Due date':'dueDate',
+      'Vulnerability ID': 'vulnerabilityId',
+      'State': 'state',
+      'Severity': 'prioridad', // reutilizamos renderer de prioridad
+      'VUL Code': 'vulCode',
+      'VIT Code': 'vitCode',
     },
   },
 };

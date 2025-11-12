@@ -3,6 +3,7 @@ import { Box, TextField, InputAdornment, Checkbox, FormControlLabel } from '@mui
 import SearchIcon from '@mui/icons-material/Search';
 
 const headerMap: Record<string, string> = {
+  // Mapeos por clave interna (no imprescindibles, se mantienen)
   nombre: 'Nombre',
   numero: 'Número',
   idExterno: 'ID externo',
@@ -10,16 +11,44 @@ const headerMap: Record<string, string> = {
   resumen: 'Resumen',
   breveDescripcion: 'Breve descripción',
   elementoConfiguracion: 'Elemento de configuración',
-  fechaCreacion: 'Fecha de creación',
+  fechaCreacion: 'Fecha creación',
   prioridad: 'Prioridad',
   puntuacionRiesgo: 'Puntuación de riesgo',
   grupoAsignacion: 'Grupo de asignación',
   asignadoA: 'Asignado a',
   sites: 'Sites',
   vulnerabilidad: 'Vulnerabilidad',
-  vulnerabilitySolution: 'Solución de vulnerabilidad',
+  vulnerabilitySolution: 'Solución',
   creado: 'Creado',
   actualizado: 'Actualizado',
+
+  // ✅ Alias directos por etiqueta (lo que llega desde VIT_MAP/VUL_MAP)
+  'Número': 'Número',
+  'ID externo': 'ID externo',
+  'Estado': 'Estado',
+  'Resumen': 'Resumen',
+  'Breve descripción': 'Breve descripción',
+  'Elemento de configuración': 'Elemento de configuración',
+  'Prioridad': 'Prioridad',
+  'Puntuación de riesgo': 'Puntuación de riesgo',
+  'Grupo de asignación': 'Grupo de asignación',
+  'Asignado a': 'Asignado a',
+  'Creado': 'Creado',
+  'Actualizado': 'Actualizado',
+  'Sites': 'Sites',
+  'Vulnerabilidad': 'Vulnerabilidad',
+  'Solución': 'Solución',
+  'Vulnerability solution': 'Solución', // por si llega con el alias en inglés
+  'Fecha creación': 'Fecha creación',
+  'Due date': 'Due date',
+
+  // ➕ 6 nuevos campos VIT (Excel)
+  'Dirección IP': 'Dirección IP',
+  'Aplazado por': 'Aplazado por',
+  'Fecha de aplazamiento': 'Fecha de aplazamiento',
+  'Notas de aplazamiento': 'Notas de aplazamiento',
+  'Software vulnerable': 'Software vulnerable',
+  'Resolución': 'Resolución',
 };
 
 type Props = {
@@ -40,7 +69,7 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
   }, [isOpen]);
 
   const filteredFields = allHeaders.filter((f) =>
-    (headerMap[f] || f).toLowerCase().includes(search.toLowerCase())
+    (headerMap[f] || f).toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleToggle = (field: string) => {
@@ -48,7 +77,7 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
       ? visibleColumns.filter((c) => c !== field)
       : [...visibleColumns, field];
 
-    // Deja que DisplayWrapper persista por vista (Csirt/Cso).
+    // Persiste por vista en DisplayWrapper (VIT/VUL)
     setVisibleColumns(updated);
   };
 
@@ -96,7 +125,7 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
         </Box>
       </Box>
 
-      {/* Contenido con animación */}
+      {/* Contenido */}
       <Box
         sx={{
           opacity: isOpen ? 1 : 0,

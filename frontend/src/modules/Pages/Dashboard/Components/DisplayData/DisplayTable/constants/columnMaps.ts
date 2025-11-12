@@ -24,7 +24,11 @@ export const VIT_MAP: Record<string, keyof Item> = {
 
   'Sites': 'sites',
   'Vulnerabilidad': 'vulnerabilidad',
+
+  // ✅ Soporta tanto el label en español como el del Excel en inglés
   'Solución': 'vulnerabilitySolution',
+  'Vulnerability solution': 'vulnerabilitySolution',
+
   'Comentarios': 'comentarios',
 };
 

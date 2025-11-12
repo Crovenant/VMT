@@ -8,6 +8,15 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Resumen': 'resumen',
   'Breve descripción': 'breveDescripcion',
   'Elemento de configuración': 'elementoConfiguracion',
+
+  // ➕ Nuevos campos del Excel VIT
+  'Dirección IP': 'direccionIp',
+  'Aplazado por': 'aplazadoPor',
+  'Fecha de aplazamiento': 'fechaAplazamiento',
+  'Notas de aplazamiento': 'notasAplazamiento',
+  'Software vulnerable': 'softwareVulnerable',
+  'Resolución': 'resolucion',
+
   'Prioridad': 'prioridad',
   'Puntuación de riesgo': 'puntuacionRiesgo',
   'Grupo de asignación': 'grupoAsignacion',
@@ -17,7 +26,7 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Vulnerability solution': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
-  'Due date': 'dueDate', // ✅ Nuevo campo
+  'Due date': 'dueDate', // ✅ incluido
 };
 
 export async function exportFullJsonToExcel(data: Item[]) {
@@ -34,7 +43,7 @@ export async function exportFullJsonToExcel(data: Item[]) {
   data.forEach((item) => {
     const rowData = headers.map((header) => {
       const key = columnKeyMap[header];
-      return key && key !== 'id' ? item[key] ?? '' : '';
+      return key && key !== 'id' ? (item as any)[key] ?? '' : '';
     });
     worksheet.addRow(rowData);
   });

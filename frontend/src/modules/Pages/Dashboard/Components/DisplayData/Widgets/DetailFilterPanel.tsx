@@ -1,4 +1,4 @@
-import  {useState} from 'react';
+import { useState } from 'react';
 import {
   Box,
   Accordion,
@@ -22,20 +22,66 @@ type Props = {
   setSelectedCsoFields: (fields: string[]) => void;
 };
 
+// VIT (csirt) — incluye los 22 del Excel y los ya definidos en VIT_MAP (sin el alias "Vulnerability solution")
 const csirtFields = [
-  'Número', 'Estado', 'Resumen', 'Breve descripción', 'Elemento de configuración',
-  'Prioridad', 'Puntuación de riesgo', 'Grupo de asignación', 'Asignado a',
-  'Creado', 'Actualizado', 'Due date', 'Sites', 'Solución'
+  'Número',
+  'ID externo',
+  'Estado',
+  'Resumen',
+  'Breve descripción',
+  'Elemento de configuración',
+  'Dirección IP',
+  'Prioridad',
+  'Puntuación de riesgo',
+  'Grupo de asignación',
+  'Asignado a',
+  'Creado',
+  'Actualizado',
+  'Due date',
+  'Fecha creación',
+  'Sites',
+  'Vulnerabilidad',
+  'Solución',
+  'Aplazado por',
+  'Fecha de aplazamiento',
+  'Notas de aplazamiento',
+  'Software vulnerable',
+  'Resolución',
+  'Comentarios',
 ];
 
+// VUL (cso)
 const csoFields = [
-  'Severity', 'State', 'Category ASVS', 'ASVS ID', 'OWASP TOP 10', 'PCI Status',
-  'Threat Description', 'Details', 'Target', 'Detection Date', 'Deadline',
-  'Days Open', 'Countermeasure', 'Environment', 'References / CWE', 'CVSS Base',
-  'CVSS Overall', 'CVSS Rescored', 'EPSS', 'Easy of Exploit', 'CVSS Version',
-  'CVSS Vector', 'Resolution Date', 'IT Owner', 'SW Provider', 'Critical Case',
-  'Fecha comunicación SWF', 'Certificación pedida', 'Fecha mitigacion',
-  'Fecha certificación'
+  'Severity',
+  'State',
+  'Category ASVS',
+  'ASVS ID',
+  'OWASP TOP 10',
+  'PCI Status',
+  'Threat Description',
+  'Details',
+  'Target',
+  'Detection Date',
+  'Deadline',
+  'Days Open',
+  'Countermeasure',
+  'Environment',
+  'References / CWE',
+  'CVSS Base',
+  'CVSS Overall',
+  'CVSS Rescored',
+  'EPSS',
+  'Easy of Exploit',
+  'CVSS Version',
+  'CVSS Vector',
+  'Resolution Date',
+  'IT Owner',
+  'SW Provider',
+  'Critical Case',
+  'Fecha comunicación SWF',
+  'Certificación pedida',
+  'Fecha mitigacion',
+  'Fecha certificación',
 ];
 
 export default function DetailSideFilterPanel({
@@ -49,26 +95,26 @@ export default function DetailSideFilterPanel({
   const [searchCsirt, setSearchCsirt] = useState('');
   const [searchCso, setSearchCso] = useState('');
 
-  const filteredCsirt = csirtFields.filter(f =>
-    f.toLowerCase().includes(searchCsirt.toLowerCase())
+  const filteredCsirt = csirtFields.filter((f) =>
+    f.toLowerCase().includes(searchCsirt.toLowerCase()),
   );
-  const filteredCso = csoFields.filter(f =>
-    f.toLowerCase().includes(searchCso.toLowerCase())
+  const filteredCso = csoFields.filter((f) =>
+    f.toLowerCase().includes(searchCso.toLowerCase()),
   );
 
   const toggleCsirt = (field: string) => {
     setSelectedCsirtFields(
       selectedCsirtFields.includes(field)
-        ? selectedCsirtFields.filter(f => f !== field)
-        : [...selectedCsirtFields, field]
+        ? selectedCsirtFields.filter((f) => f !== field)
+        : [...selectedCsirtFields, field],
     );
   };
 
   const toggleCso = (field: string) => {
     setSelectedCsoFields(
       selectedCsoFields.includes(field)
-        ? selectedCsoFields.filter(f => f !== field)
-        : [...selectedCsoFields, field]
+        ? selectedCsoFields.filter((f) => f !== field)
+        : [...selectedCsoFields, field],
     );
   };
 
@@ -128,15 +174,15 @@ export default function DetailSideFilterPanel({
       >
         {isOpen && (
           <>
-            {/* Csirt Fields */}
+            {/* VIT Fields */}
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 600 }}>Vul Fields</Typography>
+                <Typography sx={{ fontWeight: 600 }}>Vit Fields</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TextField
                   size="small"
-                  placeholder="Search Csirt..."
+                  placeholder="Search Vit..."
                   fullWidth
                   value={searchCsirt}
                   onChange={(e) => setSearchCsirt(e.target.value)}
@@ -166,15 +212,15 @@ export default function DetailSideFilterPanel({
               </AccordionDetails>
             </Accordion>
 
-            {/* Cso Fields */}
+            {/* VUL Fields */}
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 600 }}>Vit Fields</Typography>
+                <Typography sx={{ fontWeight: 600 }}>Vul Fields</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TextField
                   size="small"
-                  placeholder="Search Cso..."
+                  placeholder="Search Vul..."
                   fullWidth
                   value={searchCso}
                   onChange={(e) => setSearchCso(e.target.value)}

@@ -106,15 +106,15 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         PaperProps={{
           elevation: 6,
-          sx: { px: 1, py: 1, borderRadius: 2, ml: `${SHIFT_LEFT_PX}px` }, // ← ajusta aquí
+          sx: { px: 1, py: 1, borderRadius: 2, ml: `${SHIFT_LEFT_PX}px` },
         }}
         keepMounted
       >
         <Box sx={{ display: 'flex', gap: 0.75 }}>
-          <Tile label="CSIRT" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')} />
-          <Tile label="CSO"   src="/upload_vul_icon.svg" onClick={() => act('VUL_CSO')} />
-          <Tile label="CSIRT" src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
-          <Tile label="VUL→VIT" src="/map_vul_to_vit_icon.svg" onClick={() => act('VUL_TO_VIT')} />
+          <Tile label="VUL CSIRT" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')} />
+          <Tile label="VUL CSO"   src="/upload_vul_icon.svg" onClick={() => act('VUL_CSO')} />
+          <Tile label="VIT"        src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
+          <Tile label="VUL→VIT"    src="/map_vul_to_vit_icon.svg" onClick={() => act('VUL_TO_VIT')} />
         </Box>
       </Popover>
     </Box>
