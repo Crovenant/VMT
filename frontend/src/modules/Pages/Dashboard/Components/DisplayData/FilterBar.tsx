@@ -17,20 +17,25 @@ type TileProps = {
   label: string;
   src: string;
   onClick: () => void;
+  disabled?: boolean;
 };
 
-const Tile = memo(function Tile({ label, src, onClick }: TileProps) {
+const Tile = memo(function Tile({ label, src, onClick, disabled }: TileProps) {
   return (
     <Box
       role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
+      tabIndex={disabled ? -1 : 0}
+      onClick={() => !disabled && onClick()}
+      onKeyDown={(e) => {
+        if (disabled) return;
+        if (e.key === 'Enter' || e.key === ' ') onClick();
+      }}
+      aria-disabled={disabled}
       sx={{
-        width: 50,
-        p: 0.4,
+        width: 56,
+        p: 0.6,
         borderRadius: 1.5,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         bgcolor: 'background.paper',
         border: '1px solid rgba(0,0,0,0.08)',
         boxShadow: 1,
@@ -38,12 +43,14 @@ const Tile = memo(function Tile({ label, src, onClick }: TileProps) {
         flexDirection: 'column',
         alignItems: 'center',
         gap: 0.5,
-        transition: 'transform 0.12s ease, box-shadow 0.12s ease',
-        '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 },
-        '&:active': { transform: 'translateY(0)' },
+        transition: 'transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease',
+        opacity: disabled ? 0.45 : 1,
+        '&:hover': disabled ? {} : { transform: 'translateY(-2px)', boxShadow: 3 },
+        '&:active': disabled ? {} : { transform: 'translateY(0)' },
       }}
+      title={disabled ? 'No operativo' : undefined}
     >
-      <img src={src} alt={label} width={24} height={24} style={{ display: 'block' }} />
+      <img src={src} alt={label} width={24} height={24} style={{ display: 'block', filter: disabled ? 'grayscale(100%)' : 'none' }} />
       <Typography variant="caption" sx={{ fontSize: 10, textAlign: 'center', lineHeight: 1.1, userSelect: 'none' }}>
         {label}
       </Typography>
@@ -51,7 +58,7 @@ const Tile = memo(function Tile({ label, src, onClick }: TileProps) {
   );
 });
 
-// Ajuste de alineado horizontal del popover (negativo => desplaza a la izquierda)
+// Ajuste de alineado horizontal del popover
 const SHIFT_LEFT_PX = -180;
 
 export default function FilterBar({ handleDownload, onResetView, onUpload }: Props) {
@@ -69,9 +76,11 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
     if (typeof (window as any).clearAllFilters === 'function') (window as any).clearAllFilters();
   }, [onResetView]);
 
+  // Solo permitimos VIT
   const act = useCallback(
     (kind: ViewKind) => {
-      onUpload(kind);
+      if (kind !== 'VIT') return; // no-op
+      onUpload('VIT');
       closeMenu();
     },
     [onUpload, closeMenu],
@@ -97,7 +106,6 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         </IconButton>
       </Tooltip>
 
-      {/* Popover horizontal ENCIMA y ALINEADO A LA IZQUIERDA (desplazamiento fijo) */}
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -111,10 +119,10 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         keepMounted
       >
         <Box sx={{ display: 'flex', gap: 0.75 }}>
-          <Tile label="VUL CSIRT" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')} />
-          <Tile label="VUL CSO"   src="/upload_vul_icon.svg" onClick={() => act('VUL_CSO')} />
-          <Tile label="VIT"        src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
-          <Tile label="VUL→VIT"    src="/map_vul_to_vit_icon.svg" onClick={() => act('VUL_TO_VIT')} />
+          <Tile label="VUL CSIRT" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')} disabled />
+          <Tile label="VUL CSO"   src="/upload_vul_icon.svg" onClick={() => act('VUL_CSO')} disabled />
+          <Tile label="VIT"       src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
+          <Tile label="VUL→VIT"   src="/map_vul_to_vit_icon.svg" onClick={() => act('VUL_TO_VIT')} disabled />
         </Box>
       </Popover>
     </Box>

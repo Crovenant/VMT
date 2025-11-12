@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/Dashboard/DashboardContent.tsx
 import {
   Container, Grid, Paper, Box, Toolbar, Drawer,
 } from '@mui/material';
@@ -30,15 +31,26 @@ const DrawerStyled = styled(Drawer)(() => ({
 }));
 
 const CompactPaper = styled(Paper)(({ theme }) => ({
-  height: 160, // 🔍 Altura fija del card
-  padding: theme.spacing(2), // 🔍 Espacio interno (reduce área útil para el gráfico)
+  height: 160,
+  padding: theme.spacing(2),
   display: 'flex',
   overflow: 'hidden',
-  flexDirection: 'column', // 🔍 Coloca título y gráfico en columna
+  flexDirection: 'column',
   boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
   border: 'none',
 }));
 
+type Props = {
+  refreshKey: number;
+  priorityFilter: string | null;
+  selectedItemId: string | null;                             // ✅ string | null
+  customFlagFilter: 'followUp' | 'soonDue' | null;
+  setPriorityFilter: (val: string | null) => void;
+  setSelectedItemId: (val: string | null) => void;          // ✅ string | null
+  setCustomFlagFilter: (val: 'followUp' | 'soonDue' | null) => void;
+  setShowUploadModal: (val: boolean) => void;
+  onResetView: () => void;
+};
 
 export default function DashboardContent({
   refreshKey,
@@ -50,17 +62,7 @@ export default function DashboardContent({
   setCustomFlagFilter,
   setShowUploadModal,
   onResetView,
-}: {
-  refreshKey: number;
-  priorityFilter: string | null;
-  selectedItemId: number | null;
-  customFlagFilter: 'followUp' | 'soonDue' | null;
-  setPriorityFilter: (val: string | null) => void;
-  setSelectedItemId: (val: number | null) => void;
-  setCustomFlagFilter: (val: 'followUp' | 'soonDue' | null) => void;
-  setShowUploadModal: (val: boolean) => void;
-  onResetView: () => void;
-}) {
+}: Props) {
   return (
     <>
       <DrawerStyled variant="permanent" open>
@@ -122,7 +124,7 @@ export default function DashboardContent({
                 <DisplayData
                   refreshKey={refreshKey}
                   priorityFilter={priorityFilter}
-                  selectedItemId={selectedItemId !== null ? String(selectedItemId) : null}
+                  selectedItemId={selectedItemId}          
                   customFlagFilter={customFlagFilter}
                   onResetView={onResetView}
                   setShowUploadModal={setShowUploadModal}

@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayWrapper.tsx
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
@@ -10,7 +11,6 @@ import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 
 type ViewType = 'VIT' | 'VUL';
-
 type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT' | 'VUL_CSIRT' | 'VUL_CSO';
 
 const SCHEMA: Record<
@@ -21,7 +21,6 @@ const SCHEMA: Record<
     listUrl: 'http://localhost:8000/vit/risk-data/',
     uploadUrl: 'http://localhost:8000/vit/upload/',
     saveUrl: 'http://localhost:8000/vit/save-selection/',
-   
     defaultColumns: [
       'Número',
       'Estado',
@@ -41,7 +40,7 @@ const SCHEMA: Record<
   },
 };
 
-const LS_VIEW = 'displayData.viewType'; // 'VIT' | 'VUL'
+const LS_VIEW = 'displayData.viewType';
 const LS_COLS = (v: ViewType) => `displayData.visibleColumns.${v}`;
 
 declare global {
@@ -67,7 +66,6 @@ export default function DisplayWrapper({
   onResetView,
   setShowUploadModal,
 }: Props) {
-
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
     return saved === 'VUL' || saved === 'VIT' ? (saved as ViewType) : 'VIT';
@@ -79,13 +77,8 @@ export default function DisplayWrapper({
 
   const { allColumns: allowedColumns } = useColumnMap(viewType);
 
-  // Modal Upload
+  // Modal Upload (solo VIT operativo)
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadTarget, setUploadTarget] = useState<ViewKind>(viewType);
-  useEffect(() => {
-    setUploadTarget(viewType);
-  }, [viewType]);
-
 
   const schema = SCHEMA[viewType];
   const { rows, showFilterPanel } = useDisplayData({
@@ -96,7 +89,6 @@ export default function DisplayWrapper({
     viewType,
     listUrl: schema.listUrl,
   });
-
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
@@ -111,9 +103,7 @@ export default function DisplayWrapper({
           setVisibleColumns(filtered.length ? filtered : SCHEMA[viewType].defaultColumns);
           return;
         }
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
   }, [viewType, allowedColumns]);
@@ -127,8 +117,9 @@ export default function DisplayWrapper({
     );
   }, [viewType, visibleColumns, allowedColumns]);
 
+  // Solo abrir modal si es VIT
   const handleUploadByKind = (kind: ViewKind) => {
-    setUploadTarget(kind);
+    if (kind !== 'VIT') return; // no-op para cualquier otro botón
     setUploadOpen(true);
     setShowUploadModal?.(true);
   };
@@ -137,21 +128,12 @@ export default function DisplayWrapper({
     setUploadOpen(false);
     setShowUploadModal?.(false);
     if (success) {
-   
-      if (uploadTarget !== viewType && uploadTarget !== 'VUL_TO_VIT') {
-     
-        if (uploadTarget === 'VUL' || uploadTarget === 'VUL_CSIRT' || uploadTarget === 'VUL_CSO') {
-          setViewType('VUL');
-        } else if (uploadTarget === 'VIT') {
-          setViewType('VIT');
-        }
-      }
       onResetView?.();
     }
   };
 
-  const endpoints =
-    uploadTarget === 'VIT' ? SCHEMA.VIT : SCHEMA.VUL;
+  // Endpoints forzados a VIT para el modal
+  const endpoints = SCHEMA.VIT;
   const current = SCHEMA[viewType];
 
   return (
@@ -171,7 +153,6 @@ export default function DisplayWrapper({
               if (typeof window.exportFilteredDataToExcel === 'function') window.exportFilteredDataToExcel();
             }}
             onResetView={onResetView}
-            // ✅ firma coincide con FilterBar: (type: ViewKind) => void
             onUpload={handleUploadByKind}
           />
         </Box>
@@ -192,7 +173,7 @@ export default function DisplayWrapper({
             onClose={handleUploadClose}
             uploadUrl={endpoints.uploadUrl}
             saveUrl={endpoints.saveUrl}
-            listUrlForMutate={current.listUrl}
+            listUrlForMutate={current.listUrl} // recargar la vista activa tras subir (ok)
           />
         </Box>
       </Dialog>

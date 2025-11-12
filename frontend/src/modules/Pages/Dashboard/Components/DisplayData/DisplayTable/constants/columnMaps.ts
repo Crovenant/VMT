@@ -10,6 +10,7 @@ export const VIT_MAP: Record<string, keyof Item> = {
   'Resumen': 'resumen',
   'Breve descripción': 'breveDescripcion',
   'Elemento de configuración': 'elementoConfiguracion',
+  'Dirección IP': 'direccionIp',
 
   'Prioridad': 'prioridad',
   'Puntuación de riesgo': 'puntuacionRiesgo',
@@ -25,10 +26,18 @@ export const VIT_MAP: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Vulnerabilidad': 'vulnerabilidad',
 
-  // ✅ Soporta tanto el label en español como el del Excel en inglés
+  // Soporta tanto el label en español como el del Excel en inglés
   'Solución': 'vulnerabilitySolution',
   'Vulnerability solution': 'vulnerabilitySolution',
 
+  // Campos adicionales del Excel VIT (22 en total)
+  'Aplazado por': 'aplazadoPor',
+  'Fecha de aplazamiento': 'fechaAplazamiento',
+  'Notas de aplazamiento': 'notasAplazamiento',
+  'Software vulnerable': 'softwareVulnerable',
+  'Resolución': 'resolucion',
+
+  // (Opcional en tu app; lo mantenemos por compatibilidad)
   'Comentarios': 'comentarios',
 };
 
