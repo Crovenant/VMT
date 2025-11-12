@@ -70,53 +70,67 @@ function mapVUL(row: Record<string, unknown>): Item {
     asignadoA: String(asignadoA),
     sites: pick(row, ['Domain', 'Network']),
     vulnerabilidad: pick(row, ['Category ASVS', 'ASVS ID', 'OWASP TOP 10']),
-    vulnerabilitySolution: String(row['Countermeasure'] ?? ''),
+    vulnerabilitySolution: String((row['Countermeasure'] as string) ?? ''),
     creado: String(creado),
     actualizado: String(actualizado),
     dueDate,
-    // claves habituales que usáis en columnas VUL
-    vulnerabilityId: String(row['Vulnerability ID'] ?? ''),
-    state: String(row['State'] ?? row['State CSO'] ?? ''),
-    severity: String(row['Severity'] ?? ''),
-    vulCode: String(row['VUL Code'] ?? ''),
-    vitCode: String(row['VIT Code'] ?? ''),
+    vulnerabilityId: String((row['Vulnerability ID'] as string) ?? ''),
+    state: String((row['State'] as string) ?? (row['State CSO'] as string) ?? ''),
+    severity: String((row['Severity'] as string) ?? ''),
+    vulCode: String((row['VUL Code'] as string) ?? ''),
+    vitCode: String((row['VIT Code'] as string) ?? ''),
   } as Item;
 }
 
 function mapVIT(row: Record<string, unknown>): Item {
   const prioridad = normalizePriority(row['prioridad']);
-  const creado = String(row['creado'] ?? '');
-  const actualizado = String(row['actualizado'] ?? '');
-  const dueDate = String((row as any)['dueDate'] ?? '');
+  const creado = String((row['creado'] as string) ?? '');
+  const actualizado = String((row['actualizado'] as string) ?? '');
+  const rawDue = row['dueDate'];
+  const dueDate = typeof rawDue === 'string' ? rawDue : '';
 
   const id =
-    row['id'] ??
-    row['numero'] ??
+    (row['id'] as string) ??
+    (row['numero'] as string) ??
     (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
     id: String(id),
-    nombre: String(row['nombre'] ?? row['resumen'] ?? ''),
-    numero: String(row['numero'] ?? ''),
-    idExterno: String(row['idExterno'] ?? ''),
-    estado: String(row['estado'] ?? ''),
-    resumen: String(row['resumen'] ?? ''),
-    breveDescripcion: String(row['breveDescripcion'] ?? ''),
-    elementoConfiguracion: String(row['elementoConfiguracion'] ?? ''),
-    fechaCreacion: String(row['fechaCreacion'] ?? creado),
+    nombre: String((row['nombre'] as string) ?? (row['resumen'] as string) ?? ''),
+    numero: String((row['numero'] as string) ?? ''),
+    idExterno: String((row['idExterno'] as string) ?? ''),
+    estado: String((row['estado'] as string) ?? ''),
+    resumen: String((row['resumen'] as string) ?? ''),
+    breveDescripcion: String((row['breveDescripcion'] as string) ?? ''),
+    elementoConfiguracion: String((row['elementoConfiguracion'] as string) ?? ''),
+    fechaCreacion: String((row['fechaCreacion'] as string) ?? creado),
     prioridad,
-    puntuacionRiesgo: toNumber(row['puntuacionRiesgo'] ?? row['riesgo']),
-    grupoAsignacion: String(row['grupoAsignacion'] ?? ''),
-    asignadoA: String(row['asignadoA'] ?? ''),
-    sites: String(row['sites'] ?? ''),
-    vulnerabilidad: String(row['vulnerabilidad'] ?? ''),
-    vulnerabilitySolution: String(row['vulnerabilitySolution'] ?? ''),
+    puntuacionRiesgo: toNumber((row['puntuacionRiesgo'] as number) ?? (row['riesgo'] as number)),
+    grupoAsignacion: String((row['grupoAsignacion'] as string) ?? ''),
+    asignadoA: String((row['asignadoA'] as string) ?? ''),
+    sites: String((row['sites'] as string) ?? ''),
+    vulnerabilidad: String((row['vulnerabilidad'] as string) ?? ''),
+    vulnerabilitySolution: String((row['vulnerabilitySolution'] as string) ?? ''),
     creado,
     actualizado,
     dueDate,
   } as Item;
+}
+
+function extractArray(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    if (Array.isArray(o.data)) return o.data;
+    if (Array.isArray(o.results)) return o.results;
+  }
+  return [];
+}
+
+function isAbortError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { name?: string }).name === 'AbortError';
 }
 
 export default function useDisplayData({
@@ -124,7 +138,7 @@ export default function useDisplayData({
   priorityFilter,
   selectedItemId,
   customFlagFilter,
-  viewType, // 'VIT' | 'VUL'
+  viewType,
   listUrl,
 }: {
   refreshKey: number;
@@ -144,15 +158,7 @@ export default function useDisplayData({
         const res = await fetch(listUrl, { signal: ctrl.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const raw = (await res.json()) as unknown;
-
-        const array: unknown[] =
-          Array.isArray(raw)
-            ? raw
-            : Array.isArray((raw as any)?.data)
-            ? (raw as any).data
-            : Array.isArray((raw as any)?.results)
-            ? (raw as any).results
-            : [];
+        const array = extractArray(raw);
 
         const mapped: Item[] = array.map((entry) => {
           const row = entry as Record<string, unknown>;
@@ -195,8 +201,8 @@ export default function useDisplayData({
         }
 
         setRows(filtered);
-      } catch (err) {
-        if ((err as any)?.name !== 'AbortError') {
+      } catch (err: unknown) {
+        if (!isAbortError(err)) {
           console.error(`[${viewType}] fetch error:`, err);
           setRows([]);
         }

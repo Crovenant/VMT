@@ -25,9 +25,9 @@ function toNumber(n: unknown): number {
   return Number.isFinite(x) ? x : 0;
 }
 
-function pick<T extends object, K extends keyof T>(obj: T, keys: K[], fallback: string = ''): string {
+function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): string {
   for (const k of keys) {
-    const v = (obj as any)[k];
+    const v = obj[k];
     if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
   }
   return fallback;
@@ -69,7 +69,7 @@ function CsoToItem(row: Record<string, unknown>): Item {
     asignadoA: String(asignadoA),
     sites: pick(row, ['Domain', 'Network']),
     vulnerabilidad: pick(row, ['Category ASVS', 'ASVS ID', 'OWASP TOP 10']),
-    vulnerabilitySolution: String(row['Countermeasure'] ?? ''),
+    vulnerabilitySolution: String((row['Countermeasure'] as string) ?? ''),
     creado: String(creado),
     actualizado: String(actualizado),
   } as Item;
@@ -77,31 +77,31 @@ function CsoToItem(row: Record<string, unknown>): Item {
 
 function CsirtToItem(row: Record<string, unknown>): Item {
   const id =
-    row['id'] ??
-    row['numero'] ??
+    (row['id'] as string) ??
+    (row['numero'] as string) ??
     (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
     id: String(id),
-    nombre: String(row['nombre'] ?? row['resumen'] ?? ''),
-    numero: String(row['numero'] ?? ''),
-    idExterno: String(row['idExterno'] ?? ''),
-    estado: String(row['estado'] ?? ''),
-    resumen: String(row['resumen'] ?? ''),
-    breveDescripcion: String(row['breveDescripcion'] ?? ''),
-    elementoConfiguracion: String(row['elementoConfiguracion'] ?? ''),
-    fechaCreacion: String(row['fechaCreacion'] ?? row['creado'] ?? ''),
-    prioridad: normalizePriority(row['prioridad'] ?? ''),
+    nombre: String((row['nombre'] as string) ?? (row['resumen'] as string) ?? ''),
+    numero: String((row['numero'] as string) ?? ''),
+    idExterno: String((row['idExterno'] as string) ?? ''),
+    estado: String((row['estado'] as string) ?? ''),
+    resumen: String((row['resumen'] as string) ?? ''),
+    breveDescripcion: String((row['breveDescripcion'] as string) ?? ''),
+    elementoConfiguracion: String((row['elementoConfiguracion'] as string) ?? ''),
+    fechaCreacion: String((row['fechaCreacion'] as string) ?? (row['creado'] as string) ?? ''),
+    prioridad: normalizePriority(row['prioridad']),
     puntuacionRiesgo: toNumber(row['puntuacionRiesgo']),
-    grupoAsignacion: String(row['grupoAsignacion'] ?? ''),
-    asignadoA: String(row['asignadoA'] ?? ''),
-    sites: String(row['sites'] ?? ''),
-    vulnerabilidad: String(row['vulnerabilidad'] ?? ''),
-    vulnerabilitySolution: String(row['vulnerabilitySolution'] ?? ''),
-    creado: String(row['creado'] ?? ''),
-    actualizado: String(row['actualizado'] ?? ''),
+    grupoAsignacion: String((row['grupoAsignacion'] as string) ?? ''),
+    asignadoA: String((row['asignadoA'] as string) ?? ''),
+    sites: String((row['sites'] as string) ?? ''),
+    vulnerabilidad: String((row['vulnerabilidad'] as string) ?? ''),
+    vulnerabilitySolution: String((row['vulnerabilitySolution'] as string) ?? ''),
+    creado: String((row['creado'] as string) ?? ''),
+    actualizado: String((row['actualizado'] as string) ?? ''),
   } as Item;
 }
 
@@ -148,12 +148,13 @@ export default function useItems(
       try {
         const res = await fetch(effectiveList);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const raw = (await res.json()) as unknown[];
+        const raw = (await res.json()) as unknown;
 
+        const arr: unknown[] = Array.isArray(raw) ? raw : [];
         const mapped =
           viewType === 'Cso'
-            ? (raw ?? []).map((r) => CsoToItem(r as Record<string, unknown>))
-            : (raw ?? []).map((r) => CsirtToItem(r as Record<string, unknown>));
+            ? (arr ?? []).map((r) => CsoToItem(r as Record<string, unknown>))
+            : (arr ?? []).map((r) => CsirtToItem(r as Record<string, unknown>));
 
         const withFlags = computeFlags(mapped);
         if (!cancelled) setItems(withFlags);

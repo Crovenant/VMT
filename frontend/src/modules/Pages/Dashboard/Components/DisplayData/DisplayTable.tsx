@@ -12,6 +12,8 @@ import type {
   RowClassParams,
   ColumnMovedEvent,
   ColumnResizedEvent,
+  ColumnState,
+  GridApi, // ✅
 } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
@@ -34,16 +36,14 @@ export default function DisplayTable({
   rows,
   visibleColumns,
   setVisibleColumns,
-  showFilterPanel,
   viewType,
-  setShowUploadModal: _setShowUploadModal,
 }: {
   rows: Item[];
   visibleColumns: string[];
   setVisibleColumns: (cols: string[]) => void;
   showFilterPanel: boolean;
   viewType: ViewType;
-  setShowUploadModal?: (val: boolean) => void;
+  setShowUploadModal?: (val: boolean) => void; // permitido en props entrantes, no lo usamos
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
 
@@ -67,9 +67,11 @@ export default function DisplayTable({
     });
   }, []);
 
-  useExportExcel(gridRef, rows, visibleColumns);
+  // ✅ sin any en el ref
+  useExportExcel(gridRef as unknown as React.RefObject<{ api: GridApi }>, rows, visibleColumns);
   const { handleGridReady, handleFirstDataRendered } = useGridUtils();
 
+  // ✅ sin dependencia innecesaria
   const defaultColDef: ColDef<GridRow> = useMemo(
     () => ({
       resizable: true,
@@ -85,7 +87,7 @@ export default function DisplayTable({
       suppressHeaderMenuButton: false,
       minWidth: 60,
     }),
-    [showFilterPanel],
+    [],
   );
 
   const toggleColDef = useMemo(() => createToggleColDef(expanded, toggleExpand), [expanded, toggleExpand]);
@@ -93,14 +95,16 @@ export default function DisplayTable({
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const handleOpenModal = (item: Item) => {
+
+  const handleOpenModal = useCallback((item: Item) => {
     setSelectedItem(item);
     setOpenModal(true);
-  };
-  const handleCloseModal = () => {
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
     setOpenModal(false);
     setSelectedItem(null);
-  };
+  }, []);
 
   const eyeColDef = useMemo(() => createEyeColDef(handleOpenModal), [handleOpenModal]);
   const columnDefs: ColDef<GridRow>[] = useMemo(
@@ -109,19 +113,25 @@ export default function DisplayTable({
   );
 
   const getRowStyle = useCallback(
-    (p: RowClassParams<GridRow, any>): RowStyle | undefined => {
+    (p: RowClassParams<GridRow, unknown>): RowStyle | undefined => {
       const data = p?.data as DisplayRow | undefined;
+
+      // Fila de detalle
       if (isDetailRow(data)) {
         const st: RowStyle = {};
         st.backgroundColor = '#f5f6f8';
         return st;
       }
-      const it = (data as unknown as Item) ?? ({} as Item);
-      if (it.prioridad === 'Crítico' || (it as any).followUp) {
+
+      const it = (data as Item) ?? ({} as Item);
+
+      // Amarillo suave para "Crítico" o followUp
+      if (it.prioridad === 'Crítico' || it.followUp) {
         const st: RowStyle = {};
         st.backgroundColor = '#fff8e1';
         return st;
       }
+
       return undefined;
     },
     [],
@@ -130,7 +140,7 @@ export default function DisplayTable({
   const persistColumnState = useCallback(() => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return;
-    const state = colApi.getColumnState();
+    const state = colApi.getColumnState() as ColumnState[];
     localStorage.setItem(LS_COLUMN_STATE(viewType), JSON.stringify(state));
   }, [viewType]);
 
@@ -140,9 +150,9 @@ export default function DisplayTable({
     const raw = localStorage.getItem(LS_COLUMN_STATE(viewType));
     if (!raw) return;
     try {
-      const state = JSON.parse(raw);
+      const state: unknown = JSON.parse(raw);
       if (Array.isArray(state)) {
-        colApi.applyColumnState({ state, applyOrder: true });
+        colApi.applyColumnState({ state: state as ColumnState[], applyOrder: true });
       }
     } catch {
       /* ignore */
@@ -195,8 +205,12 @@ export default function DisplayTable({
             onGridReady={handleGridReady}
             onFirstDataRendered={handleFirstDataRendered}
             embedFullWidthRows={false}
-            isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) => isDetailRow(p.rowNode?.data as DisplayRow | undefined)}
-            fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => <FullWidthRenderer params={p} itemById={itemById} />}
+            isFullWidthRow={(p: IsFullWidthRowParams<GridRow>) =>
+              isDetailRow(p.rowNode?.data as DisplayRow | undefined)
+            }
+            fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => (
+              <FullWidthRenderer params={p} itemById={itemById} />
+            )}
             getRowHeight={(p) => (isDetailRow(p.data as DisplayRow) ? 300 : undefined)}
             getRowStyle={getRowStyle}
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}

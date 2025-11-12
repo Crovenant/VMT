@@ -11,6 +11,13 @@ type Endpoints = {
   listUrlForMutate?: string; // SWR revalidate
 };
 
+type UploadResponse = {
+  duplicates?: DuplicatePair[];
+  new?: Entry[];
+  error?: string;
+  message?: string;
+};
+
 export function useUploadFile(onClose: (success: boolean) => void, endpoints: Endpoints) {
   const { uploadUrl, saveUrl, listUrlForMutate } = endpoints;
 
@@ -26,8 +33,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
-    // Permitir re-subir el mismo archivo
-    if (event.target) event.target.value = '';
+    if (event.target) event.target.value = ''; // permitir re-subir el mismo archivo
 
     if (!file) {
       setMensaje('❌ No se seleccionó ningún archivo.');
@@ -44,14 +50,11 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     try {
       const response = await fetch(uploadUrl, { method: 'POST', body: formData });
 
-      // Acepta 200/201 y maneja payloads vacíos
-      let result: any = null;
+      let result: UploadResponse = {};
       const contentType = response.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
-        result = await response.json();
-      } else if (response.ok) {
-        result = {};
-      } else {
+        result = (await response.json()) as UploadResponse;
+      } else if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
@@ -60,23 +63,25 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
         throw new Error(msg);
       }
 
-      // Flujo con duplicados
-      if (Array.isArray(result?.duplicates) && result.duplicates.length > 0) {
-        setDuplicates(result.duplicates as DuplicatePair[]);
-        setNewEntries(Array.isArray(result?.new) ? (result.new as Entry[]) : []);
+      if (Array.isArray(result.duplicates) && result.duplicates.length > 0) {
+        setDuplicates(result.duplicates);
+        setNewEntries(Array.isArray(result.new) ? result.new : []);
         setSelectedOptions(Array(result.duplicates.length).fill('incoming'));
         setResolverOpen(true);
         setMensaje('⚠️ Se detectaron duplicados. Elige qué líneas guardar.');
       } else {
-        // Sin duplicados: enviamos directamente lo nuevo (o nada)
-        await guardarFinal(Array.isArray(result?.new) ? (result.new as Entry[]) : []);
+        await guardarFinal(Array.isArray(result.new) ? result.new : []);
         setMensaje('✅ Archivo subido correctamente.');
         onClose(true);
         safeMutate();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg =
+        typeof error === 'object' && error && 'message' in error
+          ? String((error as { message?: unknown }).message ?? 'desconocido')
+          : 'desconocido';
       console.error('Error al subir el archivo:', error);
-      setMensaje(`❌ Error al subir el archivo: ${error?.message ?? 'desconocido'}`);
+      setMensaje(`❌ Error al subir el archivo: ${msg}`);
       onClose(false);
     } finally {
       setLoading(false);
@@ -93,7 +98,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
       try {
-        const j = await res.json();
+        const j = (await res.json()) as Partial<UploadResponse>;
         msg = j?.error || j?.message || msg;
       } catch { /* ignore */ }
       throw new Error(`Error al guardar selección: ${msg}`);
@@ -114,9 +119,13 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       setMensaje('✅ Selección guardada correctamente.');
       onClose(true);
       safeMutate();
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg =
+        typeof e === 'object' && e && 'message' in e
+          ? String((e as { message?: unknown }).message ?? 'Error al guardar selección')
+          : 'Error al guardar selección';
       console.error(e);
-      setMensaje(`❌ ${e?.message ?? 'Error al guardar selección'}`);
+      setMensaje(`❌ ${msg}`);
       onClose(false);
     } finally {
       setLoading(false);

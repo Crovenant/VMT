@@ -53,9 +53,9 @@ export default function DetailModal({ open, onClose, item }: Props) {
   const relatedRows: Record<string, unknown>[] = useMemo(() => [], []);
 
   const vitPairs = useMemo(() => {
-    if (!item) return [];
+    if (!item) return [] as { label: string; value: unknown }[];
     return Object.entries(VIT_MAP).map(([label, key]) => {
-      const value = (item as any)[key];
+      const value = item[key];
       return { label, value: value ?? '' };
     });
   }, [item]);
@@ -65,16 +65,12 @@ export default function DetailModal({ open, onClose, item }: Props) {
     selectedVulFields.includes(col.headerName ?? ''),
   );
 
-  const comments: string[] = (item as Item & { comments?: string[] })?.comments ?? [];
+  const comments: string[] = (item?.comentarios
+    ? [item.comentarios]
+    : (item as Item & { comments?: string[] })?.comments) ?? [];
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: 2 } }}
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
       <DialogContent dividers sx={{ bgcolor: '#fafbfc', p: 0 }}>
         <Box
           sx={{
