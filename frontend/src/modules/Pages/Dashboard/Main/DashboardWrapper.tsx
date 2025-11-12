@@ -19,7 +19,7 @@ export default function DashboardWrapper() {
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [priorityFilter, setPriorityFilter] = React.useState<string | null>(null);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [selectedItemId, setSelectedItemId] = React.useState<number | null>(null); // <- número
+  const [selectedItemId, setSelectedItemId] = React.useState<string | null>(null); // <- string | null
   const [customFlagFilter, setCustomFlagFilter] = React.useState<'followUp' | 'soonDue' | null>(null);
 
   // 🔁 Auto-refresh cada 30 min
@@ -71,7 +71,7 @@ export default function DashboardWrapper() {
     setRefreshKey((prev) => prev + 1);
   };
 
-  // ✅ Datos para VIT
+  // ✅ Datos para VIT (para el contador de la campana)
   const { rows } = useDisplayData({
     refreshKey,
     priorityFilter: null,
@@ -105,10 +105,10 @@ export default function DashboardWrapper() {
       <DashboardContent
         refreshKey={refreshKey}
         priorityFilter={priorityFilter}
-        selectedItemId={selectedItemId}               // <- number | null
+        selectedItemId={selectedItemId}               // <- string | null
         customFlagFilter={customFlagFilter}
         setPriorityFilter={setPriorityFilter}
-        setSelectedItemId={setSelectedItemId}         // <- (val: number | null) => void
+        setSelectedItemId={setSelectedItemId}         // <- (val: string | null) => void
         setCustomFlagFilter={setCustomFlagFilter}
         setShowUploadModal={setShowUploadModal}
         onResetView={handleResetView}
@@ -190,9 +190,8 @@ export default function DashboardWrapper() {
                       gap: '8px',
                     }}
                     onClick={() => {
-                      // Convertimos el id a number para el DashboardContent (contrato actual)
-                      const n = Number(item.id);
-                      setSelectedItemId(Number.isFinite(n) ? n : null);
+                      // Siempre string -> compatible con useDisplayData (String match)
+                      setSelectedItemId(String(item.id));
                       setAnchorEl(null);
                     }}
                   >
