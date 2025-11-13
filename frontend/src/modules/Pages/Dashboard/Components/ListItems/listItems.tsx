@@ -1,2 +1,2 @@
-import ListWrapper from './ListItems/ListWrapper';
+import ListWrapper from './ListWrapper';
 export default ListWrapper;
