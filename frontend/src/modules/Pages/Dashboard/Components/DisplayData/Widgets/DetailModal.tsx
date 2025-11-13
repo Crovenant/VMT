@@ -40,22 +40,31 @@ const DEFAULT_VUL_CARD_FIELDS: string[] = [
   'VUL Code',
 ];
 
-export default function DetailModal({ open, onClose, item }: Props) {
-  // VUL = card, VIT = grid
-  const vitFields = useMemo(() => Object.keys(VIT_MAP), []);
-  const vulFields = useMemo(() => Object.keys(VUL_MAP), []);
+// Campos VIT que se mostrarán por defecto en el GRID (igual que DisplayData)
+const DEFAULT_VIT_GRID_FIELDS: string[] = [
+  'Número',
+  'Estado',
+  'Breve descripción',
+  'Elemento de configuración',
+  'Prioridad',
+  'Asignado a',
+  'Creado',
+  'Due date',
+];
 
+export default function DetailModal({ open, onClose, item }: Props) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  // VUL card: por defecto solo los campos definidos arriba (que existan en VUL_MAP)
+
   const [selectedVulCardFields, setSelectedVulCardFields] = useState<string[]>(() =>
     DEFAULT_VUL_CARD_FIELDS.filter((label) => label in VUL_MAP),
   );
 
-  // VIT grid: por defecto todas las columnas como en DisplayData
-  const [selectedVitGridFields, setSelectedVitGridFields] = useState<string[]>(vitFields);
 
-  // GRID: columnas VIT
+  const [selectedVitGridFields, setSelectedVitGridFields] = useState<string[]>(() =>
+    DEFAULT_VIT_GRID_FIELDS.filter((label) => label in VIT_MAP),
+  );
+
   const gridColumnDefs = useMemo<ColDef[]>(
     () =>
       Object.keys(VIT_MAP).map((header) => ({
@@ -71,10 +80,10 @@ export default function DetailModal({ open, onClose, item }: Props) {
     [],
   );
 
-  // Aquí irán las filas relacionadas de VIT cuando toque
+
   const relatedRows: Record<string, unknown>[] = useMemo(() => [], []);
 
-  // CARD: pares label/valor para VUL
+
   const vulCardPairs = useMemo(() => {
     if (!item) return [] as { label: string; value: unknown }[];
     return Object.entries(VUL_MAP).map(([label, key]) => {
@@ -100,148 +109,132 @@ export default function DetailModal({ open, onClose, item }: Props) {
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      scroll="body"
-      PaperProps={{ sx: { borderRadius: 2 } }}
+      PaperProps={{ sx: { borderRadius: 2, maxHeight: '80vh' } }}
     >
-      {/* DialogContent sin scroll propio; el scroll va en el Box interno */}
+   
       <DialogContent
         dividers
         sx={{
           bgcolor: '#fafbfc',
           p: 0,
-          overflow: 'hidden',
         }}
       >
-        {/* ÚNICO scrollbar del modal */}
         <Box
           sx={{
-            maxHeight: '80vh',
-            overflowY: 'auto',
+            display: 'grid',
+            gridTemplateColumns: `${isPanelOpen ? '350px' : '40px'} 1fr`,
+            gridTemplateRows: 'auto 1fr',
+            transition: 'grid-template-columns 0.3s ease',
           }}
         >
+          <Box sx={{ gridRow: '1 / span 2', bgcolor: '#f5f6f8' }}>
+            <DetailFilterPanel
+              isOpen={isPanelOpen}
+              setIsOpen={setIsPanelOpen}
+              selectedCsirtFields={selectedVitGridFields}
+              setSelectedCsirtFields={setSelectedVitGridFields}
+              selectedCsoFields={selectedVulCardFields}
+              setSelectedCsoFields={setSelectedVulCardFields}
+            />
+          </Box>
+
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: `${isPanelOpen ? '350px' : '40px'} 1fr`,
-              gridTemplateRows: 'auto 1fr',
-              transition: 'grid-template-columns 0.3s ease',
+              gridColumn: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              p: 2,
+              borderBottom: '1px solid #ddd',
             }}
           >
-            {/* Panel lateral de filtros */}
-            <Box sx={{ gridRow: '1 / span 2', bgcolor: '#f5f6f8' }}>
-              <DetailFilterPanel
-                isOpen={isPanelOpen}
-                setIsOpen={setIsPanelOpen}
-                // ⬇️ mapping antiguo de props → ahora:
-                // Csirt = VIT (grid), Cso = VUL (card)
-                selectedCsirtFields={selectedVitGridFields}
-                setSelectedCsirtFields={setSelectedVitGridFields}
-                selectedCsoFields={selectedVulCardFields}
-                setSelectedCsoFields={setSelectedVulCardFields}
-              />
-            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              VUL item
+            </Typography>
+            <IconButton aria-label="close" onClick={onClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
 
-            {/* Cabecera del modal */}
-            <Box
-              sx={{
-                gridColumn: 2,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 2,
-                borderBottom: '1px solid #ddd',
-              }}
-            >
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                VUL item
-              </Typography>
-              <IconButton aria-label="close" onClick={onClose} size="small">
-                <CloseIcon />
-              </IconButton>
-            </Box>
-
-            {/* Contenido scrolleable */}
-            <Box sx={{ gridColumn: 2, p: 2 }}>
-              {/* CARD: detalles VUL */}
-              <Box sx={{ mb: 2 }}>
-                <Grid container spacing={1.5}>
-                  {filteredVulCardPairs.map(({ label, value }) => (
-                    <Grid key={label} item xs={12} sm={6}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                        {label}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {String(value)}
-                      </Typography>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Comments */}
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    Comments
-                  </Typography>
-                  <Button variant="text" size="small" sx={{ fontWeight: 700 }}>
-                    ADD COMMENT
-                  </Button>
-                </Box>
-                <Box
-                  sx={{
-                    border: '1px solid #ddd',
-                    borderRadius: 1,
-                    p: 1,
-                    bgcolor: '#f9f9f9',
-                    minHeight: 50,
-                  }}
-                >
-                  {comments.length > 0 ? (
-                    comments.map((comment: string, idx: number) => (
-                      <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
-                        {comment}
-                      </Typography>
-                    ))
-                  ) : (
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No comments available
+          <Box sx={{ gridColumn: 2, p: 2 }}>
+            {/* CARD: detalles VUL */}
+            <Box sx={{ mb: 2 }}>
+              <Grid container spacing={1.5}>
+                {filteredVulCardPairs.map(({ label, value }) => (
+                  <Grid key={label} item xs={12} sm={6}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                      {label}
                     </Typography>
-                  )}
-                </Box>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      {String(value)}
+                    </Typography>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                  Comments
+                </Typography>
+                <Button variant="text" size="small" sx={{ fontWeight: 700 }}>
+                  ADD COMMENT
+                </Button>
               </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* GRID: VIT columns */}
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 700, color: 'primary.main', mb: 1.5 }}
-              >
-                VIT columns
-              </Typography>
-
               <Box
                 sx={{
+                  border: '1px solid #ddd',
                   borderRadius: 1,
-                  border: '1px solid rgba(31,45,90,0.2)',
-                  bgcolor: 'white',
                   p: 1,
+                  bgcolor: '#f9f9f9',
+                  minHeight: 50,
                 }}
               >
-                <Box className="ag-theme-quartz" sx={{ height: 300, width: '100%' }}>
-                  <AgGridReact
-                    rowData={relatedRows}
-                    columnDefs={filteredVitGridColumnDefs}
-                    suppressMovableColumns={false}
-                    animateRows
-                    rowSelection="multiple"
-                    suppressRowClickSelection={true}
-                    domLayout="normal"
-                  />
-                </Box>
+                {comments.length > 0 ? (
+                  comments.map((comment: string, idx: number) => (
+                    <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
+                      {comment}
+                    </Typography>
+                  ))
+                ) : (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    No comments available
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, color: 'primary.main', mb: 1.5 }}
+            >
+              VIT columns
+            </Typography>
+
+            <Box
+              sx={{
+                borderRadius: 1,
+                border: '1px solid rgba(31,45,90,0.2)',
+                bgcolor: 'white',
+                p: 1,
+              }}
+            >
+              <Box className="ag-theme-quartz" sx={{ height: 300, width: '100%' }}>
+                <AgGridReact
+                  rowData={relatedRows}
+                  columnDefs={filteredVitGridColumnDefs}
+                  suppressMovableColumns={false}
+                  animateRows
+                  rowSelection="multiple"
+                  suppressRowClickSelection={true}
+                  domLayout="normal"
+                />
               </Box>
             </Box>
           </Box>

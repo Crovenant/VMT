@@ -1,13 +1,18 @@
 // src/modules/Shared/hooks/useItems.ts
 import { useEffect, useState } from 'react';
 import type { Item } from '../../Types/item';
+import { VUL_MAP } from '../../Pages/Dashboard/Components/DisplayData/DisplayTable/constants/columnMaps';
 
 type ViewType = 'Csirt' | 'Cso';
 
 const DEFAULT_Csirt_LIST = 'http://localhost:8000/vit/risk-data/';
 
 function norm(s: unknown) {
-  return String(s ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+  return String(s ?? '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
 }
 
 function normalizePriority(p: unknown): Item['prioridad'] {
@@ -53,7 +58,8 @@ function CsoToItem(row: Record<string, unknown>): Item {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
-  return {
+  // 🔹 Base común VUL -> Item (lo que ya tenías)
+  const base: Item = {
     id: String(id),
     nombre: resumen,
     numero: String(numero),
@@ -73,6 +79,43 @@ function CsoToItem(row: Record<string, unknown>): Item {
     creado: String(creado),
     actualizado: String(actualizado),
   } as Item;
+
+  // 🔹 EXTRA: rellenamos TODOS los campos VUL usando VUL_MAP
+  // para que el modal tenga datos en State CSO, VUL Code, VIT Code, Details,
+  // Deadline, IT Owner, etc.
+  const filled: Item = { ...base };
+
+  const SPECIAL_KEYS: (keyof Item)[] = [
+    'id',
+    'nombre',
+    'numero',
+    'idExterno',
+    'estado',
+    'resumen',
+    'breveDescripcion',
+    'elementoConfiguracion',
+    'fechaCreacion',
+    'prioridad',
+    'puntuacionRiesgo',
+    'grupoAsignacion',
+    'asignadoA',
+    'sites',
+    'vulnerabilidad',
+    'vulnerabilitySolution',
+    'creado',
+    'actualizado',
+  ];
+
+  (Object.entries(VUL_MAP) as [string, keyof Item][]).forEach(([label, key]) => {
+    if (SPECIAL_KEYS.includes(key)) return;
+
+    const v = row[label];
+    if (v !== undefined && v !== null && String(v).trim() !== '') {
+      (filled as unknown as Record<string, unknown>)[key] = v;
+    }
+  });
+
+  return filled;
 }
 
 function CsirtToItem(row: Record<string, unknown>): Item {
