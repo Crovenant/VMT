@@ -36,7 +36,6 @@ export default function DisplayTable({
   rows,
   visibleColumns,
   setVisibleColumns,
-  showFilterPanel, // eslint-disable-line @typescript-eslint/no-unused-vars
   viewType,
   hasLink,
 }: {
@@ -237,7 +236,12 @@ export default function DisplayTable({
         />
       </Box>
 
-      <DetailModal open={openModal} onClose={handleCloseModal} item={selectedItem} />
+      <DetailModal
+        open={openModal}
+        onClose={handleCloseModal}
+        item={selectedItem}
+        viewType={viewType}
+      />
     </>
   );
 }
