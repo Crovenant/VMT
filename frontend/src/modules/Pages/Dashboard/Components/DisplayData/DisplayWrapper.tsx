@@ -78,7 +78,7 @@ export default function DisplayWrapper({
 
   const { allColumns: allowedColumns } = useColumnMap(viewType);
 
-  // Modal Upload (solo VIT operativo)
+
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const schema = SCHEMA[viewType];
@@ -93,7 +93,7 @@ export default function DisplayWrapper({
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
-  // 🔗 Códigos enlazados entre VIT <-> VUL
+
   const [linkedCodes, setLinkedCodes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -154,10 +154,9 @@ export default function DisplayWrapper({
     };
   }, [refreshKey]);
 
-  // Función para saber si una fila tiene match y debe mostrar el ojo
   const hasLink = useCallback(
     (item: Item): boolean => {
-      // Si aún no tenemos enlaces calculados, muestra todos los ojos para no "parpadear"
+
       if (!linkedCodes || linkedCodes.size === 0) return true;
 
       if (viewType === 'VIT') {
@@ -165,7 +164,6 @@ export default function DisplayWrapper({
         return code !== '' && linkedCodes.has(code);
       }
 
-      // VUL view: usamos vitCode del item (rellenado desde VUL data)
       const vitCode = (item as any).vitCode ?? '';
       const code = String(vitCode).trim();
       return code !== '' && linkedCodes.has(code);
@@ -185,7 +183,7 @@ export default function DisplayWrapper({
           return;
         }
       } catch {
-        /* ignore */
+
       }
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
@@ -200,9 +198,8 @@ export default function DisplayWrapper({
     );
   }, [viewType, visibleColumns, allowedColumns]);
 
-  // Solo abrir modal si es VIT
   const handleUploadByKind = (kind: ViewKind) => {
-    if (kind !== 'VIT') return; // no-op para cualquier otro botón
+    if (kind !== 'VIT') return;
     setUploadOpen(true);
     setShowUploadModal?.(true);
   };
@@ -215,7 +212,6 @@ export default function DisplayWrapper({
     }
   };
 
-  // Endpoints forzados a VIT para el modal
   const endpoints = SCHEMA.VIT;
   const current = SCHEMA[viewType];
 

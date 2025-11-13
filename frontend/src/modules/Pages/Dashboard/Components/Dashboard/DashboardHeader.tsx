@@ -6,7 +6,7 @@ import {
   Typography,
   IconButton,
   Badge,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 

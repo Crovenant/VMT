@@ -126,7 +126,7 @@ export default function DisplayTable({
     (p: RowClassParams<GridRow, unknown>): RowStyle | undefined => {
       const data = p?.data as DisplayRow | undefined;
 
-      // Fila de detalle
+
       if (isDetailRow(data)) {
         const st: RowStyle = {};
         st.backgroundColor = '#f5f6f8';
@@ -135,7 +135,6 @@ export default function DisplayTable({
 
       const it = (data as Item) ?? ({} as Item);
 
-      // Amarillo suave para "Crítico" o followUp
       if (it.prioridad === 'Crítico' || it.followUp) {
         const st: RowStyle = {};
         st.backgroundColor = '#fff8e1';
@@ -165,7 +164,7 @@ export default function DisplayTable({
         colApi.applyColumnState({ state: state as ColumnState[], applyOrder: true });
       }
     } catch {
-      /* ignore */
+
     }
   }, [viewType]);
 

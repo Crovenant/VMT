@@ -8,6 +8,7 @@ import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
 import ChartPieWrapper from '../Chart/ChartPieWrapper';
 import { DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
+import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize'; // ✅ Icono rojo MUI
 
 const drawerWidth = 72;
 
@@ -43,10 +44,10 @@ const CompactPaper = styled(Paper)(({ theme }) => ({
 type Props = {
   refreshKey: number;
   priorityFilter: string | null;
-  selectedItemId: string | null;                             // ✅ string | null
+  selectedItemId: string | null;
   customFlagFilter: 'followUp' | 'soonDue' | null;
   setPriorityFilter: (val: string | null) => void;
-  setSelectedItemId: (val: string | null) => void;          // ✅ string | null
+  setSelectedItemId: (val: string | null) => void;
   setCustomFlagFilter: (val: 'followUp' | 'soonDue' | null) => void;
   setShowUploadModal: (val: boolean) => void;
   onResetView: () => void;
@@ -67,6 +68,10 @@ export default function DashboardContent({
     <>
       <DrawerStyled variant="permanent" open>
         <DashboardListItem />
+        {/* ✅ Icono rojo en medio */}
+        <Box sx={{ cursor: 'pointer' }}>
+          <DashboardCustomizeIcon sx={{ color: '#dc3545', fontSize: 32 }} />
+        </Box>
         <ReportsListItem />
       </DrawerStyled>
 
@@ -124,7 +129,7 @@ export default function DashboardContent({
                 <DisplayData
                   refreshKey={refreshKey}
                   priorityFilter={priorityFilter}
-                  selectedItemId={selectedItemId}          
+                  selectedItemId={selectedItemId}
                   customFlagFilter={customFlagFilter}
                   onResetView={onResetView}
                   setShowUploadModal={setShowUploadModal}
