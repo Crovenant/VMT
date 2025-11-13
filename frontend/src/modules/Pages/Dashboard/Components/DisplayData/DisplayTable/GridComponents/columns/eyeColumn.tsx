@@ -1,10 +1,12 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/GridComponents/columns/eyeColumn.tsx
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { GridRow, DisplayRow } from '../../hooks/useDisplayRows';
 import type { Item } from '../../../../../../../Types/item';
 import { Box } from '@mui/material';
 
 export const createEyeColDef = (
-  handleOpenModal: (item: Item) => void
+  handleOpenModal: (item: Item) => void,
+  hasLink?: (item: Item) => boolean,
 ): ColDef<GridRow> => {
   return {
     headerName: '',
@@ -19,8 +21,14 @@ export const createEyeColDef = (
     sortable: false,
     cellRenderer: (p: ICellRendererParams<GridRow>) => {
       const d = p.data as DisplayRow | undefined;
-      if (!d) return null; // ✅ solo comprobamos que hay datos
+      if (!d) return null;
+
       const item = d as unknown as Item;
+
+      // 👁️ Si nos pasan una función de enlace y NO hay match, no pintamos el ojo
+      if (hasLink && !hasLink(item)) {
+        return null;
+      }
 
       return (
         <Box

@@ -13,7 +13,7 @@ import type {
   ColumnMovedEvent,
   ColumnResizedEvent,
   ColumnState,
-  GridApi, // ✅
+  GridApi,
 } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
@@ -36,14 +36,17 @@ export default function DisplayTable({
   rows,
   visibleColumns,
   setVisibleColumns,
+  showFilterPanel, // eslint-disable-line @typescript-eslint/no-unused-vars
   viewType,
+  hasLink,
 }: {
   rows: Item[];
   visibleColumns: string[];
   setVisibleColumns: (cols: string[]) => void;
   showFilterPanel: boolean;
   viewType: ViewType;
-  setShowUploadModal?: (val: boolean) => void; // permitido en props entrantes, no lo usamos
+  setShowUploadModal?: (val: boolean) => void;
+  hasLink?: (item: Item) => boolean;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
 
@@ -67,11 +70,9 @@ export default function DisplayTable({
     });
   }, []);
 
-  // ✅ sin any en el ref
   useExportExcel(gridRef as unknown as React.RefObject<{ api: GridApi }>, rows, visibleColumns);
   const { handleGridReady, handleFirstDataRendered } = useGridUtils();
 
-  // ✅ sin dependencia innecesaria
   const defaultColDef: ColDef<GridRow> = useMemo(
     () => ({
       resizable: true,
@@ -90,8 +91,14 @@ export default function DisplayTable({
     [],
   );
 
-  const toggleColDef = useMemo(() => createToggleColDef(expanded, toggleExpand), [expanded, toggleExpand]);
-  const businessColDefs = useMemo(() => createBusinessColDefs(visibleColumns, columnKeyMap), [visibleColumns, columnKeyMap]);
+  const toggleColDef = useMemo(
+    () => createToggleColDef(expanded, toggleExpand),
+    [expanded, toggleExpand],
+  );
+  const businessColDefs = useMemo(
+    () => createBusinessColDefs(visibleColumns, columnKeyMap),
+    [visibleColumns, columnKeyMap],
+  );
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -106,7 +113,11 @@ export default function DisplayTable({
     setSelectedItem(null);
   }, []);
 
-  const eyeColDef = useMemo(() => createEyeColDef(handleOpenModal), [handleOpenModal]);
+  const eyeColDef = useMemo(
+    () => createEyeColDef(handleOpenModal, hasLink),
+    [handleOpenModal, hasLink],
+  );
+
   const columnDefs: ColDef<GridRow>[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
     [eyeColDef, toggleColDef, businessColDefs],

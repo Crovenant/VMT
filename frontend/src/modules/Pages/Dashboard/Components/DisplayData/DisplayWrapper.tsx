@@ -1,5 +1,5 @@
 // src/modules/Pages/Dashboard/Components/DisplayData/DisplayWrapper.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
 import Title from '../Title/Title';
@@ -9,6 +9,7 @@ import useDisplayData from '../../hooks/useDisplayData';
 import LatchWidget from './Widgets/LatchWidget';
 import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
+import type { Item } from '../../../../Types/item';
 
 type ViewType = 'VIT' | 'VUL';
 type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT' | 'VUL_CSIRT' | 'VUL_CSO';
@@ -92,6 +93,86 @@ export default function DisplayWrapper({
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
+  // 🔗 Códigos enlazados entre VIT <-> VUL
+  const [linkedCodes, setLinkedCodes] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchLinks = async () => {
+      try {
+        const [vitRes, vulRes] = await Promise.all([
+          fetch(SCHEMA.VIT.listUrl),
+          fetch(SCHEMA.VUL.listUrl),
+        ]);
+
+        if (!vitRes.ok || !vulRes.ok) {
+          throw new Error(`HTTP ${vitRes.status} / ${vulRes.status}`);
+        }
+
+        const vitRaw = await vitRes.json();
+        const vulRaw = await vulRes.json();
+
+        const vitNums = new Set<string>();
+        if (Array.isArray(vitRaw)) {
+          vitRaw.forEach((r: any) => {
+            const n = r.numero ?? r['numero'] ?? r['Número'];
+            if (n !== undefined && n !== null && String(n).trim() !== '') {
+              vitNums.add(String(n).trim());
+            }
+          });
+        }
+
+        const vulVitCodes = new Set<string>();
+        if (Array.isArray(vulRaw)) {
+          vulRaw.forEach((r: any) => {
+            const v = r.vitCode ?? r['VIT Code'] ?? r['Vit Code'];
+            if (v !== undefined && v !== null && String(v).trim() !== '') {
+              vulVitCodes.add(String(v).trim());
+            }
+          });
+        }
+
+        const linked = new Set<string>();
+        vulVitCodes.forEach((code) => {
+          if (vitNums.has(code)) linked.add(code);
+        });
+
+        if (!cancelled) {
+          setLinkedCodes(linked);
+        }
+      } catch (err) {
+        console.error('Error calculating linked VIT/VUL codes:', err);
+        if (!cancelled) setLinkedCodes(new Set());
+      }
+    };
+
+    void fetchLinks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  // Función para saber si una fila tiene match y debe mostrar el ojo
+  const hasLink = useCallback(
+    (item: Item): boolean => {
+      // Si aún no tenemos enlaces calculados, muestra todos los ojos para no "parpadear"
+      if (!linkedCodes || linkedCodes.size === 0) return true;
+
+      if (viewType === 'VIT') {
+        const code = String(item.numero ?? '').trim();
+        return code !== '' && linkedCodes.has(code);
+      }
+
+      // VUL view: usamos vitCode del item (rellenado desde VUL data)
+      const vitCode = (item as any).vitCode ?? '';
+      const code = String(vitCode).trim();
+      return code !== '' && linkedCodes.has(code);
+    },
+    [linkedCodes, viewType],
+  );
+
   useEffect(() => {
     const allowed = new Set(allowedColumns);
     const saved = localStorage.getItem(LS_COLS(viewType));
@@ -103,7 +184,9 @@ export default function DisplayWrapper({
           setVisibleColumns(filtered.length ? filtered : SCHEMA[viewType].defaultColumns);
           return;
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
   }, [viewType, allowedColumns]);
@@ -165,6 +248,7 @@ export default function DisplayWrapper({
         showFilterPanel={showFilterPanel}
         viewType={viewType}
         setShowUploadModal={setShowUploadModal}
+        hasLink={hasLink}
       />
 
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>

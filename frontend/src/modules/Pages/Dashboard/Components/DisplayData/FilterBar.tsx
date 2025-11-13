@@ -76,7 +76,7 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
     if (typeof (window as any).clearAllFilters === 'function') (window as any).clearAllFilters();
   }, [onResetView]);
 
-  // Solo permitimos VIT
+
   const act = useCallback(
     (kind: ViewKind) => {
       if (kind !== 'VIT') return; // no-op
