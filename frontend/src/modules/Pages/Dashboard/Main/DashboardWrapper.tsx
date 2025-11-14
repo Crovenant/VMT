@@ -6,7 +6,7 @@ import DashboardHeader from '../Components/Dashboard/DashboardHeader';
 import DashboardContent from '../Components/Dashboard/DashboardContent';
 import useDisplayData from '../hooks/useDisplayData'; // <-- un nivel más arriba
 
-// Endpoints por defecto para la subida (VIT view)
+
 const VIT_ENDPOINTS = {
   uploadUrl: 'http://localhost:8000/vit/upload/',
   saveUrl:   'http://localhost:8000/vit/save-selection/',

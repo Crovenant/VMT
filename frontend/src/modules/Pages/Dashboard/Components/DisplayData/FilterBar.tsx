@@ -3,14 +3,20 @@ import { Box, IconButton, Tooltip, Popover, Typography, Select, MenuItem } from 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import LatchWidget from './Widgets/LatchWidget';
 
 type ViewKind = 'VIT' | 'VUL_CSIRT' | 'VUL_CSO' | 'VUL_TO_VIT';
+type ViewType = 'VIT' | 'VUL';
 
 type Props = {
   handleDownload: () => void;
   onResetView?: () => void;
   onUpload: (type: ViewKind) => void;
-  hideToggle?: boolean; // NUEVA PROP
+  hideToggle?: boolean;
+  viewType: ViewType;
+  onSwitchView: (v: ViewType) => void;
+  onSelectedViewChange: (v: 'CSIRT' | 'CSO') => void;
+  forceSelectedView?: 'CSIRT' | 'CSO'; // ✅ Nueva prop para CSODashboard
 };
 
 type TileProps = {
@@ -58,10 +64,18 @@ const Tile = memo(function Tile({ label, src, onClick, disabled }: TileProps) {
   );
 });
 
-// Ajuste de alineado horizontal del popover
 const SHIFT_LEFT_PX = -180;
 
-export default function FilterBar({ handleDownload, onResetView, onUpload, hideToggle }: Props) {
+export default function FilterBar({
+  handleDownload,
+  onResetView,
+  onUpload,
+  hideToggle,
+  viewType,
+  onSwitchView,
+  onSelectedViewChange,
+  forceSelectedView,
+}: Props) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
 
@@ -78,18 +92,47 @@ export default function FilterBar({ handleDownload, onResetView, onUpload, hideT
 
   const act = useCallback(
     (kind: ViewKind) => {
-      if (kind !== 'VIT') return; // no-op
+      if (kind !== 'VIT') return;
       onUpload('VIT');
       closeMenu();
     },
     [onUpload, closeMenu],
   );
 
-  // Estado para el desplegable
   const [selectedView, setSelectedView] = useState<'CSIRT' | 'CSO'>('CSIRT');
+  const effectiveSelectedView = forceSelectedView ?? selectedView;
+
+  const handleSelectorChange = (value: 'CSIRT' | 'CSO') => {
+    setSelectedView(value);
+    onSelectedViewChange(value);
+  };
 
   return (
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+      {/* Selector solo si no está forzado */}
+      {!forceSelectedView && (
+        <Select
+          value={effectiveSelectedView}
+          onChange={(e) => handleSelectorChange(e.target.value as 'CSIRT' | 'CSO')}
+          size="small"
+          sx={{
+            minWidth: 80,
+            fontSize: 12,
+            height: 28,
+            '& .MuiSelect-select': { padding: '4px 8px' },
+          }}
+        >
+          <MenuItem value="CSIRT">CSIRT</MenuItem>
+          <MenuItem value="CSO">CSO</MenuItem>
+        </Select>
+      )}
+
+      {/* Toggle solo si CSIRT y hideToggle false */}
+      {effectiveSelectedView === 'CSIRT' && !hideToggle && (
+        <LatchWidget viewType={viewType} onSwitchView={onSwitchView} />
+      )}
+
+      {/* Botones */}
       <Tooltip title="Refresh view">
         <IconButton aria-label="Reset view" color="primary" size="small" onClick={handleRefresh}>
           <RefreshIcon fontSize="small" />
@@ -108,24 +151,6 @@ export default function FilterBar({ handleDownload, onResetView, onUpload, hideT
         </IconButton>
       </Tooltip>
 
-      {/* Selector condicional */}
-      {!hideToggle && (
-        <Select
-          value={selectedView}
-          onChange={(e) => setSelectedView(e.target.value as 'CSIRT' | 'CSO')}
-          size="small"
-          sx={{
-            minWidth: 80,
-            fontSize: 12,
-            height: 28,
-            '& .MuiSelect-select': { padding: '4px 8px' },
-          }}
-        >
-          <MenuItem value="CSIRT">CSIRT</MenuItem>
-          <MenuItem value="CSO">CSO</MenuItem>
-        </Select>
-      )}
-
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -139,7 +164,7 @@ export default function FilterBar({ handleDownload, onResetView, onUpload, hideT
         keepMounted
       >
         <Box sx={{ display: 'flex', gap: 0.75 }}>
-          <Tile label="" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')} disabled />
+          <Tile label="" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')}/>
           <Tile label="" src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
         </Box>
       </Popover>
