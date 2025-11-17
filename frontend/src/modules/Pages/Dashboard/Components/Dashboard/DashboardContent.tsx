@@ -7,8 +7,7 @@ import Chart from '../Chart/Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
 import ChartPieWrapper from '../Chart/ChartPieWrapper';
-import { DashboardListItem, ReportsListItem } from '../ListItems/ListWrapper';
-import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize'; // ✅ Icono rojo MUI
+import { DashboardListItem, CsoListItem, ReportsListItem } from '../ListItems/ListWrapper'; // 
 
 const drawerWidth = 72;
 
@@ -68,10 +67,7 @@ export default function DashboardContent({
     <>
       <DrawerStyled variant="permanent" open>
         <DashboardListItem />
-        {/* ✅ Icono rojo en medio */}
-        <Box sx={{ cursor: 'pointer' }}>
-          <DashboardCustomizeIcon sx={{ color: '#dc3545', fontSize: 32 }} />
-        </Box>
+        <CsoListItem /> 
         <ReportsListItem />
       </DrawerStyled>
 

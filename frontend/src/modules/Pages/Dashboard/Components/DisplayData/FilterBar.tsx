@@ -1,15 +1,20 @@
 import { useState, useCallback, memo } from 'react';
-import { Box, IconButton, Tooltip, Popover, Typography, Select, MenuItem } from '@mui/material';
+import { Box, IconButton, Tooltip, Popover, Typography } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import LatchWidget from './Widgets/LatchWidget';
 
 type ViewKind = 'VIT' | 'VUL_CSIRT' | 'VUL_CSO' | 'VUL_TO_VIT';
+type ViewType = 'VIT' | 'VUL';
 
 type Props = {
   handleDownload: () => void;
   onResetView?: () => void;
   onUpload: (type: ViewKind) => void;
+  hideToggle?: boolean;
+  viewType: ViewType;
+  onSwitchView: (v: ViewType) => void;
 };
 
 type TileProps = {
@@ -57,10 +62,16 @@ const Tile = memo(function Tile({ label, src, onClick, disabled }: TileProps) {
   );
 });
 
-// Ajuste de alineado horizontal del popover
 const SHIFT_LEFT_PX = -180;
 
-export default function FilterBar({ handleDownload, onResetView, onUpload }: Props) {
+export default function FilterBar({
+  handleDownload,
+  onResetView,
+  onUpload,
+  hideToggle,
+  viewType,
+  onSwitchView,
+}: Props) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
 
@@ -77,18 +88,19 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
 
   const act = useCallback(
     (kind: ViewKind) => {
-      if (kind !== 'VIT') return; // no-op
+      if (kind !== 'VIT') return;
       onUpload('VIT');
       closeMenu();
     },
     [onUpload, closeMenu],
   );
 
-  // Estado para el desplegable
-  const [selectedView, setSelectedView] = useState<'CSIRT' | 'CSO'>('CSIRT');
-
   return (
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+      {/* ✅ LatchWidget se mantiene */}
+      {!hideToggle && <LatchWidget viewType={viewType} onSwitchView={onSwitchView} />}
+
+      {/* Botones */}
       <Tooltip title="Refresh view">
         <IconButton aria-label="Reset view" color="primary" size="small" onClick={handleRefresh}>
           <RefreshIcon fontSize="small" />
@@ -107,22 +119,6 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         </IconButton>
       </Tooltip>
 
-      {/* Desplegable visual al lado del toggle */}
-      <Select
-        value={selectedView}
-        onChange={(e) => setSelectedView(e.target.value as 'CSIRT' | 'CSO')}
-        size="small"
-        sx={{
-          minWidth: 80,
-          fontSize: 12,
-          height: 28,
-          '& .MuiSelect-select': { padding: '4px 8px' },
-        }}
-      >
-        <MenuItem value="CSIRT">CSIRT</MenuItem>
-        <MenuItem value="CSO">CSO</MenuItem>
-      </Select>
-
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -136,10 +132,8 @@ export default function FilterBar({ handleDownload, onResetView, onUpload }: Pro
         keepMounted
       >
         <Box sx={{ display: 'flex', gap: 0.75 }}>
-          <Tile label="VUL CSIRT" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')} disabled />
-          <Tile label="VUL CSO" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSO')} disabled />
-          <Tile label="VIT" src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
-          <Tile label="VUL→VIT" src="/map_vul_to_vit_icon.svg" onClick={() => act('VUL_TO_VIT')} disabled />
+          <Tile label="" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')}/>
+          <Tile label="" src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
         </Box>
       </Popover>
     </Box>

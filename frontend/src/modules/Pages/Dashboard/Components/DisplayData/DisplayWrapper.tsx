@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/DisplayWrapper.tsx
 import { useEffect, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
@@ -6,7 +5,6 @@ import Title from '../Title/Title';
 import FilterBar from './FilterBar';
 import DisplayTable from './DisplayTable';
 import useDisplayData from '../../hooks/useDisplayData';
-import LatchWidget from './Widgets/LatchWidget';
 import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 import type { Item } from '../../../../Types/item';
@@ -14,10 +12,7 @@ import type { Item } from '../../../../Types/item';
 type ViewType = 'VIT' | 'VUL';
 type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT' | 'VUL_CSIRT' | 'VUL_CSO';
 
-const SCHEMA: Record<
-  ViewType,
-  { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }
-> = {
+const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }> = {
   VIT: {
     listUrl: 'http://localhost:8000/vit/risk-data/',
     uploadUrl: 'http://localhost:8000/vit/upload/',
@@ -47,6 +42,7 @@ const LS_COLS = (v: ViewType) => `displayData.visibleColumns.${v}`;
 declare global {
   interface Window {
     exportFilteredDataToExcel: () => void;
+    clearAllFilters?: () => void;
   }
 }
 
@@ -57,6 +53,7 @@ interface Props {
   customFlagFilter?: 'followUp' | 'soonDue' | null | undefined;
   onResetView?: () => void;
   setShowUploadModal?: (val: boolean) => void;
+  hideToggle?: boolean;
 }
 
 export default function DisplayWrapper({
@@ -66,21 +63,20 @@ export default function DisplayWrapper({
   customFlagFilter,
   onResetView,
   setShowUploadModal,
+  hideToggle = false,
 }: Props) {
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
     return saved === 'VUL' || saved === 'VIT' ? (saved as ViewType) : 'VIT';
   });
+
   const setViewType = (v: ViewType) => {
     localStorage.setItem(LS_VIEW, v);
     _setViewType(v);
   };
 
   const { allColumns: allowedColumns } = useColumnMap(viewType);
-
-
   const [uploadOpen, setUploadOpen] = useState(false);
-
   const schema = SCHEMA[viewType];
   const { rows, showFilterPanel } = useDisplayData({
     refreshKey,
@@ -92,27 +88,18 @@ export default function DisplayWrapper({
   });
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
-
-
   const [linkedCodes, setLinkedCodes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
-
     const fetchLinks = async () => {
       try {
-        const [vitRes, vulRes] = await Promise.all([
-          fetch(SCHEMA.VIT.listUrl),
-          fetch(SCHEMA.VUL.listUrl),
-        ]);
-
+        const [vitRes, vulRes] = await Promise.all([fetch(SCHEMA.VIT.listUrl), fetch(SCHEMA.VUL.listUrl)]);
         if (!vitRes.ok || !vulRes.ok) {
           throw new Error(`HTTP ${vitRes.status} / ${vulRes.status}`);
         }
-
         const vitRaw = await vitRes.json();
         const vulRaw = await vulRes.json();
-
         const vitNums = new Set<string>();
         if (Array.isArray(vitRaw)) {
           vitRaw.forEach((r: any) => {
@@ -122,7 +109,6 @@ export default function DisplayWrapper({
             }
           });
         }
-
         const vulVitCodes = new Set<string>();
         if (Array.isArray(vulRaw)) {
           vulRaw.forEach((r: any) => {
@@ -132,12 +118,10 @@ export default function DisplayWrapper({
             }
           });
         }
-
         const linked = new Set<string>();
         vulVitCodes.forEach((code) => {
           if (vitNums.has(code)) linked.add(code);
         });
-
         if (!cancelled) {
           setLinkedCodes(linked);
         }
@@ -146,9 +130,7 @@ export default function DisplayWrapper({
         if (!cancelled) setLinkedCodes(new Set());
       }
     };
-
     void fetchLinks();
-
     return () => {
       cancelled = true;
     };
@@ -156,14 +138,11 @@ export default function DisplayWrapper({
 
   const hasLink = useCallback(
     (item: Item): boolean => {
-
       if (!linkedCodes || linkedCodes.size === 0) return true;
-
       if (viewType === 'VIT') {
         const code = String(item.numero ?? '').trim();
         return code !== '' && linkedCodes.has(code);
       }
-
       const vitCode = (item as any).vitCode ?? '';
       const code = String(vitCode).trim();
       return code !== '' && linkedCodes.has(code);
@@ -182,9 +161,7 @@ export default function DisplayWrapper({
           setVisibleColumns(filtered.length ? filtered : SCHEMA[viewType].defaultColumns);
           return;
         }
-      } catch {
-
-      }
+      } catch {}
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
   }, [viewType, allowedColumns]);
@@ -192,10 +169,7 @@ export default function DisplayWrapper({
   useEffect(() => {
     const allowed = new Set(allowedColumns);
     const filtered = visibleColumns.filter((c) => allowed.has(String(c)));
-    localStorage.setItem(
-      LS_COLS(viewType),
-      JSON.stringify(filtered.length ? filtered : SCHEMA[viewType].defaultColumns),
-    );
+    localStorage.setItem(LS_COLS(viewType), JSON.stringify(filtered.length ? filtered : SCHEMA[viewType].defaultColumns));
   }, [viewType, visibleColumns, allowedColumns]);
 
   const handleUploadByKind = (kind: ViewKind) => {
@@ -217,15 +191,10 @@ export default function DisplayWrapper({
 
   return (
     <>
-      <Box display="grid" gridTemplateColumns="1fr auto auto" alignItems="center" columnGap={2} mb={0.5}>
+      <Box display="grid" gridTemplateColumns="1fr auto" alignItems="center" columnGap={2} mb={0.5}>
         <Box>
-          <Title>{`${viewType} view`}</Title>
+          <Title>{`CSIRT ${viewType} view`}</Title>
         </Box>
-
-        <Box display="flex" justifyContent="center">
-          <LatchWidget viewType={viewType} onSwitchView={(v: ViewType) => setViewType(v)} />
-        </Box>
-
         <Box display="flex" justifyContent="flex-end">
           <FilterBar
             handleDownload={() => {
@@ -233,6 +202,9 @@ export default function DisplayWrapper({
             }}
             onResetView={onResetView}
             onUpload={handleUploadByKind}
+            hideToggle={hideToggle}
+            viewType={viewType}
+            onSwitchView={(v) => setViewType(v)}
           />
         </Box>
       </Box>
@@ -249,12 +221,7 @@ export default function DisplayWrapper({
 
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>
         <Box p={3}>
-          <UploadFileWrapper
-            onClose={handleUploadClose}
-            uploadUrl={endpoints.uploadUrl}
-            saveUrl={endpoints.saveUrl}
-            listUrlForMutate={current.listUrl} // recargar la vista activa tras subir (ok)
-          />
+          <UploadFileWrapper onClose={handleUploadClose} uploadUrl={endpoints.uploadUrl} saveUrl={endpoints.saveUrl} listUrlForMutate={current.listUrl} />
         </Box>
       </Dialog>
     </>
