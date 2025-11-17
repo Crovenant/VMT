@@ -89,7 +89,7 @@ export default function CSODashboard() {
                 }}
               >
                 {/* ✅ Forzamos CSO y ocultamos toggle */}
-                <DisplayWrapper refreshKey={0} hideToggle forceSelectedView="CSO" />
+                <DisplayWrapper refreshKey={0} hideToggle />
               </Paper>
             </Grid>
           </Grid>

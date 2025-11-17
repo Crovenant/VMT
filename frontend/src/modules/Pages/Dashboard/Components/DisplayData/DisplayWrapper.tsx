@@ -8,15 +8,11 @@ import useDisplayData from '../../hooks/useDisplayData';
 import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 import type { Item } from '../../../../Types/item';
-import Typography from '@mui/material/Typography';
 
 type ViewType = 'VIT' | 'VUL';
 type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT' | 'VUL_CSIRT' | 'VUL_CSO';
 
-const SCHEMA: Record<
-  ViewType,
-  { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }
-> = {
+const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }> = {
   VIT: {
     listUrl: 'http://localhost:8000/vit/risk-data/',
     uploadUrl: 'http://localhost:8000/vit/upload/',
@@ -58,7 +54,6 @@ interface Props {
   onResetView?: () => void;
   setShowUploadModal?: (val: boolean) => void;
   hideToggle?: boolean;
-  forceSelectedView?: 'CSIRT' | 'CSO'; // ✅ Nueva prop
 }
 
 export default function DisplayWrapper({
@@ -69,7 +64,6 @@ export default function DisplayWrapper({
   onResetView,
   setShowUploadModal,
   hideToggle = false,
-  forceSelectedView,
 }: Props) {
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
@@ -81,36 +75,26 @@ export default function DisplayWrapper({
     _setViewType(v);
   };
 
-  // ✅ Estado para CSIRT / CSO (controlado por prop si existe)
-  const [selectedView, setSelectedView] = useState<'CSIRT' | 'CSO'>('CSIRT');
-  const effectiveSelectedView = forceSelectedView ?? selectedView;
-
-  // ✅ Si CSO, forzamos VUL
-  const effectiveViewType = effectiveSelectedView === 'CSO' ? 'VUL' : viewType;
-
-  const { allColumns: allowedColumns } = useColumnMap(effectiveViewType);
+  const { allColumns: allowedColumns } = useColumnMap(viewType);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const schema = SCHEMA[effectiveViewType];
+  const schema = SCHEMA[viewType];
   const { rows, showFilterPanel } = useDisplayData({
     refreshKey,
     priorityFilter,
     selectedItemId,
     customFlagFilter,
-    viewType: effectiveViewType,
+    viewType,
     listUrl: schema.listUrl,
   });
 
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[effectiveViewType].defaultColumns);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
   const [linkedCodes, setLinkedCodes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
     const fetchLinks = async () => {
       try {
-        const [vitRes, vulRes] = await Promise.all([
-          fetch(SCHEMA.VIT.listUrl),
-          fetch(SCHEMA.VUL.listUrl),
-        ]);
+        const [vitRes, vulRes] = await Promise.all([fetch(SCHEMA.VIT.listUrl), fetch(SCHEMA.VUL.listUrl)]);
         if (!vitRes.ok || !vulRes.ok) {
           throw new Error(`HTTP ${vitRes.status} / ${vulRes.status}`);
         }
@@ -155,7 +139,7 @@ export default function DisplayWrapper({
   const hasLink = useCallback(
     (item: Item): boolean => {
       if (!linkedCodes || linkedCodes.size === 0) return true;
-      if (effectiveViewType === 'VIT') {
+      if (viewType === 'VIT') {
         const code = String(item.numero ?? '').trim();
         return code !== '' && linkedCodes.has(code);
       }
@@ -163,33 +147,30 @@ export default function DisplayWrapper({
       const code = String(vitCode).trim();
       return code !== '' && linkedCodes.has(code);
     },
-    [linkedCodes, effectiveViewType],
+    [linkedCodes, viewType],
   );
 
   useEffect(() => {
     const allowed = new Set(allowedColumns);
-    const saved = localStorage.getItem(LS_COLS(effectiveViewType));
+    const saved = localStorage.getItem(LS_COLS(viewType));
     if (saved) {
       try {
         const parsed: unknown = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           const filtered = parsed.filter((c) => allowed.has(String(c)));
-          setVisibleColumns(filtered.length ? filtered : SCHEMA[effectiveViewType].defaultColumns);
+          setVisibleColumns(filtered.length ? filtered : SCHEMA[viewType].defaultColumns);
           return;
         }
       } catch {}
     }
-    setVisibleColumns(SCHEMA[effectiveViewType].defaultColumns);
-  }, [effectiveViewType, allowedColumns]);
+    setVisibleColumns(SCHEMA[viewType].defaultColumns);
+  }, [viewType, allowedColumns]);
 
   useEffect(() => {
     const allowed = new Set(allowedColumns);
     const filtered = visibleColumns.filter((c) => allowed.has(String(c)));
-    localStorage.setItem(
-      LS_COLS(effectiveViewType),
-      JSON.stringify(filtered.length ? filtered : SCHEMA[effectiveViewType].defaultColumns),
-    );
-  }, [effectiveViewType, visibleColumns, allowedColumns]);
+    localStorage.setItem(LS_COLS(viewType), JSON.stringify(filtered.length ? filtered : SCHEMA[viewType].defaultColumns));
+  }, [viewType, visibleColumns, allowedColumns]);
 
   const handleUploadByKind = (kind: ViewKind) => {
     if (kind !== 'VIT') return;
@@ -206,38 +187,24 @@ export default function DisplayWrapper({
   };
 
   const endpoints = SCHEMA.VIT;
-  const current = SCHEMA[effectiveViewType];
+  const current = SCHEMA[viewType];
 
   return (
     <>
-      <Box
-        display="grid"
-        gridTemplateColumns="1fr auto"
-        alignItems="center"
-        columnGap={2}
-        mb={0.5}
-      >
+      <Box display="grid" gridTemplateColumns="1fr auto" alignItems="center" columnGap={2} mb={0.5}>
         <Box>
-          {effectiveSelectedView === 'CSO' ? (
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>VUL view</Typography>
-          ) : (
-            <Title>{`CSIRT ${effectiveViewType} view`}</Title>
-          )}
+          <Title>{`CSIRT ${viewType} view`}</Title>
         </Box>
-
         <Box display="flex" justifyContent="flex-end">
           <FilterBar
             handleDownload={() => {
-              if (typeof window.exportFilteredDataToExcel === 'function')
-                window.exportFilteredDataToExcel();
+              if (typeof window.exportFilteredDataToExcel === 'function') window.exportFilteredDataToExcel();
             }}
             onResetView={onResetView}
             onUpload={handleUploadByKind}
             hideToggle={hideToggle}
-            viewType={effectiveViewType}
+            viewType={viewType}
             onSwitchView={(v) => setViewType(v)}
-            onSelectedViewChange={(v) => setSelectedView(v)}
-            forceSelectedView={forceSelectedView}
           />
         </Box>
       </Box>
@@ -247,19 +214,14 @@ export default function DisplayWrapper({
         visibleColumns={visibleColumns}
         setVisibleColumns={setVisibleColumns}
         showFilterPanel={showFilterPanel}
-        viewType={effectiveViewType}
+        viewType={viewType}
         setShowUploadModal={setShowUploadModal}
         hasLink={hasLink}
       />
 
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>
         <Box p={3}>
-          <UploadFileWrapper
-            onClose={handleUploadClose}
-            uploadUrl={endpoints.uploadUrl}
-            saveUrl={endpoints.saveUrl}
-            listUrlForMutate={current.listUrl}
-          />
+          <UploadFileWrapper onClose={handleUploadClose} uploadUrl={endpoints.uploadUrl} saveUrl={endpoints.saveUrl} listUrlForMutate={current.listUrl} />
         </Box>
       </Dialog>
     </>

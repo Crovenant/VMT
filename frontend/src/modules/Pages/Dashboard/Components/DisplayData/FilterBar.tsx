@@ -1,5 +1,5 @@
 import { useState, useCallback, memo } from 'react';
-import { Box, IconButton, Tooltip, Popover, Typography, Select, MenuItem } from '@mui/material';
+import { Box, IconButton, Tooltip, Popover, Typography } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -15,8 +15,6 @@ type Props = {
   hideToggle?: boolean;
   viewType: ViewType;
   onSwitchView: (v: ViewType) => void;
-  onSelectedViewChange: (v: 'CSIRT' | 'CSO') => void;
-  forceSelectedView?: 'CSIRT' | 'CSO'; // ✅ Nueva prop para CSODashboard
 };
 
 type TileProps = {
@@ -73,8 +71,6 @@ export default function FilterBar({
   hideToggle,
   viewType,
   onSwitchView,
-  onSelectedViewChange,
-  forceSelectedView,
 }: Props) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
@@ -99,38 +95,10 @@ export default function FilterBar({
     [onUpload, closeMenu],
   );
 
-  const [selectedView, setSelectedView] = useState<'CSIRT' | 'CSO'>('CSIRT');
-  const effectiveSelectedView = forceSelectedView ?? selectedView;
-
-  const handleSelectorChange = (value: 'CSIRT' | 'CSO') => {
-    setSelectedView(value);
-    onSelectedViewChange(value);
-  };
-
   return (
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-      {/* Selector solo si no está forzado */}
-      {!forceSelectedView && (
-        <Select
-          value={effectiveSelectedView}
-          onChange={(e) => handleSelectorChange(e.target.value as 'CSIRT' | 'CSO')}
-          size="small"
-          sx={{
-            minWidth: 80,
-            fontSize: 12,
-            height: 28,
-            '& .MuiSelect-select': { padding: '4px 8px' },
-          }}
-        >
-          <MenuItem value="CSIRT">CSIRT</MenuItem>
-          <MenuItem value="CSO">CSO</MenuItem>
-        </Select>
-      )}
-
-      {/* Toggle solo si CSIRT y hideToggle false */}
-      {effectiveSelectedView === 'CSIRT' && !hideToggle && (
-        <LatchWidget viewType={viewType} onSwitchView={onSwitchView} />
-      )}
+      {/* ✅ LatchWidget se mantiene */}
+      {!hideToggle && <LatchWidget viewType={viewType} onSwitchView={onSwitchView} />}
 
       {/* Botones */}
       <Tooltip title="Refresh view">
