@@ -7,10 +7,10 @@ def _norm(val: Any) -> str:
 def _key(item: Dict) -> Tuple[str, str]:
     """
     Clave compuesta estable para VUL:
-    - Vulnerability ID
-    - VUL Code
+    - Número (antes Vulnerability ID)
+    - id (identificador interno)
     """
-    return (_norm(item.get("Vulnerability ID", "")), _norm(item.get("VUL Code", "")))
+    return (_norm(item.get("Número", "")), _norm(item.get("id", "")))
 
 def build_lookup(existing_data: List[Dict]) -> Dict[Tuple[str, str], Dict]:
     """Índice rápido por clave compuesta normalizada."""
@@ -24,7 +24,7 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
     Devuelve (duplicates, unique_new_entries)
 
     - duplicates: lista de dicts {"existing": <fila_json>, "incoming": <fila_excel>}
-      cuando hay coincidencia exacta por (Vulnerability ID, VUL Code).
+      cuando hay coincidencia exacta por (Número, id).
 
     - unique_new_entries: filas del Excel que NO tienen match por la clave compuesta.
     """
