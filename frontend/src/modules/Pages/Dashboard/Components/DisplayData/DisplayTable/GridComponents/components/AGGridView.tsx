@@ -1,23 +1,26 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import type { ColDef } from 'ag-grid-community';
+import type { ColDef, RowHeightParams } from 'ag-grid-community';
 import type { Item } from '../../../../../../../Types/item';
+import FullWidthRenderer from '../../Renderers/FullWidthRenderer';
+import { isDetailRow } from '../../hooks/useDisplayRows';
 
 interface Props {
   items: Item[];
   columnDefs: ColDef[];
+  itemById: Map<string, Item>;
 }
 
-const AGGridView: React.FC<Props> = ({ items, columnDefs }) => {
+const AGGridView: React.FC<Props> = ({ items, columnDefs, itemById }) => {
   const [rowData] = useState(items);
 
   const defaultColDef: ColDef = useMemo(
     () => ({
       resizable: true,
       filter: 'agTextColumnFilter',
-      floatingFilter: false, // solo barra de filtro en header
+      floatingFilter: false,
       sortable: true,
       suppressHeaderMenuButton: false,
     }),
@@ -49,6 +52,19 @@ const AGGridView: React.FC<Props> = ({ items, columnDefs }) => {
     [columnDefs]
   );
 
+  /** ✅ Altura fija para filas detalle */
+  const getRowHeight = useCallback((params: RowHeightParams) => {
+    if (isDetailRow(params.data)) {
+      return 220; // altura suficiente para Comments + Log
+    }
+    return 40; // altura normal para filas estándar
+  }, []);
+
+  /** ✅ Indica qué filas son full-width */
+  const isFullWidthRow = useCallback((params: any) => {
+    return isDetailRow(params.data);
+  }, []);
+
   return (
     <div
       style={{ height: 600, width: '100%', overflow: 'hidden' }}
@@ -60,10 +76,17 @@ const AGGridView: React.FC<Props> = ({ items, columnDefs }) => {
         defaultColDef={defaultColDef}
         rowSelection="multiple"
         animateRows
+        isFullWidthRow={isFullWidthRow}
+        getRowHeight={getRowHeight}
+        components={{
+          fullWidthRenderer: (props: any) => (
+            <FullWidthRenderer params={props} itemById={itemById} />
+          ),
+        }}
+        fullWidthCellRenderer="fullWidthRenderer"
       />
     </div>
   );
 };
 
 export default AGGridView;
-

@@ -102,17 +102,25 @@ button:focus-visible { outline: 4px auto -webkit-focus-ring-color; }
   padding-right: 6px;
 }
 
-/* El contenedor del full-width row sin padding */
+/* El contenedor del full-width row sin padding interno */
 .ag-theme-alpine .ag-full-width-row .ag-cell,
 .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
 
-/* Wrapper opcional para detalle */
+/* ✅ Wrapper para detalle (acordeón) */
 .full-width-detail-wrapper {
   width: 100%;
   box-sizing: border-box;
-  padding: 0 0; /* pon 0 12px si quieres margen lateral */
+  padding: 0 12px; /* margen lateral consistente */
+  margin: 0; /* sin margen vertical extra */
 }
 
+/* ✅ Ajuste dinámico para Collapse (sin altura fija) */
+.full-width-detail-wrapper .MuiCollapse-root {
+  margin-top: 0; /* no deja espacio cuando está colapsado */
+}
+.full-width-detail-wrapper .MuiCollapse-entered {
+  margin-top: 8px; /* añade espacio solo cuando está expandido */
+}

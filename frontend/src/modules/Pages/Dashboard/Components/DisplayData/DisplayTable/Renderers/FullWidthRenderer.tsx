@@ -1,3 +1,4 @@
+//src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/Renderers/FullWidthRenderer.tsx
 import AccordionDetail from './AccordionDetail';
 import type { ICellRendererParams } from 'ag-grid-community';
 import type { GridRow, DisplayRow } from '../hooks/useDisplayRows';
@@ -16,7 +17,7 @@ export default function FullWidthRenderer({
 
   const parent = itemById.get(d.parentId);
   return (
-    <div className="full-width-detail-wrapper">
+    <div className="full-width-detail-wrapper" style={{ padding: '4px 0' }}>
       <AccordionDetail item={parent} />
     </div>
   );

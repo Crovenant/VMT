@@ -22,12 +22,21 @@ export default function AccordionDetail({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* Header de Comments + botón Add comment (se queda a la derecha) */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* Header de Comments + botón Add comment */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mt: 1, // margen superior para separar del row
+        }}
+      >
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Comments:
         </Typography>
-        <Button variant="outlined" size="small">Add comment</Button>
+        <Button variant="text" size="small" sx={{ fontWeight: 700 }}>
+          ADD COMMENT
+        </Button>
       </Box>
 
       {/* Contenido de Comments */}
@@ -37,6 +46,7 @@ export default function AccordionDetail({
           bgcolor: '#fff',
           border: '1px solid #e0e0e0',
           borderRadius: 1,
+          mx: 1, // margen horizontal para no ir de punta a punta
         }}
       >
         <Typography variant="body2">
@@ -44,7 +54,7 @@ export default function AccordionDetail({
         </Typography>
       </Box>
 
-      {/* Header de Log History con flecha a la IZQUIERDA */}
+      {/* Header de Log History */}
       <Box
         sx={{
           mt: 1,
@@ -80,6 +90,8 @@ export default function AccordionDetail({
             bgcolor: '#fff',
             border: '1px solid #e0e0e0',
             borderRadius: 1,
+            mx: 1, // mismo margen horizontal que Comments
+            mt: 1, // pequeño margen superior cuando se expande
           }}
         >
           <Typography variant="body2">
