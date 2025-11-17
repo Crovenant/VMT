@@ -146,7 +146,9 @@ export default function DisplayTable({
       if (Array.isArray(state)) {
         colApi.applyColumnState({ state: state as ColumnState[], applyOrder: true });
       }
-    } catch {}
+    } catch {
+      console.error('Error applying saved column state');
+    }
   }, [viewType]);
 
   useEffect(() => {

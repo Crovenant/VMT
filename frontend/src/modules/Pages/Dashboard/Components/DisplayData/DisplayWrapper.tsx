@@ -109,11 +109,11 @@ export default function DisplayWrapper({
         if (!vitRes.ok || !vulRes.ok) {
           throw new Error(`HTTP ${vitRes.status} / ${vulRes.status}`);
         }
-        const vitRaw = await vitRes.json();
-        const vulRaw = await vulRes.json();
+        const vitRaw: unknown = await vitRes.json();
+        const vulRaw: unknown = await vulRes.json();
         const vitNums = new Set<string>();
         if (Array.isArray(vitRaw)) {
-          vitRaw.forEach((r: any) => {
+          (vitRaw as Record<string, unknown>[]).forEach((r) => {
             const n = r.numero ?? r['numero'] ?? r['Número'];
             if (n !== undefined && n !== null && String(n).trim() !== '') {
               vitNums.add(String(n).trim());
@@ -122,7 +122,7 @@ export default function DisplayWrapper({
         }
         const vulVitCodes = new Set<string>();
         if (Array.isArray(vulRaw)) {
-          vulRaw.forEach((r: any) => {
+          (vulRaw as Record<string, unknown>[]).forEach((r) => {
             const v = r.vitCode ?? r['VIT Code'] ?? r['Vit Code'];
             if (v !== undefined && v !== null && String(v).trim() !== '') {
               vulVitCodes.add(String(v).trim());
@@ -154,7 +154,7 @@ export default function DisplayWrapper({
         const code = String(item.numero ?? '').trim();
         return code !== '' && linkedCodes.has(code);
       }
-      const vitCode = (item as any).vitCode ?? '';
+      const vitCode = (item as Record<string, unknown>).vitCode ?? '';
       const code = String(vitCode).trim();
       return code !== '' && linkedCodes.has(code);
     },
@@ -172,7 +172,9 @@ export default function DisplayWrapper({
           setVisibleColumns(filtered.length ? filtered : SCHEMA[viewType].defaultColumns);
           return;
         }
-      } catch {}
+      } catch {
+        console.error('Error parsing saved columns');
+      }
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
   }, [viewType, allowedColumns]);

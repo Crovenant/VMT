@@ -87,7 +87,7 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
       return;
     }
 
-    const vitCode = (item as any).vitCode;
+    const vitCode = (item as Record<string, unknown>).vitCode;
     if (!vitCode) {
       setRelatedRows([]);
       return;
@@ -100,8 +100,8 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
         const res = await fetch('http://localhost:8000/vit/risk-data/');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json();
-        const arr: any[] = Array.isArray(data) ? data : [];
+        const data: unknown = await res.json();
+        const arr: Record<string, unknown>[] = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
 
         const matches = arr.filter((r) => String(r.numero ?? '').trim() === codeNorm);
 

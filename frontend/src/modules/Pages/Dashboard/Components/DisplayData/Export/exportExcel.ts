@@ -46,7 +46,7 @@ export async function exportFullJsonToExcel(data: Item[]) {
   data.forEach((item) => {
     const rowData = headers.map((header) => {
       const key = columnKeyMap[header];
-      return key ? (item as any)[key] ?? '' : '';
+      return key ? (item[key] ?? '') : '';
     });
     worksheet.addRow(rowData);
   });

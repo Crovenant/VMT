@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/FilterBar.tsx
 import { useState, useCallback, memo } from 'react';
 import { Box, IconButton, Tooltip, Popover, Typography } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -83,7 +84,10 @@ export default function FilterBar({
 
   const handleRefresh = useCallback(() => {
     onResetView?.();
-    if (typeof (window as any).clearAllFilters === 'function') (window as any).clearAllFilters();
+    const win = window as Window & { clearAllFilters?: () => void };
+    if (typeof win.clearAllFilters === 'function') {
+      win.clearAllFilters();
+    }
   }, [onResetView]);
 
   const act = useCallback(
@@ -97,10 +101,8 @@ export default function FilterBar({
 
   return (
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-      {/* ✅ LatchWidget se mantiene */}
       {!hideToggle && <LatchWidget viewType={viewType} onSwitchView={onSwitchView} />}
 
-      {/* Botones */}
       <Tooltip title="Refresh view">
         <IconButton aria-label="Reset view" color="primary" size="small" onClick={handleRefresh}>
           <RefreshIcon fontSize="small" />
