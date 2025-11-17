@@ -1,22 +1,21 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/Export/exportExcel.ts
 import ExcelJS from 'exceljs';
 import type { Item } from '../../../../../Types/item';
 
 const columnKeyMap: Record<string, keyof Item> = {
+  // VIT
   'Número': 'numero',
   'ID externo': 'idExterno',
   'Estado': 'estado',
   'Resumen': 'resumen',
   'Breve descripción': 'breveDescripcion',
   'Elemento de configuración': 'elementoConfiguracion',
-
-  // ➕ Nuevos campos del Excel VIT
   'Dirección IP': 'direccionIp',
   'Aplazado por': 'aplazadoPor',
   'Fecha de aplazamiento': 'fechaAplazamiento',
   'Notas de aplazamiento': 'notasAplazamiento',
   'Software vulnerable': 'softwareVulnerable',
   'Resolución': 'resolucion',
-
   'Prioridad': 'prioridad',
   'Puntuación de riesgo': 'puntuacionRiesgo',
   'Grupo de asignación': 'grupoAsignacion',
@@ -26,7 +25,13 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Vulnerability solution': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
-  'Due date': 'dueDate', // ✅ incluido
+  'Due date': 'dueDate',
+
+  // VUL
+  'id': 'id',
+  'Activo': 'activo',
+  'Elementos vulnerables': 'elementosVulnerables',
+  'VITS': 'vits',
 };
 
 export async function exportFullJsonToExcel(data: Item[]) {
@@ -35,20 +40,17 @@ export async function exportFullJsonToExcel(data: Item[]) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Vulnerability list');
 
-  // Cabeceras
   const headers = Object.keys(columnKeyMap);
   worksheet.addRow(headers);
 
-  // Datos
   data.forEach((item) => {
     const rowData = headers.map((header) => {
       const key = columnKeyMap[header];
-      return key && key !== 'id' ? (item as any)[key] ?? '' : '';
+      return key ? (item as any)[key] ?? '' : '';
     });
     worksheet.addRow(rowData);
   });
 
-  // Estilo cabecera
   const headerRow = worksheet.getRow(1);
   headerRow.eachCell((cell) => {
     cell.fill = {

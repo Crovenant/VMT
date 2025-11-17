@@ -1,13 +1,5 @@
 // src/modules/Pages/Dashboard/Types/item.ts
-// -----------------------------------------------------------------------------
-// Definición del tipo Item que usan las vistas VIT y VUL.
-// - Hoy: solo cambios mínimos para que VIT soporte los 22 campos del Excel.
-// - Se añaden 6 claves opcionales: direccionIp, aplazadoPor, fechaAplazamiento,
-//   notasAplazamiento, softwareVulnerable, resolucion.
-// -----------------------------------------------------------------------------
-
 export type Item = {
-  // Comunes / Csirt
   id: string;
   nombre: string;
   numero: string;
@@ -17,7 +9,6 @@ export type Item = {
   breveDescripcion: string;
   elementoConfiguracion: string;
 
-  // Campos adicionales VIT Excel
   direccionIp?: string;
   aplazadoPor?: string;
   fechaAplazamiento?: string;
@@ -37,7 +28,12 @@ export type Item = {
   vulnerabilitySolution: string;
   dueDate: string;
 
-  // ---- Cso / VUL (hacer opcionales para evitar fricciones de datos) ----
+  // Campos VUL adaptados
+  activo?: string;
+  elementosVulnerables?: string;
+  vits?: string;
+
+  // Mantener opcionales previos para compatibilidad
   tratada?: string;
   accionNotas?: string;
   actualizacionEstado?: string;
@@ -101,9 +97,8 @@ export type Item = {
   fechaMitigacion?: string;
   fechaCertificacion?: string;
 
-  // Opcionales de UI
-  comments?: string[];          // <- usado en DetailModal
-  comentarios?: string;         // compatibilidad si lo cargas en español
+  comments?: string[];
+  comentarios?: string;
   logHistory?: string;
   followUp?: boolean;
   soonDue?: boolean;

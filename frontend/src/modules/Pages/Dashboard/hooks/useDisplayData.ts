@@ -36,19 +36,18 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
 }
 
 function mapVUL(row: Record<string, unknown>): Item {
-  const numero = pick(row, ['Vulnerability ID', 'ID Test', 'VUL Code', 'VIT Code']);
-  const resumen = pick(row, ['Vulnerability Title', 'Threat Description', 'Details']);
-  const estado = pick(row, ['State', 'State CSO']);
-  const prioridad = normalizePriority(pick(row, ['Severity']));
-  const puntuacionRiesgo =
-    toNumber(row['CVSS Overall']) || toNumber(row['CVSS Base']) || toNumber(row['EPSS']);
-  const asignadoA = pick(row, ['IT Owner', 'Detection team', 'SW Provider']);
-  const elementoConfiguracion = pick(row, ['Hostname', 'Application', 'Nombre Aplicación']);
-  const creado = pick(row, ['Detection Date', 'Actualizacion estado', 'Fecha comunicación SWF']);
-  const actualizado = pick(row, ['Resolution Date', 'Production Date', 'Fecha mitigacion']);
-  const dueDate = pick(row, ['Due date', 'Due Date', 'dueDate']);
+  const numero = pick(row, ['Número']);
+  const activo = pick(row, ['Activo']);
+  const elementosVulnerables = pick(row, ['Elementos vulnerables']);
+  const asignadoA = pick(row, ['Asignado a']);
+  const grupoAsignacion = pick(row, ['Grupo de asignación']);
+  const prioridad = normalizePriority(pick(row, ['Prioridad']));
+  const estado = pick(row, ['Estado']);
+  const actualizado = pick(row, ['Actualizado']);
+  const vits = pick(row, ['VITS']);
 
   const id =
+    pick(row, ['id']) ||
     numero ||
     (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
@@ -56,45 +55,35 @@ function mapVUL(row: Record<string, unknown>): Item {
 
   return {
     id: String(id),
-    nombre: resumen,
+    nombre: numero,
     numero: String(numero),
     idExterno: String(numero),
     estado: String(estado),
-    resumen: String(resumen),
+    resumen: '',
     breveDescripcion: '',
-    elementoConfiguracion: String(elementoConfiguracion),
-    fechaCreacion: String(creado),
+    elementoConfiguracion: '',
+    fechaCreacion: '',
     prioridad,
-    puntuacionRiesgo,
-    grupoAsignacion: '',
+    puntuacionRiesgo: 0,
+    grupoAsignacion: String(grupoAsignacion),
     asignadoA: String(asignadoA),
-    sites: pick(row, ['Domain', 'Network']),
-    vulnerabilidad: pick(row, ['Category ASVS', 'ASVS ID', 'OWASP TOP 10']),
-    vulnerabilitySolution: String((row['Countermeasure'] as string) ?? ''),
-    creado: String(creado),
+    sites: '',
+    vulnerabilidad: '',
+    vulnerabilitySolution: '',
+    creado: '',
     actualizado: String(actualizado),
-    dueDate,
-    vulnerabilityId: String((row['Vulnerability ID'] as string) ?? ''),
-    state: String((row['State'] as string) ?? (row['State CSO'] as string) ?? ''),
-    severity: String((row['Severity'] as string) ?? ''),
-    vulCode: String((row['VUL Code'] as string) ?? ''),
-    vitCode: String((row['VIT Code'] as string) ?? ''),
+    dueDate: '',
+    activo: String(activo),
+    elementosVulnerables: String(elementosVulnerables),
+    vits: String(vits),
   } as Item;
 }
 
-/**
- * VIT: normaliza entradas a las claves de Item. Minimalista para hoy.
- * Incluye los 22 campos del Excel (alias "Vulnerability solution" incluido).
- */
 function mapVIT(row: Record<string, unknown>): Item {
-  // Identificadores
   const numero = pick(row, ['numero', 'Número', 'Num', 'number', 'id']);
   const idExterno = pick(row, ['idExterno', 'ID externo', 'externalId', 'external_id']);
-
-  // Estado / textos
   const estado = pick(row, ['estado', 'Estado', 'state', 'State']);
   const resumen = pick(row, ['resumen', 'Resumen', 'summary', 'Summary', 'nombre']);
-
   const breveDescripcion = pick(row, [
     'breveDescripcion',
     'Breve descripción',
@@ -102,7 +91,6 @@ function mapVIT(row: Record<string, unknown>): Item {
     'short_description',
     'Short description',
   ]);
-
   const elementoConfiguracion = pick(row, [
     'elementoConfiguracion',
     'Elemento de configuración',
@@ -110,8 +98,6 @@ function mapVIT(row: Record<string, unknown>): Item {
     'cmdb_ci',
     'CI',
   ]);
-
-  // NUEVO: Dirección IP
   const direccionIp = pick(row, [
     'direccionIp',
     'Dirección IP',
@@ -120,12 +106,9 @@ function mapVIT(row: Record<string, unknown>): Item {
     'ip_address',
     'IP Address',
   ]);
-
-  // Métricas / prioridad
   const prioridad = normalizePriority(
     pick(row, ['prioridad', 'Prioridad', 'severity', 'Severity', 'priority']),
   );
-
   const puntuacionRiesgo =
     toNumber(
       pick(row, [
@@ -136,8 +119,6 @@ function mapVIT(row: Record<string, unknown>): Item {
         'Risk Score',
       ]),
     ) || 0;
-
-  // Asignación
   const grupoAsignacion = pick(row, [
     'grupoAsignacion',
     'Grupo de asignación',
@@ -145,10 +126,7 @@ function mapVIT(row: Record<string, unknown>): Item {
     'assignment_group',
     'Assignment group',
   ]);
-
   const asignadoA = pick(row, ['asignadoA', 'Asignado a', 'assigned_to', 'Assigned to']);
-
-  // Fechas
   const creado = pick(row, ['creado', 'Creado', 'created', 'Created', 'sys_created_on']);
   const actualizado = pick(row, ['actualizado', 'Actualizado', 'updated', 'Updated', 'sys_updated_on']);
   const fechaCreacion = pick(row, [
@@ -158,11 +136,9 @@ function mapVIT(row: Record<string, unknown>): Item {
     'created',
     'Created',
     'sys_created_on',
-    creado, // fallback
+    creado,
   ]);
   const dueDate = pick(row, ['dueDate', 'Due date', 'Due Date', 'deadline', 'Deadline']);
-
-  // Extras del VIT_MAP
   const sites = pick(row, ['sites', 'Sites', 'Domain', 'Network']);
   const vulnerabilidad = pick(row, [
     'vulnerabilidad',
@@ -175,20 +151,17 @@ function mapVIT(row: Record<string, unknown>): Item {
     'vulnerabilitySolution',
     'Solución',
     'Solucion',
-    'Vulnerability solution', // alias del Excel
+    'Vulnerability solution',
     'Solution',
     'Countermeasure',
   ]);
   const comentarios = pick(row, ['comentarios', 'Comentarios', 'Comments', 'Observations']);
-
-  // NUEVOS (Excel VIT): Aplazamientos / SW / Resolución
   const aplazadoPor = pick(row, ['aplazadoPor', 'Aplazado por']);
   const fechaAplazamiento = pick(row, ['fechaAplazamiento', 'Fecha de aplazamiento']);
   const notasAplazamiento = pick(row, ['notasAplazamiento', 'Notas de aplazamiento']);
   const softwareVulnerable = pick(row, ['softwareVulnerable', 'Software vulnerable']);
   const resolucion = pick(row, ['resolucion', 'Resolución', 'Resolution']);
 
-  // ID estable
   const id =
     numero ||
     (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -204,10 +177,7 @@ function mapVIT(row: Record<string, unknown>): Item {
     resumen: String(resumen),
     breveDescripcion: String(breveDescripcion),
     elementoConfiguracion: String(elementoConfiguracion),
-
-    // nuevos del Excel
     direccionIp: String(direccionIp),
-
     fechaCreacion: String(fechaCreacion || creado),
     prioridad,
     puntuacionRiesgo,
@@ -216,14 +186,11 @@ function mapVIT(row: Record<string, unknown>): Item {
     sites: String(sites),
     vulnerabilidad: String(vulnerabilidad),
     vulnerabilitySolution: String(vulnerabilitySolution),
-
-    // nuevos del Excel
     aplazadoPor: String(aplazadoPor),
     fechaAplazamiento: String(fechaAplazamiento),
     notasAplazamiento: String(notasAplazamiento),
     softwareVulnerable: String(softwareVulnerable),
     resolucion: String(resolucion),
-
     comentarios: String(comentarios),
     creado: String(creado),
     actualizado: String(actualizado),

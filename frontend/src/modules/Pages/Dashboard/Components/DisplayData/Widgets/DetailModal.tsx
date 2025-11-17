@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayModal.tsx
 import { useMemo, useState, useEffect } from 'react';
 import {
   Dialog,
@@ -29,20 +30,18 @@ type Props = {
   viewType: ViewType;
 };
 
-// Campos VUL que se mostrarán por defecto en el card
 const DEFAULT_VUL_CARD_FIELDS: string[] = [
-  'Vulnerability ID',
-  'Severity',
-  'VUL Code',
-  'Details',
-  'Due date',
-  'State CSO',
-  'VIT Code',
-  'Deadline',
-  'IT Owner',
+  'Número',
+  'Activo',
+  'Elementos vulnerables',
+  'Asignado a',
+  'Grupo de asignación',
+  'Prioridad',
+  'Estado',
+  'Actualizado',
+  'VITS',
 ];
 
-// Campos VIT por defecto en el grid (como en DisplayData)
 const DEFAULT_VIT_GRID_FIELDS: string[] = [
   'Número',
   'Estado',
@@ -57,22 +56,19 @@ const DEFAULT_VIT_GRID_FIELDS: string[] = [
 export default function DetailModal({ open, onClose, item, viewType }: Props) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  // VUL card: por defecto solo los campos definidos arriba (que existan en VUL_MAP)
   const [selectedVulCardFields, setSelectedVulCardFields] = useState<string[]>(() =>
     DEFAULT_VUL_CARD_FIELDS.filter((label) => label in VUL_MAP),
   );
 
-  // VIT grid: por defecto mismos campos que DisplayData (si existen en VIT_MAP)
   const [selectedVitGridFields, setSelectedVitGridFields] = useState<string[]>(() =>
     DEFAULT_VIT_GRID_FIELDS.filter((label) => label in VIT_MAP),
   );
 
-  // GRID: columnas VIT (⚠️ field usa la clave real, no el label)
   const gridColumnDefs = useMemo<ColDef[]>(
     () =>
       Object.entries(VIT_MAP).map(([header, key]) => ({
         headerName: header,
-        field: key, // <- aquí estaba el fallo: antes era `field: header`
+        field: key,
         resizable: true,
         sortable: true,
         filter: 'agTextColumnFilter',
@@ -83,11 +79,9 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
     [],
   );
 
-  // FILAS RELACIONADAS VIT
   const [relatedRows, setRelatedRows] = useState<Record<string, unknown>[]>([]);
 
   useEffect(() => {
-    // Si el modal está cerrado, no hay item o no estamos en vista VUL -> nada
     if (!open || !item || viewType !== 'VUL') {
       setRelatedRows([]);
       return;
@@ -109,7 +103,6 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
         const data = await res.json();
         const arr: any[] = Array.isArray(data) ? data : [];
 
-        // Coincidencia: Número de VIT === vitCode del VUL
         const matches = arr.filter((r) => String(r.numero ?? '').trim() === codeNorm);
 
         setRelatedRows(matches);
@@ -120,7 +113,6 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
     })();
   }, [open, item, viewType]);
 
-  // CARD: pares label/valor para VUL
   const vulCardPairs = useMemo(() => {
     if (!item) return [] as { label: string; value: unknown }[];
     return Object.entries(VUL_MAP).map(([label, key]) => {
@@ -171,7 +163,6 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
               transition: 'grid-template-columns 0.3s ease',
             }}
           >
-            {/* Panel lateral de filtros */}
             <Box sx={{ gridRow: '1 / span 2', bgcolor: '#f5f6f8' }}>
               <DetailFilterPanel
                 isOpen={isPanelOpen}
@@ -183,7 +174,6 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
               />
             </Box>
 
-            {/* Cabecera del modal */}
             <Box
               sx={{
                 gridColumn: 2,
@@ -202,9 +192,7 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
               </IconButton>
             </Box>
 
-            {/* Contenido scrolleable */}
             <Box sx={{ gridColumn: 2, p: 2 }}>
-              {/* CARD: detalles VUL */}
               <Box sx={{ mb: 2 }}>
                 <Grid container spacing={1.5}>
                   {filteredVulCardPairs.map(({ label, value }) => (
@@ -222,7 +210,6 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Comments */}
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -257,7 +244,6 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
 
               <Divider sx={{ my: 2 }} />
 
-              {/* GRID: VIT columns */}
               <Typography
                 variant="subtitle1"
                 sx={{ fontWeight: 700, color: 'primary.main', mb: 1.5 }}

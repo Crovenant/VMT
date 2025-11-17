@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayWrapper.tsx
 import { useEffect, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
@@ -32,7 +33,17 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
     listUrl: 'http://localhost:8000/vul/risk-data/',
     uploadUrl: 'http://localhost:8000/vul/upload/',
     saveUrl: 'http://localhost:8000/vul/save-selection/',
-    defaultColumns: ['Vulnerability ID', 'State', 'Severity', 'VUL Code', 'VIT Code'],
+    defaultColumns: [
+      'Número',
+      'Activo',
+      'Elementos vulnerables',
+      'Asignado a',
+      'Grupo de asignación',
+      'Prioridad',
+      'Estado',
+      'Actualizado',
+      'VITS',
+    ],
   },
 };
 

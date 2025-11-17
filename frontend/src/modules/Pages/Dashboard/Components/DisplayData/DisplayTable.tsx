@@ -90,14 +90,8 @@ export default function DisplayTable({
     [],
   );
 
-  const toggleColDef = useMemo(
-    () => createToggleColDef(expanded, toggleExpand),
-    [expanded, toggleExpand],
-  );
-  const businessColDefs = useMemo(
-    () => createBusinessColDefs(visibleColumns, columnKeyMap),
-    [visibleColumns, columnKeyMap],
-  );
+  const toggleColDef = useMemo(() => createToggleColDef(expanded, toggleExpand), [expanded, toggleExpand]);
+  const businessColDefs = useMemo(() => createBusinessColDefs(visibleColumns, columnKeyMap), [visibleColumns, columnKeyMap]);
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -112,35 +106,24 @@ export default function DisplayTable({
     setSelectedItem(null);
   }, []);
 
-  const eyeColDef = useMemo(
-    () => createEyeColDef(handleOpenModal, hasLink),
-    [handleOpenModal, hasLink],
-  );
+  const eyeColDef = useMemo(() => createEyeColDef(handleOpenModal, hasLink), [handleOpenModal, hasLink]);
 
-  const columnDefs: ColDef<GridRow>[] = useMemo(
-    () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
-    [eyeColDef, toggleColDef, businessColDefs],
-  );
+  const columnDefs: ColDef<GridRow>[] = useMemo(() => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs], [eyeColDef, toggleColDef, businessColDefs]);
 
   const getRowStyle = useCallback(
     (p: RowClassParams<GridRow, unknown>): RowStyle | undefined => {
       const data = p?.data as DisplayRow | undefined;
-
-
       if (isDetailRow(data)) {
         const st: RowStyle = {};
         st.backgroundColor = '#f5f6f8';
         return st;
       }
-
       const it = (data as Item) ?? ({} as Item);
-
       if (it.prioridad === 'Crítico' || it.followUp) {
         const st: RowStyle = {};
         st.backgroundColor = '#fff8e1';
         return st;
       }
-
       return undefined;
     },
     [],
@@ -163,9 +146,7 @@ export default function DisplayTable({
       if (Array.isArray(state)) {
         colApi.applyColumnState({ state: state as ColumnState[], applyOrder: true });
       }
-    } catch {
-
-    }
+    } catch {}
   }, [viewType]);
 
   useEffect(() => {
@@ -173,19 +154,13 @@ export default function DisplayTable({
     return () => clearTimeout(t);
   }, [applySavedColumnState, columnDefs]);
 
-  const onColumnMoved = useCallback(
-    (e: ColumnMovedEvent) => {
-      if (e.finished) persistColumnState();
-    },
-    [persistColumnState],
-  );
+  const onColumnMoved = useCallback((e: ColumnMovedEvent) => {
+    if (e.finished) persistColumnState();
+  }, [persistColumnState]);
 
-  const onColumnResized = useCallback(
-    (e: ColumnResizedEvent) => {
-      if (e.finished) persistColumnState();
-    },
-    [persistColumnState],
-  );
+  const onColumnResized = useCallback((e: ColumnResizedEvent) => {
+    if (e.finished) persistColumnState();
+  }, [persistColumnState]);
 
   return (
     <>
@@ -227,7 +202,6 @@ export default function DisplayTable({
             onColumnResized={onColumnResized}
           />
         </Box>
-
         <SideFilterPanel
           allHeaders={allColumns}
           visibleColumns={visibleColumns}
