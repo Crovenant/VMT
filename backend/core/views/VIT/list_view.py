@@ -1,4 +1,3 @@
-# backend/core/views/VIT/list_view.py
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -19,7 +18,8 @@ def get_risk_data(request):
         return add_cors_headers(JsonResponse({"error": "Método no permitido"}, status=405))
 
     try:
-        data = load_json_data("vit_Data.json")
+        # Ajuste: ahora vit_Data.json está en data/CSIRT/
+        data = load_json_data("CSIRT/vit_Data.json")
         response = JsonResponse(data, safe=False)
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=500)
@@ -40,7 +40,8 @@ def get_vit_risk_data(request):
         return add_cors_headers(JsonResponse({"error": "Método no permitido"}, status=405))
 
     try:
-        data = load_json_data("vit_Data.json")
+        # Ajuste: ahora vit_Data.json está en data/CSIRT/
+        data = load_json_data("CSIRT/vit_Data.json")
         response = JsonResponse(data, safe=False)
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=500)

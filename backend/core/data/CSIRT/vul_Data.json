@@ -9,7 +9,7 @@
         "Prioridad": "Medium",
         "Estado": "Rejected",
         "Actualizado": "2025-12-12",
-        "VITS": "Info-R2D2"
+        "VITS": "INC-001, INC-002, INC-003, INC-004"
     },
     {
         "id": "SOUP-002",
@@ -21,7 +21,7 @@
         "Prioridad": "Low",
         "Estado": "Pending",
         "Actualizado": "2026-01-19",
-        "VITS": "Info-1d1e43a1"
+        "VITS": "INC-005, INC-006"
     },
     {
         "id": "SOUP-003",
@@ -33,7 +33,7 @@
         "Prioridad": "Low",
         "Estado": "Validated",
         "Actualizado": "2025-12-21",
-        "VITS": "Info-9f85339a"
+        "VITS": ""
     },
     {
         "id": "SOUP-004",
@@ -45,7 +45,7 @@
         "Prioridad": "Medium",
         "Estado": "Pending",
         "Actualizado": "2025-12-01",
-        "VITS": "INC-001"
+        "VITS": ""
     },
     {
         "id": "SOUP-005",
@@ -57,7 +57,7 @@
         "Prioridad": "Low",
         "Estado": "Validated",
         "Actualizado": "2025-09-08",
-        "VITS": "INC-002"
+        "VITS": ""
     },
     {
         "id": "SOUP-006",
@@ -69,7 +69,7 @@
         "Prioridad": "Medium",
         "Estado": "Rejected",
         "Actualizado": "2025-08-11",
-        "VITS": "Info-82a79011"
+        "VITS": ""
     },
     {
         "id": "SOUP-007",
@@ -81,7 +81,7 @@
         "Prioridad": "Low",
         "Estado": "Pending",
         "Actualizado": "2025-11-27",
-        "VITS": "Info-3715f651"
+        "VITS": ""
     },
     {
         "id": "SOUP-008",
@@ -93,7 +93,7 @@
         "Prioridad": "Low",
         "Estado": "Validated",
         "Actualizado": "2025-10-20",
-        "VITS": "Info-b2fc3c06"
+        "VITS": ""
     },
     {
         "id": "SOUP-009",
@@ -105,7 +105,7 @@
         "Prioridad": "Critical",
         "Estado": "Pending",
         "Actualizado": "2025-12-11",
-        "VITS": "Info-C3P0"
+        "VITS": ""
     },
     {
         "id": "SOUP-010",
@@ -117,6 +117,6 @@
         "Prioridad": "Medium",
         "Estado": "Rejected",
         "Actualizado": "2025-10-05",
-        "VITS": "Info-d26f834b"
+        "VITS": ""
     }
 ]
