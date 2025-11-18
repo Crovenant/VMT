@@ -25,7 +25,7 @@ export const createEyeColDef = (
 
       const item = d as unknown as Item;
 
-      // 👁️ Si nos pasan una función de enlace y NO hay match, no pintamos el ojo
+      // Si nos pasan una función de enlace y NO hay match, no pintamos el ojo
       if (hasLink && !hasLink(item)) {
         return null;
       }
@@ -42,7 +42,7 @@ export const createEyeColDef = (
           }}
           onClick={() => handleOpenModal(item)}
         >
-          <svg width="20" height="20" viewBox="0 0 24 5" fill="#1976d2" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#1976d2" aria-hidden="true">
             <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 13a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm0-9a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" />
           </svg>
         </Box>

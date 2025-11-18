@@ -135,7 +135,6 @@ export default function DisplayTable({
     const state = colApi.getColumnState() as ColumnState[];
     localStorage.setItem(LS_COLUMN_STATE(viewType), JSON.stringify(state));
   }, [viewType]);
-
   const applySavedColumnState = useCallback(() => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return;
@@ -150,20 +149,16 @@ export default function DisplayTable({
       console.error('Error applying saved column state');
     }
   }, [viewType]);
-
   useEffect(() => {
     const t = setTimeout(() => applySavedColumnState(), 0);
     return () => clearTimeout(t);
   }, [applySavedColumnState, columnDefs]);
-
   const onColumnMoved = useCallback((e: ColumnMovedEvent) => {
     if (e.finished) persistColumnState();
   }, [persistColumnState]);
-
   const onColumnResized = useCallback((e: ColumnResizedEvent) => {
     if (e.finished) persistColumnState();
   }, [persistColumnState]);
-
   return (
     <>
       <Box
@@ -210,7 +205,6 @@ export default function DisplayTable({
           setVisibleColumns={setVisibleColumns}
         />
       </Box>
-
       <DetailModal
         open={openModal}
         onClose={handleCloseModal}

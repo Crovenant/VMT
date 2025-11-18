@@ -127,6 +127,17 @@ export default function DisplayWrapper({
             if (v !== undefined && v !== null && String(v).trim() !== '') {
               vulVitCodes.add(String(v).trim());
             }
+            // También considerar campo VITS (lista de códigos)
+            const vitsField = r.VITS ?? r['VITS'] ?? r['vits'];
+            if (typeof vitsField === 'string') {
+              vitsField.split(',').map((code) => code.trim()).forEach((code) => {
+                if (code) vulVitCodes.add(code);
+              });
+            } else if (Array.isArray(vitsField)) {
+              (vitsField as unknown[]).map((code) => String(code).trim()).forEach((code) => {
+                if (code) vulVitCodes.add(code);
+              });
+            }
           });
         }
         const linked = new Set<string>();
@@ -154,9 +165,14 @@ export default function DisplayWrapper({
         const code = String(item.numero ?? '').trim();
         return code !== '' && linkedCodes.has(code);
       }
-      const vitCode = (item as Record<string, unknown>).vitCode ?? '';
-      const code = String(vitCode).trim();
-      return code !== '' && linkedCodes.has(code);
+      // Vista VUL: buscar en VITS
+      const vitsField = (item as Record<string, unknown>).VITS ?? (item as Record<string, unknown>)['vits'];
+      if (typeof vitsField === 'string') {
+        return vitsField.split(',').some((code) => linkedCodes.has(code.trim()));
+      } else if (Array.isArray(vitsField)) {
+        return (vitsField as unknown[]).some((code) => linkedCodes.has(String(code).trim()));
+      }
+      return false;
     },
     [linkedCodes, viewType],
   );
@@ -221,7 +237,6 @@ export default function DisplayWrapper({
           />
         </Box>
       </Box>
-
       <DisplayTable
         rows={rows}
         visibleColumns={visibleColumns}
@@ -231,7 +246,6 @@ export default function DisplayWrapper({
         setShowUploadModal={setShowUploadModal}
         hasLink={hasLink}
       />
-
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>
         <Box p={3}>
           <UploadFileWrapper onClose={handleUploadClose} uploadUrl={endpoints.uploadUrl} saveUrl={endpoints.saveUrl} listUrlForMutate={current.listUrl} />
