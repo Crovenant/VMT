@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/DisplayModal.tsx
 import { useMemo, useState, useEffect } from 'react';
 import {
   Dialog,
@@ -81,36 +80,13 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
 
   const [relatedRows, setRelatedRows] = useState<Record<string, unknown>[]>([]);
 
+  // Eliminamos lógica de fetch, backend debe proveer datos si se requiere
   useEffect(() => {
     if (!open || !item || viewType !== 'VUL') {
       setRelatedRows([]);
       return;
     }
-
-    const vitCode = (item as Record<string, unknown>).vitCode;
-    if (!vitCode) {
-      setRelatedRows([]);
-      return;
-    }
-
-    const codeNorm = String(vitCode).trim();
-
-    (async () => {
-      try {
-        const res = await fetch('http://localhost:8000/vit/risk-data/');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data: unknown = await res.json();
-        const arr: Record<string, unknown>[] = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
-
-        const matches = arr.filter((r) => String(r.numero ?? '').trim() === codeNorm);
-
-        setRelatedRows(matches);
-      } catch (err) {
-        console.error('Error loading related VIT rows for modal:', err);
-        setRelatedRows([]);
-      }
-    })();
+    setRelatedRows([]); // Por ahora vacío
   }, [open, item, viewType]);
 
   const vulCardPairs = useMemo(() => {

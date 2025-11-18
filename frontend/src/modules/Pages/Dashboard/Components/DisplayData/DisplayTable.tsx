@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable.tsx
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { Box } from '@mui/material';
@@ -36,7 +35,9 @@ export default function DisplayTable({
   rows,
   visibleColumns,
   setVisibleColumns,
+  showFilterPanel,
   viewType,
+  setShowUploadModal,
   hasLink,
 }: {
   rows: Item[];
@@ -107,9 +108,7 @@ export default function DisplayTable({
   }, []);
 
   const eyeColDef = useMemo(() => createEyeColDef(handleOpenModal, hasLink), [handleOpenModal, hasLink]);
-
   const columnDefs: ColDef<GridRow>[] = useMemo(() => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs], [eyeColDef, toggleColDef, businessColDefs]);
-
   const getRowStyle = useCallback(
     (p: RowClassParams<GridRow, unknown>): RowStyle | undefined => {
       const data = p?.data as DisplayRow | undefined;
@@ -128,7 +127,6 @@ export default function DisplayTable({
     },
     [],
   );
-
   const persistColumnState = useCallback(() => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return;

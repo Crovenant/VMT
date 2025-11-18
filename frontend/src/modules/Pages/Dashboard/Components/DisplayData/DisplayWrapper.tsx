@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/DisplayWrapper.tsx
 import { useEffect, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
@@ -99,83 +98,9 @@ export default function DisplayWrapper({
   });
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
-  const [linkedCodes, setLinkedCodes] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchLinks = async () => {
-      try {
-        const [vitRes, vulRes] = await Promise.all([fetch(SCHEMA.VIT.listUrl), fetch(SCHEMA.VUL.listUrl)]);
-        if (!vitRes.ok || !vulRes.ok) {
-          throw new Error(`HTTP ${vitRes.status} / ${vulRes.status}`);
-        }
-        const vitRaw: unknown = await vitRes.json();
-        const vulRaw: unknown = await vulRes.json();
-        const vitNums = new Set<string>();
-        if (Array.isArray(vitRaw)) {
-          (vitRaw as Record<string, unknown>[]).forEach((r) => {
-            const n = r.numero ?? r['numero'] ?? r['Número'];
-            if (n !== undefined && n !== null && String(n).trim() !== '') {
-              vitNums.add(String(n).trim());
-            }
-          });
-        }
-        const vulVitCodes = new Set<string>();
-        if (Array.isArray(vulRaw)) {
-          (vulRaw as Record<string, unknown>[]).forEach((r) => {
-            const v = r.vitCode ?? r['VIT Code'] ?? r['Vit Code'];
-            if (v !== undefined && v !== null && String(v).trim() !== '') {
-              vulVitCodes.add(String(v).trim());
-            }
-            // También considerar campo VITS (lista de códigos)
-            const vitsField = r.VITS ?? r['VITS'] ?? r['vits'];
-            if (typeof vitsField === 'string') {
-              vitsField.split(',').map((code) => code.trim()).forEach((code) => {
-                if (code) vulVitCodes.add(code);
-              });
-            } else if (Array.isArray(vitsField)) {
-              (vitsField as unknown[]).map((code) => String(code).trim()).forEach((code) => {
-                if (code) vulVitCodes.add(code);
-              });
-            }
-          });
-        }
-        const linked = new Set<string>();
-        vulVitCodes.forEach((code) => {
-          if (vitNums.has(code)) linked.add(code);
-        });
-        if (!cancelled) {
-          setLinkedCodes(linked);
-        }
-      } catch (err) {
-        console.error('Error calculating linked VIT/VUL codes:', err);
-        if (!cancelled) setLinkedCodes(new Set());
-      }
-    };
-    void fetchLinks();
-    return () => {
-      cancelled = true;
-    };
-  }, [refreshKey]);
-
-  const hasLink = useCallback(
-    (item: Item): boolean => {
-      if (!linkedCodes || linkedCodes.size === 0) return true;
-      if (viewType === 'VIT') {
-        const code = String(item.numero ?? '').trim();
-        return code !== '' && linkedCodes.has(code);
-      }
-      // Vista VUL: buscar en VITS
-      const vitsField = (item as Record<string, unknown>).VITS ?? (item as Record<string, unknown>)['vits'];
-      if (typeof vitsField === 'string') {
-        return vitsField.split(',').some((code) => linkedCodes.has(code.trim()));
-      } else if (Array.isArray(vitsField)) {
-        return (vitsField as unknown[]).some((code) => linkedCodes.has(String(code).trim()));
-      }
-      return false;
-    },
-    [linkedCodes, viewType],
-  );
+  // Nueva lógica: usar hasLink del backend
+  const hasLink = useCallback((item: Item): boolean => Boolean(item.hasLink), []);
 
   useEffect(() => {
     const allowed = new Set(allowedColumns);

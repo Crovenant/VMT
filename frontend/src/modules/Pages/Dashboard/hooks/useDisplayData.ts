@@ -76,6 +76,7 @@ function mapVUL(row: Record<string, unknown>): Item {
     activo: String(activo),
     elementosVulnerables: String(elementosVulnerables),
     vits: String(vits),
+    hasLink: Boolean(row.hasLink) || Boolean(vits && vits.trim() !== ''), // ✅ ojo en VUL si hay VITS
   } as Item;
 }
 
@@ -195,6 +196,7 @@ function mapVIT(row: Record<string, unknown>): Item {
     creado: String(creado),
     actualizado: String(actualizado),
     dueDate: String(dueDate),
+    hasLink: Boolean(row.hasLink), // ✅ ojo en VIT solo si backend indica relación
   } as Item;
 }
 

@@ -16,7 +16,8 @@
     "sites": "Madrid",
     "vulnerabilitySolution": "Actualizar a v2.1",
     "vulnerabilidad": "CVE-2025-1001",
-    "dueDate": "2025-11-02"
+    "dueDate": "2025-11-02",
+    "hasLink": false
   },
   {
     "id": 2,
@@ -35,7 +36,8 @@
     "sites": "Barcelona",
     "vulnerabilitySolution": "Reemplazar router",
     "vulnerabilidad": "CVE-2025-1002",
-    "dueDate": "2026-09-29"
+    "dueDate": "2026-09-29",
+    "hasLink": false
   },
   {
     "id": 3,
@@ -54,7 +56,8 @@
     "sites": "Valencia",
     "vulnerabilitySolution": "Restablecer contraseñas",
     "vulnerabilidad": "CVE-2025-1003",
-    "dueDate": "2025-12-04"
+    "dueDate": "2025-12-04",
+    "hasLink": false
   },
   {
     "id": 4,
@@ -73,7 +76,8 @@
     "sites": "Sevilla",
     "vulnerabilitySolution": "Revisar scripts",
     "vulnerabilidad": "CVE-2025-1004",
-    "dueDate": "2025-10-03"
+    "dueDate": "2025-10-03",
+    "hasLink": false
   },
   {
     "id": 5,
@@ -92,7 +96,8 @@
     "sites": "Bilbao",
     "vulnerabilitySolution": "Actualizar firmas",
     "vulnerabilidad": "CVE-2025-1005",
-    "dueDate": "2026-08-20"
+    "dueDate": "2026-08-20",
+    "hasLink": false
   },
   {
     "id": 6,
@@ -111,7 +116,8 @@
     "sites": "Madrid",
     "vulnerabilitySolution": "Revisar drivers",
     "vulnerabilidad": "CVE-2025-1006",
-    "dueDate": "2026-09-07"
+    "dueDate": "2026-09-07",
+    "hasLink": false
   },
   {
     "id": 7,
@@ -130,7 +136,8 @@
     "sites": "Valencia",
     "vulnerabilitySolution": "Bloquear IP",
     "vulnerabilidad": "CVE-2025-1007",
-    "dueDate": "2025-12-08"
+    "dueDate": "2025-12-08",
+    "hasLink": false
   },
   {
     "id": 8,
@@ -149,7 +156,8 @@
     "sites": "Sevilla",
     "vulnerabilitySolution": "Actualizar firmware",
     "vulnerabilidad": "CVE-2025-1008",
-    "dueDate": "2026-08-30"
+    "dueDate": "2026-08-30",
+    "hasLink": false
   },
   {
     "id": 9,
@@ -168,7 +176,8 @@
     "sites": "Madrid",
     "vulnerabilitySolution": "Reemplazar disco",
     "vulnerabilidad": "CVE-2025-1009",
-    "dueDate": "2025-10-02"
+    "dueDate": "2025-10-02",
+    "hasLink": false
   },
   {
     "id": 10,
@@ -187,7 +196,8 @@
     "sites": "Barcelona",
     "vulnerabilitySolution": "Revisar configuración",
     "vulnerabilidad": "CVE-2025-1010",
-    "dueDate": "2025-12-05"
+    "dueDate": "2025-12-05",
+    "hasLink": false
   },
   {
     "id": 11,
@@ -206,7 +216,8 @@
     "sites": "Bilbao",
     "vulnerabilitySolution": "Actualizar políticas",
     "vulnerabilidad": "CVE-2025-1011",
-    "dueDate": "2026-08-28"
+    "dueDate": "2026-08-28",
+    "hasLink": false
   },
   {
     "id": 12,
@@ -225,7 +236,8 @@
     "sites": "Valencia",
     "vulnerabilitySolution": "Revisar UPS",
     "vulnerabilidad": "CVE-2025-1012",
-    "dueDate": "2025-12-03"
+    "dueDate": "2025-12-03",
+    "hasLink": false
   },
   {
     "id": 13,
@@ -244,7 +256,8 @@
     "sites": "Sevilla",
     "vulnerabilitySolution": "Reiniciar app",
     "vulnerabilidad": "CVE-2025-1013",
-    "dueDate": "2026-09-08"
+    "dueDate": "2026-09-08",
+    "hasLink": false
   },
   {
     "id": 14,
@@ -263,7 +276,8 @@
     "sites": "Madrid",
     "vulnerabilitySolution": "Actualizar drivers",
     "vulnerabilidad": "CVE-2025-1014",
-    "dueDate": "2026-08-22"
+    "dueDate": "2026-08-22",
+    "hasLink": false
   },
   {
     "id": 15,
@@ -282,6 +296,7 @@
     "sites": "Barcelona",
     "vulnerabilitySolution": "Revisar logs",
     "vulnerabilidad": "CVE-2025-1015",
-    "dueDate": "2025-11-30"
+    "dueDate": "2025-11-30",
+    "hasLink": false
   }
 ]

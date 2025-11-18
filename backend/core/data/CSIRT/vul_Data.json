@@ -9,7 +9,8 @@
         "Prioridad": "Medium",
         "Estado": "Rejected",
         "Actualizado": "2025-12-12",
-        "VITS": "INC-001, INC-002, INC-003, INC-004"
+        "VITS": "INC-001, INC-002, INC-003, INC-004",
+        "hasLink": true
     },
     {
         "id": "SOUP-002",
@@ -21,7 +22,8 @@
         "Prioridad": "Low",
         "Estado": "Pending",
         "Actualizado": "2026-01-19",
-        "VITS": "INC-005, INC-006"
+        "VITS": "INC-005, INC-006",
+        "hasLink": true
     },
     {
         "id": "SOUP-003",
@@ -33,7 +35,8 @@
         "Prioridad": "Low",
         "Estado": "Validated",
         "Actualizado": "2025-12-21",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     },
     {
         "id": "SOUP-004",
@@ -45,7 +48,8 @@
         "Prioridad": "Medium",
         "Estado": "Pending",
         "Actualizado": "2025-12-01",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     },
     {
         "id": "SOUP-005",
@@ -57,7 +61,8 @@
         "Prioridad": "Low",
         "Estado": "Validated",
         "Actualizado": "2025-09-08",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     },
     {
         "id": "SOUP-006",
@@ -69,7 +74,8 @@
         "Prioridad": "Medium",
         "Estado": "Rejected",
         "Actualizado": "2025-08-11",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     },
     {
         "id": "SOUP-007",
@@ -81,7 +87,8 @@
         "Prioridad": "Low",
         "Estado": "Pending",
         "Actualizado": "2025-11-27",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     },
     {
         "id": "SOUP-008",
@@ -93,7 +100,8 @@
         "Prioridad": "Low",
         "Estado": "Validated",
         "Actualizado": "2025-10-20",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     },
     {
         "id": "SOUP-009",
@@ -105,7 +113,8 @@
         "Prioridad": "Critical",
         "Estado": "Pending",
         "Actualizado": "2025-12-11",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     },
     {
         "id": "SOUP-010",
@@ -117,6 +126,7 @@
         "Prioridad": "Medium",
         "Estado": "Rejected",
         "Actualizado": "2025-10-05",
-        "VITS": ""
+        "VITS": "",
+        "hasLink": false
     }
 ]

@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/GridComponents/columns/eyeColumn.tsx
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { GridRow, DisplayRow } from '../../hooks/useDisplayRows';
 import type { Item } from '../../../../../../../Types/item';
@@ -25,7 +24,6 @@ export const createEyeColDef = (
 
       const item = d as unknown as Item;
 
-      // Si nos pasan una función de enlace y NO hay match, no pintamos el ojo
       if (hasLink && !hasLink(item)) {
         return null;
       }

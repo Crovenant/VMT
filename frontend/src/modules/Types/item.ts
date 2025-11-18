@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Types/item.ts
 export type Item = {
   id: string;
   nombre: string;
@@ -32,6 +31,9 @@ export type Item = {
   activo?: string;
   elementosVulnerables?: string;
   vits?: string;
+
+  // NUEVO CAMPO para lógica migrada desde frontend
+  hasLink?: boolean;
 
   // Mantener opcionales previos para compatibilidad
   tratada?: string;
