@@ -34,7 +34,8 @@ def _parse_date_loose(s: Any) -> datetime | None:
 
 def calculate_due_date_vul(actualizado: Any, prioridad: Any) -> str | None:
     base = _parse_date_loose(actualizado)
-   
+    if not base:
+        return None
     sev = str(prioridad).strip() if prioridad is not None else ""
     horizon = _HORIZON_BY_SEVERITY.get(sev, 365)
     return (base + timedelta(days=horizon)).strftime("%Y-%m-%d")
@@ -62,3 +63,25 @@ def update_selected_entries_vul(existing_data: List[Dict], selected_entries: Lis
             index_by_key[k] = len(out)
             out.append(entry)
     return out
+
+# ---------- Enriquecer VUL con VITS ----------
+def enrich_vul(vul_list: List[Dict], vit_list: List[Dict]) -> List[Dict]:
+    vit_map = {str(v.get("numero", "")).strip().lower(): v for v in vit_list}
+    for vul in vul_list:
+        vits_raw = vul.get("VITS", "")
+        vits_numbers = [v.strip().lower() for v in str(vits_raw).split(",") if v.strip()]
+        associated_vits = []
+        for vit_num in vits_numbers:
+            vit_obj = vit_map.get(vit_num)
+            if vit_obj:
+                associated_vits.append(vit_obj)
+        vul["vitsData"] = associated_vits
+    return vul_list
+
+# ---------- Enriquecer VIT con VUL ----------
+def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
+    vul_map = {str(v.get("Número", "")).strip().lower(): v for v in vul_list}
+    for vit in vit_list:
+        vul_num = str(vit.get("VUL", "")).strip().lower()
+        vul_obj = vul_map.get(vul_num)
+        vit["vulData"] = vul_obj if vul_obj else {}

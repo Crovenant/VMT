@@ -16,6 +16,7 @@ import type { ColDef } from 'ag-grid-community';
 import type { Item } from '../../../../../Types/item';
 import { VIT_MAP, VUL_MAP } from '../DisplayTable/constants/columnMaps';
 import DetailFilterPanel from './DetailFilterPanel';
+import { mapVUL, mapVIT } from '../../../hooks/useDisplayData';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
@@ -63,7 +64,7 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
     DEFAULT_VIT_GRID_FIELDS.filter((label) => label in VIT_MAP),
   );
 
-  const gridColumnDefs = useMemo<ColDef[]>(
+  const vitGridColumnDefs = useMemo<ColDef[]>(
     () =>
       Object.entries(VIT_MAP).map(([header, key]) => ({
         headerName: header,
@@ -78,15 +79,38 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
     [],
   );
 
-  const [relatedRows, setRelatedRows] = useState<Record<string, unknown>[]>([]);
+  const vulGridColumnDefs = useMemo<ColDef[]>(
+    () =>
+      Object.entries(VUL_MAP).map(([header, key]) => ({
+        headerName: header,
+        field: key,
+        resizable: true,
+        sortable: true,
+        filter: 'agTextColumnFilter',
+        minWidth: 120,
+        wrapHeaderText: true,
+        autoHeaderHeight: true,
+      })),
+    [],
+  );
 
-  // Eliminamos lógica de fetch, backend debe proveer datos si se requiere
+  const [relatedRows, setRelatedRows] = useState<Item[]>([]);
+
   useEffect(() => {
-    if (!open || !item || viewType !== 'VUL') {
+    if (!open || !item) {
       setRelatedRows([]);
       return;
     }
-    setRelatedRows([]); // Por ahora vacío
+
+    if (viewType === 'VUL') {
+      const vitObjects = (item as Item & { vitsData?: Record<string, unknown>[] }).vitsData || [];
+      const normalizedVits = vitObjects.map((vit) => mapVIT(vit));
+      setRelatedRows(normalizedVits);
+    } else {
+      const associatedVul = (item as Item & { vulData?: Record<string, unknown> })?.vulData ?? null;
+      const normalizedAssociatedVul = associatedVul ? mapVUL(associatedVul) : null;
+      setRelatedRows(normalizedAssociatedVul ? [normalizedAssociatedVul] : []);
+    }
   }, [open, item, viewType]);
 
   const vulCardPairs = useMemo(() => {
@@ -97,11 +121,26 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
     });
   }, [item]);
 
+  const vitCardPairs = useMemo(() => {
+    if (!item) return [] as { label: string; value: unknown }[];
+    return Object.entries(VIT_MAP).map(([label, key]) => {
+      const value = item[key];
+      return { label, value: value ?? '' };
+    });
+  }, [item]);
+
   const filteredVulCardPairs = vulCardPairs.filter((p) =>
     selectedVulCardFields.includes(p.label),
   );
-  const filteredVitGridColumnDefs = gridColumnDefs.filter((col) =>
+  const filteredVitCardPairs = vitCardPairs.filter((p) =>
+    selectedVitGridFields.includes(p.label),
+  );
+
+  const filteredVitGridColumnDefs = vitGridColumnDefs.filter((col) =>
     selectedVitGridFields.includes(col.headerName ?? ''),
+  );
+  const filteredVulGridColumnDefs = vulGridColumnDefs.filter((col) =>
+    selectedVulCardFields.includes(col.headerName ?? ''),
   );
 
   const comments: string[] = (item?.comentarios
@@ -125,12 +164,7 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
           overflow: 'hidden',
         }}
       >
-        <Box
-          sx={{
-            maxHeight: '80vh',
-            overflowY: 'auto',
-          }}
-        >
+        <Box sx={{ maxHeight: '80vh', overflowY: 'auto' }}>
           <Box
             sx={{
               display: 'grid',
@@ -161,7 +195,7 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
               }}
             >
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                VUL item
+                {viewType === 'VUL' ? 'VUL item' : 'VIT item'}
               </Typography>
               <IconButton aria-label="close" onClick={onClose} size="small">
                 <CloseIcon />
@@ -169,23 +203,27 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
             </Box>
 
             <Box sx={{ gridColumn: 2, p: 2 }}>
+              {/* Parte superior */}
               <Box sx={{ mb: 2 }}>
                 <Grid container spacing={1.5}>
-                  {filteredVulCardPairs.map(({ label, value }) => (
-                    <Grid key={label} item xs={12} sm={6}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                        {label}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {String(value)}
-                      </Typography>
-                    </Grid>
-                  ))}
+                  {(viewType === 'VUL' ? filteredVulCardPairs : filteredVitCardPairs).map(
+                    ({ label, value }) => (
+                      <Grid key={label} item xs={12} sm={6}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                          {label}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          {String(value)}
+                        </Typography>
+                      </Grid>
+                    ),
+                  )}
                 </Grid>
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
+              {/* Comments */}
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -220,11 +258,12 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
 
               <Divider sx={{ my: 2 }} />
 
+              {/* Parte inferior */}
               <Typography
                 variant="subtitle1"
                 sx={{ fontWeight: 700, color: 'primary.main', mb: 1.5 }}
               >
-                VIT columns
+                {viewType === 'VUL' ? 'VIT associated' : 'VUL associated'}
               </Typography>
 
               <Box
@@ -235,15 +274,17 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
                   p: 1,
                 }}
               >
-                <Box className="ag-theme-quartz" sx={{ height: 300, width: '100%' }}>
+                <Box className="ag-theme-quartz" style={{ width: '100%' }}>
                   <AgGridReact
                     rowData={relatedRows}
-                    columnDefs={filteredVitGridColumnDefs}
+                    columnDefs={
+                      viewType === 'VUL' ? filteredVitGridColumnDefs : filteredVulGridColumnDefs
+                    }
                     suppressMovableColumns={false}
                     animateRows
                     rowSelection="multiple"
                     suppressRowClickSelection={true}
-                    domLayout="normal"
+                    domLayout="autoHeight"
                   />
                 </Box>
               </Box>

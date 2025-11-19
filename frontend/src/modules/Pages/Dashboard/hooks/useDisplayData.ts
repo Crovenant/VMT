@@ -55,6 +55,7 @@ function mapVUL(row: Record<string, unknown>): Item {
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
+    ...row, // ✅ preserva todos los campos originales
     id: String(id),
     nombre: numero,
     numero: String(numero),
@@ -106,7 +107,7 @@ function mapVIT(row: Record<string, unknown>): Item {
   const notasAplazamiento = pick(row, ['notasAplazamiento', 'Notas de aplazamiento']);
   const softwareVulnerable = pick(row, ['softwareVulnerable', 'Software vulnerable']);
   const resolucion = pick(row, ['resolucion', 'Resolución']);
-  const vul = pick(row, ['VUL', 'vul']); // ✅ nuevo campo para relación inversa
+  const vul = pick(row, ['VUL', 'vul']); // 
 
   const id =
     numero ||
@@ -115,6 +116,7 @@ function mapVIT(row: Record<string, unknown>): Item {
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
+    ...row, // ✅ preserva todos los campos originales
     id: String(id),
     nombre: resumen || breveDescripcion || numero,
     numero: String(numero),
@@ -251,3 +253,5 @@ export default function useDisplayData({
     handleDownload,
   };
 }
+
+export { mapVUL, mapVIT };

@@ -1,4 +1,3 @@
-# backend/core/views/VIT/risk_logic.py
 from typing import List, Dict, Tuple
 from collections import OrderedDict
 import unicodedata
@@ -40,19 +39,17 @@ def _parse_date_loose(s: str | None) -> datetime | None:
     if not s:
         return None
     s = str(s).strip()
-    # Intentos comunes
     formats = [
         "%Y-%m-%d", "%Y/%m/%d",
         "%d/%m/%Y", "%d-%m-%Y",
         "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S",
-        "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f"
     ]
     for fmt in formats:
         try:
             return datetime.strptime(s, fmt)
         except Exception:
             pass
-    # Último recurso: ISO laxo
     try:
         return datetime.fromisoformat(s)
     except Exception:
@@ -66,7 +63,6 @@ def calculate_due_date(creado: str | None, prioridad: str | None) -> str | None:
     return (base + timedelta(days=horizon)).strftime("%Y-%m-%d")
 
 def _ensure_due(entry: Dict) -> Dict:
-    """Idempotente: rellena entry['dueDate'] si falta, usando 'creado' y 'prioridad'."""
     if isinstance(entry, dict) and not entry.get("dueDate"):
         entry["dueDate"] = calculate_due_date(entry.get("creado"), entry.get("prioridad"))
     return entry
@@ -78,21 +74,16 @@ def assign_ids_and_merge(existing_data: List[Dict], unique_new_entries: List[Dic
 
     for entry in unique_new_entries:
         entry = _ensure_due(entry)
-
         while next_id in used_ids:
             next_id += 1
-
         od = OrderedDict()
         od["id"] = next_id
         used_ids.add(next_id)
         next_id += 1
-
         for k, v in entry.items():
             if k != "id":
                 od[k] = v
-
         merged.append(od)
-
     return merged
 
 def update_selected_entries(
@@ -110,7 +101,6 @@ def update_selected_entries(
 
     for entry in selected_entries:
         entry = _ensure_due(entry)
-
         k_both = _key(entry)
         k_id = _norm(entry.get("idExterno", ""))
         k_num = _norm(entry.get("numero", ""))
@@ -124,7 +114,6 @@ def update_selected_entries(
             chosen = by_num[k_num]
 
         od = OrderedDict()
-
         if chosen and chosen.get("id") is not None:
             try:
                 od["id"] = int(chosen["id"])
@@ -148,3 +137,11 @@ def update_selected_entries(
     final_data = [row for row in existing_data if _key(row) not in keys_to_remove]
     final_data.extend(updated_rows)
     return final_data
+
+# ---------- Enriquecer VIT con VUL ----------
+def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
+    vul_map = {str(v.get("Número", "")).strip().lower(): v for v in vul_list}
+    for vit in vit_list:
+        vul_id = str(vit.get("VUL", "")).strip().lower()  # ✅ Usamos el campo correcto
+        vit["vulData"] = vul_map.get(vul_id)  # ✅ Guardamos el objeto completo en un nuevo campo
+    return vit_list
