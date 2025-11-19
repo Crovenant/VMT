@@ -17,7 +17,8 @@
     "vulnerabilitySolution": "Actualizar a v2.1",
     "vulnerabilidad": "CVE-2025-1001",
     "dueDate": "2025-11-02",
-    "hasLink": false
+    "hasLink": true,
+    "VUL": "VUL-2215"
   },
   {
     "id": 2,
@@ -37,7 +38,8 @@
     "vulnerabilitySolution": "Reemplazar router",
     "vulnerabilidad": "CVE-2025-1002",
     "dueDate": "2026-09-29",
-    "hasLink": false
+    "hasLink": true,
+    "VUL": "VUL-2215"
   },
   {
     "id": 3,
@@ -57,7 +59,8 @@
     "vulnerabilitySolution": "Restablecer contraseñas",
     "vulnerabilidad": "CVE-2025-1003",
     "dueDate": "2025-12-04",
-    "hasLink": false
+    "hasLink": true,
+    "VUL": "VUL-2215"
   },
   {
     "id": 4,
@@ -77,7 +80,8 @@
     "vulnerabilitySolution": "Revisar scripts",
     "vulnerabilidad": "CVE-2025-1004",
     "dueDate": "2025-10-03",
-    "hasLink": false
+    "hasLink": true,
+    "VUL": "VUL-2215"
   },
   {
     "id": 5,
@@ -97,7 +101,8 @@
     "vulnerabilitySolution": "Actualizar firmas",
     "vulnerabilidad": "CVE-2025-1005",
     "dueDate": "2026-08-20",
-    "hasLink": false
+    "hasLink": true,
+    "VUL": "VUL-9759"
   },
   {
     "id": 6,
@@ -117,7 +122,8 @@
     "vulnerabilitySolution": "Revisar drivers",
     "vulnerabilidad": "CVE-2025-1006",
     "dueDate": "2026-09-07",
-    "hasLink": false
+    "hasLink": true,
+    "VUL": "VUL-9759"
   },
   {
     "id": 7,
@@ -137,7 +143,8 @@
     "vulnerabilitySolution": "Bloquear IP",
     "vulnerabilidad": "CVE-2025-1007",
     "dueDate": "2025-12-08",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 8,
@@ -157,7 +164,8 @@
     "vulnerabilitySolution": "Actualizar firmware",
     "vulnerabilidad": "CVE-2025-1008",
     "dueDate": "2026-08-30",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 9,
@@ -177,7 +185,8 @@
     "vulnerabilitySolution": "Reemplazar disco",
     "vulnerabilidad": "CVE-2025-1009",
     "dueDate": "2025-10-02",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 10,
@@ -197,7 +206,8 @@
     "vulnerabilitySolution": "Revisar configuración",
     "vulnerabilidad": "CVE-2025-1010",
     "dueDate": "2025-12-05",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 11,
@@ -217,7 +227,8 @@
     "vulnerabilitySolution": "Actualizar políticas",
     "vulnerabilidad": "CVE-2025-1011",
     "dueDate": "2026-08-28",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 12,
@@ -237,7 +248,8 @@
     "vulnerabilitySolution": "Revisar UPS",
     "vulnerabilidad": "CVE-2025-1012",
     "dueDate": "2025-12-03",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 13,
@@ -257,7 +269,8 @@
     "vulnerabilitySolution": "Reiniciar app",
     "vulnerabilidad": "CVE-2025-1013",
     "dueDate": "2026-09-08",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 14,
@@ -277,7 +290,8 @@
     "vulnerabilitySolution": "Actualizar drivers",
     "vulnerabilidad": "CVE-2025-1014",
     "dueDate": "2026-08-22",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   },
   {
     "id": 15,
@@ -297,6 +311,7 @@
     "vulnerabilitySolution": "Revisar logs",
     "vulnerabilidad": "CVE-2025-1015",
     "dueDate": "2025-11-30",
-    "hasLink": false
+    "hasLink": false,
+    "VUL": ""
   }
 ]

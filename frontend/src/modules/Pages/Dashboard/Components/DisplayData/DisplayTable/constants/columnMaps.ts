@@ -27,6 +27,9 @@ export const VIT_MAP: Record<string, keyof Item> = {
   'Software vulnerable': 'softwareVulnerable',
   'Resolución': 'resolucion',
   'Comentarios': 'comentarios',
+
+  // NUEVO CAMPO para relación inversa VIT → VUL
+  'VUL': 'vul',
 };
 
 export const VUL_MAP: Record<string, keyof Item> = {

@@ -35,6 +35,9 @@ export type Item = {
   // NUEVO CAMPO para lógica migrada desde frontend
   hasLink?: boolean;
 
+  // NUEVO CAMPO para VIT → VUL relación
+  vul?: string;
+
   // Mantener opcionales previos para compatibilidad
   tratada?: string;
   accionNotas?: string;
