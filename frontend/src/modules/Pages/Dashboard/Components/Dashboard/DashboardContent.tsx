@@ -7,7 +7,8 @@ import Chart from '../Chart/Chart';
 import FocusItems from '../FocusItems/FocusWrapper';
 import DisplayData from '../DisplayData/DisplayWrapper';
 import ChartPieWrapper from '../Chart/ChartPieWrapper';
-import { DashboardListItem, CsoListItem, ReportsListItem } from '../ListItems/ListWrapper'; // 
+import { DashboardListItem, CsoListItem, ReportsListItem } from '../ListItems/ListWrapper'; 
+import type { Item } from '../../../../Types/item';
 
 const drawerWidth = 72;
 
@@ -50,6 +51,7 @@ type Props = {
   setCustomFlagFilter: (val: 'followUp' | 'soonDue' | null) => void;
   setShowUploadModal: (val: boolean) => void;
   onResetView: () => void;
+  onOpenModal: (item: Item) => void;
 };
 
 export default function DashboardContent({

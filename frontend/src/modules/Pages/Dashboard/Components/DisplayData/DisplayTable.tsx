@@ -34,10 +34,8 @@ const LS_COLUMN_STATE = (v: ViewType) => `displayData.columnState.${v}`;
 export default function DisplayTable({
   rows,
   visibleColumns,
-  setVisibleColumns,
-  showFilterPanel,
+  setVisibleColumns, 
   viewType,
-  setShowUploadModal,
   hasLink,
 }: {
   rows: Item[];
@@ -207,7 +205,11 @@ export default function DisplayTable({
         open={openModal}
         onClose={handleCloseModal}
         item={selectedItem}
-        viewType={viewType}
+        viewType={viewType}        
+        onNavigateToItem={(item) => {
+          setOpenModal(false);
+          setTimeout(() => handleOpenModal(item), 200);
+        }}
       />
     </>
   );

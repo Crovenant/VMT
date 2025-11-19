@@ -17,6 +17,8 @@ import type { Item } from '../../../../../Types/item';
 import { VIT_MAP, VUL_MAP } from '../DisplayTable/constants/columnMaps';
 import DetailFilterPanel from './DetailFilterPanel';
 import { mapVUL, mapVIT } from '../../../hooks/useDisplayData';
+import { selectionColDef } from '../DisplayTable/GridComponents/columns/selectionColumn';
+import { createEyeColDef } from '../DisplayTable/GridComponents/columns/eyeColumn';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
@@ -28,6 +30,7 @@ type Props = {
   onClose: () => void;
   item: Item | null;
   viewType: ViewType;
+  onNavigateToItem: (item: Item) => void; // ✅ nuevo callback
 };
 
 const DEFAULT_VUL_CARD_FIELDS: string[] = [
@@ -53,7 +56,7 @@ const DEFAULT_VIT_GRID_FIELDS: string[] = [
   'Due date',
 ];
 
-export default function DetailModal({ open, onClose, item, viewType }: Props) {
+export default function DetailModal({ open, onClose, item, viewType, onNavigateToItem }: Props) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const [selectedVulCardFields, setSelectedVulCardFields] = useState<string[]>(() =>
@@ -277,9 +280,13 @@ export default function DetailModal({ open, onClose, item, viewType }: Props) {
                 <Box className="ag-theme-quartz" style={{ width: '100%' }}>
                   <AgGridReact
                     rowData={relatedRows}
-                    columnDefs={
-                      viewType === 'VUL' ? filteredVitGridColumnDefs : filteredVulGridColumnDefs
-                    }
+                    columnDefs={[
+                      selectionColDef,
+                      createEyeColDef(onNavigateToItem, (it) => Boolean(it.hasLink)),
+                      ...(viewType === 'VUL'
+                        ? filteredVitGridColumnDefs
+                        : filteredVulGridColumnDefs),
+                    ]}
                     suppressMovableColumns={false}
                     animateRows
                     rowSelection="multiple"
