@@ -25,7 +25,6 @@ import { createToggleColDef } from './DisplayTable/GridComponents/columns/toggle
 import { createBusinessColDefs } from './DisplayTable/GridComponents/columns/businessColumns';
 import { useExportExcel } from '../DisplayData/Export/hooks/useExportExcel';
 import { useGridUtils } from './DisplayTable/GridComponents/hooks/useGridUtils';
-import DetailModal from '../DisplayData/Widgets/DetailModal';
 import FullWidthRenderer from './DisplayTable/Renderers/FullWidthRenderer';
 
 type ViewType = 'VIT' | 'VUL';
@@ -34,9 +33,10 @@ const LS_COLUMN_STATE = (v: ViewType) => `displayData.columnState.${v}`;
 export default function DisplayTable({
   rows,
   visibleColumns,
-  setVisibleColumns, 
+  setVisibleColumns,
   viewType,
   hasLink,
+  onOpenModal, // ✅ Prop para abrir modal desde el wrapper
 }: {
   rows: Item[];
   visibleColumns: string[];
@@ -45,6 +45,7 @@ export default function DisplayTable({
   viewType: ViewType;
   setShowUploadModal?: (val: boolean) => void;
   hasLink?: (item: Item) => boolean;
+  onOpenModal: (item: Item) => void;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
 
@@ -92,21 +93,13 @@ export default function DisplayTable({
   const toggleColDef = useMemo(() => createToggleColDef(expanded, toggleExpand), [expanded, toggleExpand]);
   const businessColDefs = useMemo(() => createBusinessColDefs(visibleColumns, columnKeyMap), [visibleColumns, columnKeyMap]);
 
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const eyeColDef = useMemo(() => createEyeColDef((item: Item) => onOpenModal(item), hasLink), [onOpenModal, hasLink]);
 
-  const handleOpenModal = useCallback((item: Item) => {
-    setSelectedItem(item);
-    setOpenModal(true);
-  }, []);
+  const columnDefs: ColDef<GridRow>[] = useMemo(
+    () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
+    [eyeColDef, toggleColDef, businessColDefs],
+  );
 
-  const handleCloseModal = useCallback(() => {
-    setOpenModal(false);
-    setSelectedItem(null);
-  }, []);
-
-  const eyeColDef = useMemo(() => createEyeColDef(handleOpenModal, hasLink), [handleOpenModal, hasLink]);
-  const columnDefs: ColDef<GridRow>[] = useMemo(() => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs], [eyeColDef, toggleColDef, businessColDefs]);
   const getRowStyle = useCallback(
     (p: RowClassParams<GridRow, unknown>): RowStyle | undefined => {
       const data = p?.data as DisplayRow | undefined;
@@ -125,12 +118,14 @@ export default function DisplayTable({
     },
     [],
   );
+
   const persistColumnState = useCallback(() => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return;
     const state = colApi.getColumnState() as ColumnState[];
     localStorage.setItem(LS_COLUMN_STATE(viewType), JSON.stringify(state));
   }, [viewType]);
+
   const applySavedColumnState = useCallback(() => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return;
@@ -145,16 +140,20 @@ export default function DisplayTable({
       console.error('Error applying saved column state');
     }
   }, [viewType]);
+
   useEffect(() => {
     const t = setTimeout(() => applySavedColumnState(), 0);
     return () => clearTimeout(t);
   }, [applySavedColumnState, columnDefs]);
+
   const onColumnMoved = useCallback((e: ColumnMovedEvent) => {
     if (e.finished) persistColumnState();
   }, [persistColumnState]);
+
   const onColumnResized = useCallback((e: ColumnResizedEvent) => {
     if (e.finished) persistColumnState();
   }, [persistColumnState]);
+
   return (
     <>
       <Box
@@ -201,16 +200,6 @@ export default function DisplayTable({
           setVisibleColumns={setVisibleColumns}
         />
       </Box>
-      <DetailModal
-        open={openModal}
-        onClose={handleCloseModal}
-        item={selectedItem}
-        viewType={viewType}        
-        onNavigateToItem={(item) => {
-          setOpenModal(false);
-          setTimeout(() => handleOpenModal(item), 200);
-        }}
-      />
     </>
   );
 }

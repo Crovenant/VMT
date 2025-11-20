@@ -4,13 +4,17 @@ import UploadFileWrapper from '../../../Shared/Components/UploadFileWrapper';
 import DashboardHeader from '../Components/Dashboard/DashboardHeader';
 import DashboardContent from '../Components/Dashboard/DashboardContent';
 import useDisplayData from '../hooks/useDisplayData';
-import DetailModal from '../Components/DisplayData/Widgets/DetailModal'; 
+import DetailModal from '../Components/DisplayData/Widgets/DetailModal';
 import type { Item } from '../../../Types/item';
 
 const VIT_ENDPOINTS = {
   uploadUrl: 'http://localhost:8000/vit/upload/',
-  saveUrl:   'http://localhost:8000/vit/save-selection/',
-  listUrl:   'http://localhost:8000/vit/risk-data/',
+  saveUrl: 'http://localhost:8000/vit/save-selection/',
+  listUrl: 'http://localhost:8000/vit/risk-data/',
+};
+
+const VUL_ENDPOINTS = {
+  listUrl: 'http://localhost:8000/vul/risk-data/',
 };
 
 export default function DashboardWrapper() {
@@ -21,13 +25,10 @@ export default function DashboardWrapper() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedItemId, setSelectedItemId] = React.useState<string | null>(null);
   const [customFlagFilter, setCustomFlagFilter] = React.useState<'followUp' | 'soonDue' | null>(null);
-
-  // ✅ Nuevo estado para modal
   const [openModal, setOpenModal] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<Item | null>(null);
   const [viewType, setViewType] = React.useState<'VIT' | 'VUL'>('VUL');
 
-  // 🔁 Auto-refresh cada 30 min
   React.useEffect(() => {
     let timer: number | undefined;
     const stop = () => { if (timer !== undefined) clearInterval(timer); };
@@ -61,8 +62,7 @@ export default function DashboardWrapper() {
     setRefreshKey((prev) => prev + 1);
   };
 
-  // ✅ Datos para VIT (para el contador de la campana)
-  const { rows } = useDisplayData({
+  const { rows: vitRows } = useDisplayData({
     refreshKey,
     priorityFilter: null,
     selectedItemId: null,
@@ -71,8 +71,17 @@ export default function DashboardWrapper() {
     listUrl: VIT_ENDPOINTS.listUrl,
   });
 
-  const followUpItems = rows.filter((item) => item.followUp);
-  const soonDueItems = rows.filter((item) => item.soonDue);
+  const { rows: vulRows } = useDisplayData({
+    refreshKey,
+    priorityFilter: null,
+    selectedItemId: null,
+    customFlagFilter: null,
+    viewType: 'VUL',
+    listUrl: VUL_ENDPOINTS.listUrl,
+  });
+
+  const followUpItems = vitRows.filter((item) => item.followUp);
+  const soonDueItems = vitRows.filter((item) => item.soonDue);
   const followUpCount = followUpItems.length + soonDueItems.length;
 
   let bellColor: 'inherit' | 'default' | 'error' | 'warning' | 'info' | 'success' = 'inherit';
@@ -82,36 +91,45 @@ export default function DashboardWrapper() {
   const openPopover = Boolean(anchorEl);
   const id = openPopover ? 'bell-popover' : undefined;
 
-  // ✅ Funciones para modal
+  /** ✅ Enriquecimiento independiente del estado previo */
+  const enrichItem = (item: Item): Item => {
+    if (!item) return item;
+    if (item.vul) {
+      // Es VIT → buscar VUL asociado
+      const relatedVul = vulRows.find((v) => {
+        const vitsList = v.vits ? v.vits.split(',').map((s) => s.trim()) : [];
+        return vitsList.includes(item.numero);
+      });
+      return { ...item, vulData: relatedVul ?? null } as Item;
+    } else {
+      // Es VUL → buscar VIT asociados
+      const vitsList = item.vits ? item.vits.split(',').map((s) => s.trim()) : [];
+      const relatedVits = vitRows.filter((vit) => vitsList.includes(vit.numero));
+      return { ...item, vitsData: relatedVits ?? [] } as Item;
+    }
+  };
+
   const handleOpenModal = (item: Item) => {
-    setSelectedItem(item);
-    setViewType(item.vul ? 'VIT' : 'VUL'); // Si tiene campo vul, es VIT
+    const enriched = enrichItem(item);
+    setSelectedItem(enriched);
+    setViewType(item.vul ? 'VIT' : 'VUL');
     setOpenModal(true);
   };
 
-const handleNavigateToItem = async (item: Item) => {
-  setOpenModal(false);
-  const endpoint = item.vul ? 'http://localhost:8000/vit/risk-data/' : 'http://localhost:8000/vul/risk-data/';
-  const res = await fetch(endpoint);
-  const data = await res.json();
-  const array: Item[] = Array.isArray(data) ? data : (data.results || []);
-  const fullItem = array.find((r: Item) => String(r.numero) === String(item.numero));
-  setTimeout(() => {
-    if (fullItem) handleOpenModal(fullItem);
-  }, 200);
-};
-
+  const handleNavigateToItem = (item: Item) => {
+    const enriched = enrichItem(item);
+    setSelectedItem(enriched);
+    setViewType(item.vul ? 'VIT' : 'VUL');
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-
       <DashboardHeader
         bellColor={bellColor}
         followUpCount={followUpCount}
         handleBellClick={handleBellClick}
       />
-
       <DashboardContent
         refreshKey={refreshKey}
         priorityFilter={priorityFilter}
@@ -122,10 +140,8 @@ const handleNavigateToItem = async (item: Item) => {
         setCustomFlagFilter={setCustomFlagFilter}
         setShowUploadModal={setShowUploadModal}
         onResetView={handleResetView}
-        onOpenModal={handleOpenModal} // 
+        onOpenModal={handleOpenModal}
       />
-
-      {/* Modal */}
       {openModal && selectedItem && (
         <DetailModal
           open={openModal}
@@ -135,13 +151,11 @@ const handleNavigateToItem = async (item: Item) => {
           onNavigateToItem={handleNavigateToItem}
         />
       )}
-
-      {/* Upload modal */}
       {showUploadModal && (
         <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1300 }}>
           <Box sx={{ backgroundColor: '#fff', padding: 2, borderRadius: 4, boxShadow: 5 }}>
             <UploadFileWrapper
-              onClose={handleUploadClose}
+              onClose={handleUploadClose}  // ✅ corregido
               uploadUrl={VIT_ENDPOINTS.uploadUrl}
               saveUrl={VIT_ENDPOINTS.saveUrl}
               listUrlForMutate={VIT_ENDPOINTS.listUrl}
@@ -149,13 +163,11 @@ const handleNavigateToItem = async (item: Item) => {
           </Box>
         </Box>
       )}
-
       {showConfirmation && (
         <Box sx={{ position: 'fixed', bottom: 32, right: 32, backgroundColor: '#4caf50', color: '#fff', padding: 2, borderRadius: 4, boxShadow: 3, zIndex: 1400 }}>
           File accepted
         </Box>
       )}
-
       <Popover
         id={id}
         open={openPopover}
@@ -179,7 +191,7 @@ const handleNavigateToItem = async (item: Item) => {
                     key={idx}
                     sx={{ mb: 1, p: 1, border: '1px solid #ccc', borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                     onClick={() => {
-                      handleOpenModal(item); // ✅ Abrir modal desde la campana
+                      handleOpenModal(item);
                       setAnchorEl(null);
                     }}
                   >

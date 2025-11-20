@@ -30,7 +30,7 @@ type Props = {
   onClose: () => void;
   item: Item | null;
   viewType: ViewType;
-  onNavigateToItem: (item: Item) => void; // ✅ nuevo callback
+  onNavigateToItem: (item: Item) => void;
 };
 
 const DEFAULT_VUL_CARD_FIELDS: string[] = [
@@ -59,12 +59,12 @@ const DEFAULT_VIT_GRID_FIELDS: string[] = [
 export default function DetailModal({ open, onClose, item, viewType, onNavigateToItem }: Props) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  const [selectedVulCardFields, setSelectedVulCardFields] = useState<string[]>(() =>
-    DEFAULT_VUL_CARD_FIELDS.filter((label) => label in VUL_MAP),
+  const [selectedVulCardFields, setSelectedVulCardFields] = useState<string[]>(
+    () => DEFAULT_VUL_CARD_FIELDS.filter((label) => label in VUL_MAP),
   );
 
-  const [selectedVitGridFields, setSelectedVitGridFields] = useState<string[]>(() =>
-    DEFAULT_VIT_GRID_FIELDS.filter((label) => label in VIT_MAP),
+  const [selectedVitGridFields, setSelectedVitGridFields] = useState<string[]>(
+    () => DEFAULT_VIT_GRID_FIELDS.filter((label) => label in VIT_MAP),
   );
 
   const vitGridColumnDefs = useMemo<ColDef[]>(
@@ -99,22 +99,23 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
 
   const [relatedRows, setRelatedRows] = useState<Item[]>([]);
 
-  useEffect(() => {
-    if (!open || !item) {
-      setRelatedRows([]);
-      return;
-    }
 
-    if (viewType === 'VUL') {
-      const vitObjects = (item as Item & { vitsData?: Record<string, unknown>[] }).vitsData || [];
-      const normalizedVits = vitObjects.map((vit) => mapVIT(vit));
-      setRelatedRows(normalizedVits);
-    } else {
-      const associatedVul = (item as Item & { vulData?: Record<string, unknown> })?.vulData ?? null;
-      const normalizedAssociatedVul = associatedVul ? mapVUL(associatedVul) : null;
-      setRelatedRows(normalizedAssociatedVul ? [normalizedAssociatedVul] : []);
-    }
-  }, [open, item, viewType]);
+  useEffect(() => {
+  if (!open || !item) {
+    setRelatedRows([]);
+    return;
+  }
+
+  if (viewType === 'VUL') {
+    const vitObjects = item.vitsData && item.vitsData.length > 0 ? item.vitsData : [];
+    const normalizedVits = vitObjects.map((vit) => mapVIT(vit));
+    setRelatedRows(normalizedVits);
+  } else {
+    const associatedVul = item.vulData && Object.keys(item.vulData).length > 0 ? item.vulData : null;
+    const normalizedAssociatedVul = associatedVul ? mapVUL(associatedVul) : null;
+    setRelatedRows(normalizedAssociatedVul ? [normalizedAssociatedVul] : []);
+  }
+}, [open, item, viewType]);
 
   const vulCardPairs = useMemo(() => {
     if (!item) return [] as { label: string; value: unknown }[];
@@ -146,9 +147,9 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
     selectedVulCardFields.includes(col.headerName ?? ''),
   );
 
-  const comments: string[] = (item?.comentarios
-    ? [item.comentarios]
-    : (item as Item & { comments?: string[] })?.comments) ?? [];
+  const comments: string[] =
+    (item?.comentarios ? [item.comentarios] : (item as Item & { comments?: string[] })?.comments) ??
+    [];
 
   return (
     <Dialog
@@ -187,6 +188,7 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               />
             </Box>
 
+            {/* Header */}
             <Box
               sx={{
                 gridColumn: 2,
@@ -205,6 +207,7 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               </IconButton>
             </Box>
 
+            {/* Content */}
             <Box sx={{ gridColumn: 2, p: 2 }}>
               {/* Parte superior */}
               <Box sx={{ mb: 2 }}>

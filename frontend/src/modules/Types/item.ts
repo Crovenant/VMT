@@ -7,14 +7,12 @@ export type Item = {
   resumen: string;
   breveDescripcion: string;
   elementoConfiguracion: string;
-
   direccionIp?: string;
   aplazadoPor?: string;
   fechaAplazamiento?: string;
   notasAplazamiento?: string;
   softwareVulnerable?: string;
   resolucion?: string;
-
   fechaCreacion: string;
   prioridad: 'Crítico' | 'Alto' | 'Medio' | 'Bajo';
   puntuacionRiesgo: number;
@@ -26,19 +24,14 @@ export type Item = {
   vulnerabilidad: string;
   vulnerabilitySolution: string;
   dueDate: string;
-
-  // Campos VUL adaptados
   activo?: string;
   elementosVulnerables?: string;
   vits?: string;
-
-  // NUEVO CAMPO para lógica migrada desde frontend
   hasLink?: boolean;
-
-  // NUEVO CAMPO para VIT → VUL relación
   vul?: string;
-
-  // Mantener opcionales previos para compatibilidad
+  vit?: string;
+  vulData?: Item | null;
+  vitsData?: Item[];
   tratada?: string;
   accionNotas?: string;
   actualizacionEstado?: string;
@@ -101,7 +94,6 @@ export type Item = {
   certificado?: string;
   fechaMitigacion?: string;
   fechaCertificacion?: string;
-
   comments?: string[];
   comentarios?: string;
   logHistory?: string;

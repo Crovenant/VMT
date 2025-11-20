@@ -35,7 +35,7 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
   return fallback;
 }
 
-// ✅ Mapeo para VUL
+
 function mapVUL(row: Record<string, unknown>): Item {
   const numero = pick(row, ['Número']);
   const activo = pick(row, ['Activo']);
@@ -55,7 +55,7 @@ function mapVUL(row: Record<string, unknown>): Item {
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
-    ...row, // ✅ preserva todos los campos originales
+    ...row, // 
     id: String(id),
     nombre: numero,
     numero: String(numero),

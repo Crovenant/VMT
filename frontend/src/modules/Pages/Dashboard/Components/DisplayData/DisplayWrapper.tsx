@@ -64,6 +64,7 @@ interface Props {
   onResetView?: () => void;
   setShowUploadModal?: (val: boolean) => void;
   hideToggle?: boolean;
+  onOpenModal: (item: Item) => void; // ✅ Añadido
 }
 
 export default function DisplayWrapper({
@@ -74,6 +75,7 @@ export default function DisplayWrapper({
   onResetView,
   setShowUploadModal,
   hideToggle = false,
+  onOpenModal, // ✅ Recibido
 }: Props) {
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
@@ -99,7 +101,6 @@ export default function DisplayWrapper({
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
-  // Nueva lógica: usar hasLink del backend
   const hasLink = useCallback((item: Item): boolean => Boolean(item.hasLink), []);
 
   useEffect(() => {
@@ -170,6 +171,7 @@ export default function DisplayWrapper({
         viewType={viewType}
         setShowUploadModal={setShowUploadModal}
         hasLink={hasLink}
+        onOpenModal={onOpenModal} // ✅ Pasamos la función al DisplayTable
       />
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>
         <Box p={3}>

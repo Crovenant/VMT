@@ -51,7 +51,7 @@ type Props = {
   setCustomFlagFilter: (val: 'followUp' | 'soonDue' | null) => void;
   setShowUploadModal: (val: boolean) => void;
   onResetView: () => void;
-  onOpenModal: (item: Item) => void;
+  onOpenModal: (item: Item) => void; // ✅ Prop para abrir modal
 };
 
 export default function DashboardContent({
@@ -64,6 +64,7 @@ export default function DashboardContent({
   setCustomFlagFilter,
   setShowUploadModal,
   onResetView,
+  onOpenModal, // ✅ Recibida correctamente
 }: Props) {
   return (
     <>
@@ -131,6 +132,7 @@ export default function DashboardContent({
                   customFlagFilter={customFlagFilter}
                   onResetView={onResetView}
                   setShowUploadModal={setShowUploadModal}
+                  onOpenModal={onOpenModal} 
                 />
               </Paper>
             </Grid>
