@@ -22,7 +22,7 @@ type Props = {
   setSelectedCsoFields: (fields: string[]) => void;
 };
 
-// VIT (csirt) — incluye los 22 del Excel y los ya definidos en VIT_MAP (sin el alias "Vulnerability solution")
+// ✅ Campos VIT exactos según tu lista
 const csirtFields = [
   'Número',
   'ID externo',
@@ -30,58 +30,30 @@ const csirtFields = [
   'Resumen',
   'Breve descripción',
   'Elemento de configuración',
-  'Dirección IP',
   'Prioridad',
   'Puntuación de riesgo',
   'Grupo de asignación',
   'Asignado a',
   'Creado',
   'Actualizado',
-  'Due date',
-  'Fecha creación',
   'Sites',
+  'Solución', // vulnerabilitySolution
   'Vulnerabilidad',
-  'Solución',
-  'Aplazado por',
-  'Fecha de aplazamiento',
-  'Notas de aplazamiento',
-  'Software vulnerable',
-  'Resolución',
-  'Comentarios',
+  'Due date',
+  'VUL', // relación con vulnerabilidad
 ];
 
-// VUL (cso)
+// ✅ Campos VUL (sin cambios, según lógica actual)
 const csoFields = [
-  'Severity',
-  'State',
-  'Category ASVS',
-  'ASVS ID',
-  'OWASP TOP 10',
-  'PCI Status',
-  'Threat Description',
-  'Details',
-  'Target',
-  'Detection Date',
-  'Deadline',
-  'Days Open',
-  'Countermeasure',
-  'Environment',
-  'References / CWE',
-  'CVSS Base',
-  'CVSS Overall',
-  'CVSS Rescored',
-  'EPSS',
-  'Easy of Exploit',
-  'CVSS Version',
-  'CVSS Vector',
-  'Resolution Date',
-  'IT Owner',
-  'SW Provider',
-  'Critical Case',
-  'Fecha comunicación SWF',
-  'Certificación pedida',
-  'Fecha mitigacion',
-  'Fecha certificación',
+  'Número',
+  'Activo',
+  'Elementos vulnerables',
+  'Asignado a',
+  'Grupo de asignación',
+  'Prioridad',
+  'Estado',
+  'Actualizado',
+  'VITS',
 ];
 
 export default function DetailSideFilterPanel({

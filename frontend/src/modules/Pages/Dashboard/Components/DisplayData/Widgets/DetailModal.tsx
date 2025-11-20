@@ -20,6 +20,9 @@ import { mapVUL, mapVIT } from '../../../hooks/useDisplayData';
 import { selectionColDef } from '../DisplayTable/GridComponents/columns/selectionColumn';
 import { createEyeColDef } from '../DisplayTable/GridComponents/columns/eyeColumn';
 
+import ExtButton from './buttons/exportButton';
+import MailTo from './buttons/mailButton';
+
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
@@ -54,6 +57,7 @@ const DEFAULT_VIT_GRID_FIELDS: string[] = [
   'Asignado a',
   'Creado',
   'Due date',
+  'VUL',
 ];
 
 export default function DetailModal({ open, onClose, item, viewType, onNavigateToItem }: Props) {
@@ -99,23 +103,22 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
 
   const [relatedRows, setRelatedRows] = useState<Item[]>([]);
 
-
   useEffect(() => {
-  if (!open || !item) {
-    setRelatedRows([]);
-    return;
-  }
+    if (!open || !item) {
+      setRelatedRows([]);
+      return;
+    }
 
-  if (viewType === 'VUL') {
-    const vitObjects = item.vitsData && item.vitsData.length > 0 ? item.vitsData : [];
-    const normalizedVits = vitObjects.map((vit) => mapVIT(vit));
-    setRelatedRows(normalizedVits);
-  } else {
-    const associatedVul = item.vulData && Object.keys(item.vulData).length > 0 ? item.vulData : null;
-    const normalizedAssociatedVul = associatedVul ? mapVUL(associatedVul) : null;
-    setRelatedRows(normalizedAssociatedVul ? [normalizedAssociatedVul] : []);
-  }
-}, [open, item, viewType]);
+    if (viewType === 'VUL') {
+      const vitObjects = item.vitsData && item.vitsData.length > 0 ? item.vitsData : [];
+      const normalizedVits = vitObjects.map((vit) => mapVIT(vit));
+      setRelatedRows(normalizedVits);
+    } else {
+      const associatedVul = item.vulData && Object.keys(item.vulData).length > 0 ? item.vulData : null;
+      const normalizedAssociatedVul = associatedVul ? mapVUL(associatedVul) : null;
+      setRelatedRows(normalizedAssociatedVul ? [normalizedAssociatedVul] : []);
+    }
+  }, [open, item, viewType]);
 
   const vulCardPairs = useMemo(() => {
     if (!item) return [] as { label: string; value: unknown }[];
@@ -150,6 +153,17 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
   const comments: string[] =
     (item?.comentarios ? [item.comentarios] : (item as Item & { comments?: string[] })?.comments) ??
     [];
+
+  // Handlers para los botones
+  const handleExportModalGrid = () => {
+    console.log('Export grid data:', relatedRows);
+    // Aquí irá la lógica para exportar a Excel
+  };
+
+  const handleSendMail = () => {
+    console.log('Send mail for item:', item);
+    // Aquí irá la lógica para enviar correo
+  };
 
   return (
     <Dialog
@@ -202,9 +216,13 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
                 {viewType === 'VUL' ? 'VUL item' : 'VIT item'}
               </Typography>
-              <IconButton aria-label="close" onClick={onClose} size="small">
-                <CloseIcon />
-              </IconButton>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <MailTo onClick={handleSendMail} />
+                <ExtButton onClick={handleExportModalGrid} />
+                <IconButton aria-label="close" onClick={onClose} size="small">
+                  <CloseIcon />
+                </IconButton>
+              </Box>
             </Box>
 
             {/* Content */}
@@ -265,12 +283,18 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               <Divider sx={{ my: 2 }} />
 
               {/* Parte inferior */}
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 700, color: 'primary.main', mb: 1.5 }}
-              >
-                {viewType === 'VUL' ? 'VIT associated' : 'VUL associated'}
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 700, color: 'primary.main' }}
+                >
+                  {viewType === 'VUL' ? 'VIT associated' : 'VUL associated'}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <MailTo onClick={handleSendMail} />
+                  <ExtButton onClick={handleExportModalGrid} />
+                </Box>
+              </Box>
 
               <Box
                 sx={{
