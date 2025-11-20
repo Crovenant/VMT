@@ -7,7 +7,7 @@ type ExportButtonProps = {
   color?: 'primary' | 'secondary' | 'default';
 };
 
-export default function ExportButton({
+export default function ExtButton({
   onClick,
   size = 'small',
   color = 'primary',

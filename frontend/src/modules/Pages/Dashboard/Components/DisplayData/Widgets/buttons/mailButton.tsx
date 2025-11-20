@@ -7,7 +7,7 @@ type MailButtonProps = {
   color?: 'primary' | 'secondary' | 'default';
 };
 
-export default function MailButton({
+export default function MailTo({
   onClick,
   size = 'small',
   color = 'primary',
