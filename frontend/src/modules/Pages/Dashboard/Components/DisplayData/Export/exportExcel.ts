@@ -2,20 +2,14 @@
 import ExcelJS from 'exceljs';
 import type { Item } from '../../../../../Types/item';
 
-const columnKeyMap: Record<string, keyof Item> = {
-  // VIT
+// Map VIT
+const vitColumnMap: Record<string, keyof Item> = {
   'Número': 'numero',
   'ID externo': 'idExterno',
   'Estado': 'estado',
   'Resumen': 'resumen',
   'Breve descripción': 'breveDescripcion',
   'Elemento de configuración': 'elementoConfiguracion',
-  'Dirección IP': 'direccionIp',
-  'Aplazado por': 'aplazadoPor',
-  'Fecha de aplazamiento': 'fechaAplazamiento',
-  'Notas de aplazamiento': 'notasAplazamiento',
-  'Software vulnerable': 'softwareVulnerable',
-  'Resolución': 'resolucion',
   'Prioridad': 'prioridad',
   'Puntuación de riesgo': 'puntuacionRiesgo',
   'Grupo de asignación': 'grupoAsignacion',
@@ -26,33 +20,24 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Vulnerability solution': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
   'Due date': 'dueDate',
+  'VUL': 'vul',
+};
 
-  // VUL
-  'id': 'id',
+// Map VUL
+const vulColumnMap: Record<string, keyof Item> = {
+  'Numero': 'numero',
   'Activo': 'activo',
   'Elementos vulnerables': 'elementosVulnerables',
+  'Asignado a': 'asignadoA',
+  'Grupo de asignación': 'grupoAsignacion',
+  'Prioridad': 'prioridad',
+  'Estado': 'estado',
+  'Actualizado': 'actualizado',
   'VITS': 'vits',
 };
 
-export async function exportFullJsonToExcel(data: Item[]) {
-  if (!data || data.length === 0) return;
-
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Vulnerability list');
-
-  const headers = Object.keys(columnKeyMap);
-  worksheet.addRow(headers);
-
-  data.forEach((item) => {
-    const rowData = headers.map((header) => {
-      const key = columnKeyMap[header];
-      return key ? (item[key] ?? '') : '';
-    });
-    worksheet.addRow(rowData);
-  });
-
-  const headerRow = worksheet.getRow(1);
-  headerRow.eachCell((cell) => {
+function styleHeader(row: ExcelJS.Row) {
+  row.eachCell((cell) => {
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
@@ -67,7 +52,9 @@ export async function exportFullJsonToExcel(data: Item[]) {
       right: { style: 'thin' },
     };
   });
+}
 
+function styleRows(worksheet: ExcelJS.Worksheet) {
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1) {
       const isEven = rowNumber % 2 === 0;
@@ -87,7 +74,9 @@ export async function exportFullJsonToExcel(data: Item[]) {
       });
     }
   });
+}
 
+function adjustColumnWidth(worksheet: ExcelJS.Worksheet) {
   (worksheet.columns || []).forEach((col) => {
     if (col && typeof col.eachCell === 'function') {
       let maxLength = 10;
@@ -98,17 +87,72 @@ export async function exportFullJsonToExcel(data: Item[]) {
       col.width = maxLength + 2;
     }
   });
+}
+
+async function downloadExcel(workbook: ExcelJS.Workbook, fileName: string) {
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.click();
+}
+
+export async function exportVITToExcel(data: Item[]) {
+  if (!data || data.length === 0) return;
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('VIT Items');
+
+  const headers = Object.keys(vitColumnMap);
+  worksheet.addRow(headers);
+
+  data.forEach((item) => {
+    const rowData = headers.map((header) => {
+      const key = vitColumnMap[header];
+      return key ? item[key] ?? '' : '';
+    });
+    worksheet.addRow(rowData);
+  });
+
+  styleHeader(worksheet.getRow(1));
+  styleRows(worksheet);
+  adjustColumnWidth(worksheet);
 
   worksheet.autoFilter = {
     from: { row: 1, column: 1 },
     to: { row: 1, column: headers.length },
   };
 
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'vulnerability_list_export.xlsx';
-  link.click();
+  await downloadExcel(workbook, 'VIT_items_export.xlsx');
+}
+
+export async function exportVULToExcel(data: Item[]) {
+  if (!data || data.length === 0) return;
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('VUL Items');
+
+  const headers = Object.keys(vulColumnMap);
+  worksheet.addRow(headers);
+
+  data.forEach((item) => {
+    const rowData = headers.map((header) => {
+      const key = vulColumnMap[header];
+      return key ? item[key] ?? '' : '';
+    });
+    worksheet.addRow(rowData);
+  });
+
+  styleHeader(worksheet.getRow(1));
+  styleRows(worksheet);
+  adjustColumnWidth(worksheet);
+
+  worksheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: headers.length },
+  };
+
+  await downloadExcel(workbook, 'VUL_items_export.xlsx');
 }

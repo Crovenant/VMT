@@ -1,16 +1,12 @@
 // src/modules/Pages/Dashboard/Components/DisplayData/Export/hooks/useExportExcel.ts
 import { useEffect } from 'react';
-import * as ExcelExport from '../exportExcel';
+import { exportVITToExcel, exportVULToExcel } from '../exportExcel';
 import type { GridApi } from 'ag-grid-community';
 import type { Item } from '../../../../../../Types/item';
 
-type ExportFn = (rows: Item[], visibleColumns: string[]) => void;
-type ExportModule = {
-  exportFilteredDataToExcel?: ExportFn;
-  exportFullJsonToExcel?: ExportFn;
-  exportToExcel?: ExportFn;
-  default?: ExportFn;
-};
+function isVULItem(item: Item): boolean {
+  return !!item.vits || !!item.elementosVulnerables || !!item.activo;
+}
 
 export function useExportExcel(
   gridRef: React.RefObject<{ api: GridApi }>,
@@ -18,21 +14,17 @@ export function useExportExcel(
   visibleColumns: string[]
 ) {
   useEffect(() => {
-    const mod = ExcelExport as unknown as ExportModule;
-
     window.exportFilteredDataToExcel = () => {
       const api = gridRef.current?.api;
       const selected = api?.getSelectedRows?.() ?? [];
-      const dataToExport = (selected as Item[]).length > 0 ? (selected as Item[]) : rows;
+      const base = (selected as Item[]).length > 0 ? (selected as Item[]) : rows;
 
-      const expFn: ExportFn | undefined =
-        mod.exportFilteredDataToExcel ||
-        mod.exportFullJsonToExcel ||
-        mod.exportToExcel ||
-        mod.default;
+      const isVULView = visibleColumns.includes('Activo') || visibleColumns.includes('Elementos vulnerables');
 
-      if (typeof expFn === 'function') {
-        expFn(dataToExport, visibleColumns);
+      if (isVULView) {
+        exportVULToExcel(base.filter(isVULItem));
+      } else {
+        exportVITToExcel(base.filter((item) => !isVULItem(item)));
       }
     };
   }, [gridRef, rows, visibleColumns]);

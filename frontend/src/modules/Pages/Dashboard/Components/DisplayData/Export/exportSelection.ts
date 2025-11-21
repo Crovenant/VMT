@@ -1,7 +1,8 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/Export/exportSelection.ts
 import ExcelJS from 'exceljs';
 import type { Item } from '../../../../../Types/item';
 
-const columnKeyMap: Record<string, keyof Item> = {
+const vitColumnMap: Record<string, keyof Item> = {
   'Número': 'numero',
   'ID externo': 'idExterno',
   'Estado': 'estado',
@@ -17,31 +18,24 @@ const columnKeyMap: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Vulnerability solution': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
-  'Due date': 'dueDate', // ✅ Nuevo campo
+  'Due date': 'dueDate',
+  'VUL': 'vul',
 };
 
-export async function exportSelectionToExcel(selected: Item[]) {
-  if (!selected || selected.length === 0) return;
+const vulColumnMap: Record<string, keyof Item> = {
+  'Numero': 'numero',
+  'Activo': 'activo',
+  'Elementos vulnerables': 'elementosVulnerables',
+  'Asignado a': 'asignadoA',
+  'Grupo de asignación': 'grupoAsignacion',
+  'Prioridad': 'prioridad',
+  'Estado': 'estado',
+  'Actualizado': 'actualizado',
+  'VITS': 'vits',
+};
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Selected Items');
-
-  // ✅ Cabeceras completas (igual que exportExcel)
-  const headers = Object.keys(columnKeyMap);
-  worksheet.addRow(headers);
-
-  // ✅ Datos completos
-  selected.forEach((item) => {
-    const rowData = headers.map((header) => {
-      const key = columnKeyMap[header];
-      return key && key !== 'id' ? item[key] ?? '' : '';
-    });
-    worksheet.addRow(rowData);
-  });
-
-  // ✅ Estilo cabecera
-  const headerRow = worksheet.getRow(1);
-  headerRow.eachCell((cell) => {
+function styleHeader(row: ExcelJS.Row) {
+  row.eachCell((cell) => {
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
@@ -56,8 +50,28 @@ export async function exportSelectionToExcel(selected: Item[]) {
       right: { style: 'thin' },
     };
   });
+}
 
-  // ✅ Bandas alternas + bordes
+export async function exportSelectionToExcel(selected: Item[], isVULView: boolean) {
+  if (!selected || selected.length === 0) return;
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Selected Items');
+
+  const map = isVULView ? vulColumnMap : vitColumnMap;
+  const headers = Object.keys(map);
+  worksheet.addRow(headers);
+
+  selected.forEach((item) => {
+    const rowData = headers.map((header) => {
+      const key = map[header];
+      return key ? item[key] ?? '' : '';
+    });
+    worksheet.addRow(rowData);
+  });
+
+  styleHeader(worksheet.getRow(1));
+
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1) {
       const isEven = rowNumber % 2 === 0;
@@ -78,7 +92,6 @@ export async function exportSelectionToExcel(selected: Item[]) {
     }
   });
 
-  // ✅ Ajustar ancho automáticamente
   (worksheet.columns || []).forEach((col) => {
     if (col && typeof col.eachCell === 'function') {
       let maxLength = 10;
@@ -90,13 +103,11 @@ export async function exportSelectionToExcel(selected: Item[]) {
     }
   });
 
-  // ✅ Filtros en cabecera
   worksheet.autoFilter = {
     from: { row: 1, column: 1 },
     to: { row: 1, column: headers.length },
   };
 
-  // ✅ Descargar archivo
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);
