@@ -1,4 +1,3 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/Widgets/DetailModal.tsx
 import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -22,6 +21,7 @@ import { createEyeColDef } from '../DisplayTable/GridComponents/columns/eyeColum
 import ExtButton from './buttons/exportButton';
 import MailTo from './buttons/mailButton';
 import { exportGridFromModal } from '../Export/exportGridFromModal';
+import { mailGridFromModal } from '../Export/mailGridFromModal';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
@@ -32,7 +32,7 @@ type Props = {
   item: Item | null;
   viewType: ViewType;
   onNavigateToItem: (item: Item) => void;
-};
+};mailGridFromModal
 
 const DEFAULT_VUL_CARD_FIELDS: string[] = [
   'Número',
@@ -145,18 +145,24 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
   const comments: string[] =
     (item?.comentarios ? [item.comentarios] : (item as Item & { comments?: string[] })?.comments) ?? [];
 
+  // Botón superior (export principal)
   const handleExportModalGrid = () => {
-    console.log('Export grid data:', relatedRows);
+    console.log('Export main item:', item);
+    // Aquí podrías usar exportGridFromModal([item], [], viewType === 'VUL')
   };
 
-  const handleSendMail = () => {
-    console.log('Send mail for item:', item);
-  };
-
+  // Botón inferior (export grid asociado)
   const handleExportAssociatedGrid = () => {
     const api = gridRef.current?.api;
     const selectedRows = api?.getSelectedRows?.() ?? [];
     exportGridFromModal(relatedRows, selectedRows as Item[], viewType === 'VUL');
+  };
+
+  // Botón inferior (mail)
+  const handleSendMail = () => {
+    const api = gridRef.current?.api;
+    const selectedRows = api?.getSelectedRows?.() ?? [];
+    mailGridFromModal(relatedRows, selectedRows as Item[], viewType === 'VUL');
   };
 
   return (
@@ -211,7 +217,7 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
                 {viewType === 'VUL' ? 'VUL item' : 'VIT item'}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
-                <MailTo onClick={handleSendMail} />
+                <MailTo onClick={() => console.log('Mail main item')} />
                 <ExtButton onClick={handleExportModalGrid} />
                 <IconButton aria-label="close" onClick={onClose} size="small">
                   <CloseIcon />
