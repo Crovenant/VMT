@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/Widgets/buttons/mailButton.tsx
 import { Tooltip, IconButton } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 

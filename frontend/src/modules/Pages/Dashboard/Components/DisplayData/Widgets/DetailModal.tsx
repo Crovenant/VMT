@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
+// src/modules/Pages/Dashboard/Components/DisplayData/Widgets/DetailModal.tsx
+import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,22 +13,19 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-
 import type { Item } from '../../../../../Types/item';
 import { VIT_MAP, VUL_MAP } from '../DisplayTable/constants/columnMaps';
 import DetailFilterPanel from './DetailFilterPanel';
 import { mapVUL, mapVIT } from '../../../hooks/useDisplayData';
 import { selectionColDef } from '../DisplayTable/GridComponents/columns/selectionColumn';
 import { createEyeColDef } from '../DisplayTable/GridComponents/columns/eyeColumn';
-
 import ExtButton from './buttons/exportButton';
 import MailTo from './buttons/mailButton';
-
+import { exportGridFromModal } from '../Export/exportGridFromModal';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 type ViewType = 'VIT' | 'VUL';
-
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -62,11 +60,9 @@ const DEFAULT_VIT_GRID_FIELDS: string[] = [
 
 export default function DetailModal({ open, onClose, item, viewType, onNavigateToItem }: Props) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-
   const [selectedVulCardFields, setSelectedVulCardFields] = useState<string[]>(
     () => DEFAULT_VUL_CARD_FIELDS.filter((label) => label in VUL_MAP),
   );
-
   const [selectedVitGridFields, setSelectedVitGridFields] = useState<string[]>(
     () => DEFAULT_VIT_GRID_FIELDS.filter((label) => label in VIT_MAP),
   );
@@ -102,13 +98,13 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
   );
 
   const [relatedRows, setRelatedRows] = useState<Item[]>([]);
+  const gridRef = useRef<AgGridReact<any>>(null);
 
   useEffect(() => {
     if (!open || !item) {
       setRelatedRows([]);
       return;
     }
-
     if (viewType === 'VUL') {
       const vitObjects = item.vitsData && item.vitsData.length > 0 ? item.vitsData : [];
       const normalizedVits = vitObjects.map((vit) => mapVIT(vit));
@@ -136,12 +132,8 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
     });
   }, [item]);
 
-  const filteredVulCardPairs = vulCardPairs.filter((p) =>
-    selectedVulCardFields.includes(p.label),
-  );
-  const filteredVitCardPairs = vitCardPairs.filter((p) =>
-    selectedVitGridFields.includes(p.label),
-  );
+  const filteredVulCardPairs = vulCardPairs.filter((p) => selectedVulCardFields.includes(p.label));
+  const filteredVitCardPairs = vitCardPairs.filter((p) => selectedVitGridFields.includes(p.label));
 
   const filteredVitGridColumnDefs = vitGridColumnDefs.filter((col) =>
     selectedVitGridFields.includes(col.headerName ?? ''),
@@ -151,18 +143,20 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
   );
 
   const comments: string[] =
-    (item?.comentarios ? [item.comentarios] : (item as Item & { comments?: string[] })?.comments) ??
-    [];
+    (item?.comentarios ? [item.comentarios] : (item as Item & { comments?: string[] })?.comments) ?? [];
 
-  // Handlers para los botones
   const handleExportModalGrid = () => {
     console.log('Export grid data:', relatedRows);
-    // Aquí irá la lógica para exportar a Excel
   };
 
   const handleSendMail = () => {
     console.log('Send mail for item:', item);
-    // Aquí irá la lógica para enviar correo
+  };
+
+  const handleExportAssociatedGrid = () => {
+    const api = gridRef.current?.api;
+    const selectedRows = api?.getSelectedRows?.() ?? [];
+    exportGridFromModal(relatedRows, selectedRows as Item[], viewType === 'VUL');
   };
 
   return (
@@ -230,18 +224,16 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               {/* Parte superior */}
               <Box sx={{ mb: 2 }}>
                 <Grid container spacing={1.5}>
-                  {(viewType === 'VUL' ? filteredVulCardPairs : filteredVitCardPairs).map(
-                    ({ label, value }) => (
-                      <Grid key={label} item xs={12} sm={6}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                          {label}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          {String(value)}
-                        </Typography>
-                      </Grid>
-                    ),
-                  )}
+                  {(viewType === 'VUL' ? filteredVulCardPairs : filteredVitCardPairs).map(({ label, value }) => (
+                    <Grid key={label} item xs={12} sm={6}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                        {label}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {String(value)}
+                      </Typography>
+                    </Grid>
+                  ))}
                 </Grid>
               </Box>
 
@@ -284,15 +276,12 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
 
               {/* Parte inferior */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 700, color: 'primary.main' }}
-                >
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main' }}>
                   {viewType === 'VUL' ? 'VIT associated' : 'VUL associated'}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <MailTo onClick={handleSendMail} />
-                  <ExtButton onClick={handleExportModalGrid} />
+                  <ExtButton onClick={handleExportAssociatedGrid} />
                 </Box>
               </Box>
 
@@ -306,13 +295,12 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               >
                 <Box className="ag-theme-quartz" style={{ width: '100%' }}>
                   <AgGridReact
+                    ref={gridRef}
                     rowData={relatedRows}
                     columnDefs={[
                       selectionColDef,
                       createEyeColDef(onNavigateToItem, (it) => Boolean(it.hasLink)),
-                      ...(viewType === 'VUL'
-                        ? filteredVitGridColumnDefs
-                        : filteredVulGridColumnDefs),
+                      ...(viewType === 'VUL' ? filteredVitGridColumnDefs : filteredVulGridColumnDefs),
                     ]}
                     suppressMovableColumns={false}
                     animateRows
