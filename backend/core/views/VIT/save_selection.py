@@ -1,3 +1,4 @@
+# core/views/VIT/save_selection.py
 import json
 import os
 from pathlib import Path
@@ -9,15 +10,13 @@ from core.views.common.utils import add_cors_headers
 from core.views.VIT.duplicates import build_lookup
 from core.views.VIT.risk_logic import update_selected_entries, calculate_due_date
 
-# ==========================
-# Rutas y archivo de datos
-# ==========================
 CORE_DIR = Path(apps.get_app_config("core").path)
 DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-# ✅ Ajuste: vit_Data.json ahora está en subcarpeta CSIRT
+
 JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"
+
 
 @csrf_exempt
 def save_selection(request):
@@ -25,7 +24,9 @@ def save_selection(request):
         return add_cors_headers(JsonResponse({"message": "Preflight OK"}))
 
     if request.method != "POST":
-        return add_cors_headers(JsonResponse({"error": "Method not allowed"}, status=405))
+        return add_cors_headers(
+            JsonResponse({"error": "Method not allowed"}, status=405)
+        )
 
     try:
         print("📥 [VIT] Recibiendo datos en save_selection...")
@@ -54,7 +55,10 @@ def save_selection(request):
         lookup = build_lookup(existing_data)
         final_data = update_selected_entries(existing_data, selected_entries, lookup)
 
-        print("🧾 [VIT] Datos finales que se van a guardar:", json.dumps(final_data, indent=2, ensure_ascii=False))
+        print(
+            "🧾 [VIT] Datos finales que se van a guardar:",
+            json.dumps(final_data, indent=2, ensure_ascii=False),
+        )
 
         with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
             json.dump(final_data, tmp, ensure_ascii=False, indent=2)

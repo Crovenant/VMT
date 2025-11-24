@@ -1,21 +1,24 @@
-from typing import List, Dict, Tuple
+# core/views/VIT/risk_logic.py
+from typing import List, Dict, Tuple, Any
 from collections import OrderedDict
 import unicodedata
 from datetime import datetime, timedelta
+import math
 
-# ---------- Normalización ----------
+
 def _norm(s: str) -> str:
     if s is None:
         return ""
     s = str(s).strip().lower()
     s = "".join(
-        c for c in unicodedata.normalize("NFD", s)
-        if unicodedata.category(c) != "Mn"
+        c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
     )
     return s
 
+
 def _key(item: Dict) -> Tuple[str, str]:
     return (_norm(item.get("numero", "")), _norm(item.get("idExterno", "")))
+
 
 def _collect_used_ids(rows: List[Dict]) -> Tuple[set, int]:
     used = set()
@@ -27,23 +30,36 @@ def _collect_used_ids(rows: List[Dict]) -> Tuple[set, int]:
     next_id = (max(used) + 1) if used else 1
     return used, next_id
 
-# ---------- Due Date ----------
+
 _HORIZON_BY_PRIORITY = {
-    "critico": 30, "crítico": 30, "critical": 30,
-    "alto": 90, "alta": 90, "high": 90,
-    "medio": 365, "media": 365, "medium": 365,
-    "bajo": 365, "baja": 365, "low": 365,
+    "critico": 30,
+    "crítico": 30,
+    "critical": 30,
+    "alto": 90,
+    "alta": 90,
+    "high": 90,
+    "medio": 365,
+    "media": 365,
+    "medium": 365,
+    "bajo": 365,
+    "baja": 365,
+    "low": 365,
 }
+
 
 def _parse_date_loose(s: str | None) -> datetime | None:
     if not s:
         return None
     s = str(s).strip()
     formats = [
-        "%Y-%m-%d", "%Y/%m/%d",
-        "%d/%m/%Y", "%d-%m-%Y",
-        "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S",
-        "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f"
+        "%Y-%m-%d",
+        "%Y/%m/%d",
+        "%d/%m/%Y",
+        "%d-%m-%Y",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y/%m/%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S.%f",
     ]
     for fmt in formats:
         try:
@@ -55,6 +71,7 @@ def _parse_date_loose(s: str | None) -> datetime | None:
     except Exception:
         return None
 
+
 def calculate_due_date(creado: str | None, prioridad: str | None) -> str | None:
     base = _parse_date_loose(creado)
     if not base:
@@ -62,18 +79,69 @@ def calculate_due_date(creado: str | None, prioridad: str | None) -> str | None:
     horizon = _HORIZON_BY_PRIORITY.get(_norm(prioridad or ""), 365)
     return (base + timedelta(days=horizon)).strftime("%Y-%m-%d")
 
+
 def _ensure_due(entry: Dict) -> Dict:
     if isinstance(entry, dict) and not entry.get("dueDate"):
-        entry["dueDate"] = calculate_due_date(entry.get("creado"), entry.get("prioridad"))
+        entry["dueDate"] = calculate_due_date(
+            entry.get("creado"), entry.get("prioridad")
+        )
     return entry
 
-# ---------- Merge/Update ----------
-def assign_ids_and_merge(existing_data: List[Dict], unique_new_entries: List[Dict]) -> List[Dict]:
+
+def _is_nan_value(v: Any) -> bool:
+
+    try:
+        if isinstance(v, float) and math.isnan(v):
+            return True
+    except Exception:
+        pass
+    if v is None:
+        return True
+    try:
+        sv = str(v).strip().lower()
+        if sv in ("nan", "none", "null"):
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _sanitize_any(entry: Dict) -> Dict:
+
+    if not isinstance(entry, dict):
+        return entry
+    for k, v in list(entry.items()):
+        if _is_nan_value(v):
+            entry[k] = ""
+        else:
+
+            if not isinstance(v, (dict, list, bool, int, float)):
+                entry[k] = str(v)
+    return entry
+
+
+def _sanitize_link(entry: Dict) -> Dict:
+
+    vul_val = entry.get("VUL")
+    if _is_nan_value(vul_val):
+        entry["VUL"] = ""
+    else:
+        entry["VUL"] = str(vul_val) if vul_val is not None else ""
+    if "hasLink" not in entry:
+        entry["hasLink"] = False
+    return entry
+
+
+def assign_ids_and_merge(
+    existing_data: List[Dict], unique_new_entries: List[Dict]
+) -> List[Dict]:
     merged = list(existing_data)
     used_ids, next_id = _collect_used_ids(existing_data)
-
     for entry in unique_new_entries:
+
+        entry = _sanitize_any(entry)
         entry = _ensure_due(entry)
+        entry = _sanitize_link(entry)
         while next_id in used_ids:
             next_id += 1
         od = OrderedDict()
@@ -83,8 +151,12 @@ def assign_ids_and_merge(existing_data: List[Dict], unique_new_entries: List[Dic
         for k, v in entry.items():
             if k != "id":
                 od[k] = v
+
+        od = _sanitize_any(od)
+        od = _sanitize_link(od)
         merged.append(od)
     return merged
+
 
 def update_selected_entries(
     existing_data: List[Dict],
@@ -92,19 +164,21 @@ def update_selected_entries(
     lookup: Dict[Tuple[str, str], Dict],
 ) -> List[Dict]:
     by_both = {_key(r): r for r in existing_data}
-    by_idext = {_norm(r.get("idExterno", "")): r for r in existing_data if r.get("idExterno")}
+    by_idext = {
+        _norm(r.get("idExterno", "")): r for r in existing_data if r.get("idExterno")
+    }
     by_num = {_norm(r.get("numero", "")): r for r in existing_data if r.get("numero")}
-
     used_ids, next_id = _collect_used_ids(existing_data)
     updated_rows: List[Dict] = []
     keys_to_remove = set()
-
     for entry in selected_entries:
+
+        entry = _sanitize_any(entry)
         entry = _ensure_due(entry)
+        entry = _sanitize_link(entry)
         k_both = _key(entry)
         k_id = _norm(entry.get("idExterno", ""))
         k_num = _norm(entry.get("numero", ""))
-
         chosen = None
         if k_both in by_both:
             chosen = by_both[k_both]
@@ -112,7 +186,6 @@ def update_selected_entries(
             chosen = by_idext[k_id]
         elif k_num and k_num in by_num:
             chosen = by_num[k_num]
-
         od = OrderedDict()
         if chosen and chosen.get("id") is not None:
             try:
@@ -126,22 +199,63 @@ def update_selected_entries(
             od["id"] = next_id
             used_ids.add(next_id)
             next_id += 1
-
         for field, val in entry.items():
             if field != "id":
                 od[field] = val
 
+        od = _sanitize_any(od)
+        od = _sanitize_link(od)
         updated_rows.append(od)
         keys_to_remove.add(k_both)
-
     final_data = [row for row in existing_data if _key(row) not in keys_to_remove]
     final_data.extend(updated_rows)
     return final_data
 
-# ---------- Enriquecer VIT con VUL ----------
+
 def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
-    vul_map = {str(v.get("Número", "")).strip().lower(): v for v in vul_list}
+    vul_map = {
+        str(v.get("Número", "")).strip().lower(): _sanitize_any(dict(v))
+        for v in vul_list
+    }
     for vit in vit_list:
-        vul_id = str(vit.get("VUL", "")).strip().lower()  # ✅ Usamos el campo correcto
-        vit["vulData"] = vul_map.get(vul_id)  # ✅ Guardamos el objeto completo en un nuevo campo
+        vit = _sanitize_any(vit)
+        vit = _sanitize_link(vit)
+        vul_id = str(vit.get("VUL", "")).strip().lower()
+        if vul_id in vul_map:
+            vit["vulData"] = vul_map[vul_id]
+            vit["hasLink"] = True
+        else:
+            vit["vulData"] = None
+            vit["hasLink"] = False
     return vit_list
+
+
+def sanitize_duplicate_pairs(pairs: List[Dict[str, Dict]]) -> List[Dict[str, Dict]]:
+
+    sanitized: List[Dict[str, Dict]] = []
+    for p in pairs:
+        existing = _sanitize_any(dict(p.get("existing", {})))
+        existing = _sanitize_link(existing)
+        incoming = _sanitize_any(dict(p.get("incoming", {})))
+        incoming = _sanitize_link(incoming)
+        sanitized.append({"existing": existing, "incoming": incoming})
+    return sanitized
+
+
+def sanitize_upload_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+
+    if not isinstance(payload, dict):
+        return payload
+    out: Dict[str, Any] = dict(payload)
+    dups = payload.get("duplicates")
+    if isinstance(dups, list):
+        out["duplicates"] = sanitize_duplicate_pairs(dups)
+    news = payload.get("new")
+    if isinstance(news, list):
+        cleaned_news: List[Dict[str, Any]] = []
+        for e in news:
+            e = _sanitize_any(dict(e))
+            e = _sanitize_link(e)
+            cleaned_news.append(e)
+        out["new"] = cleaned_news
+    return out

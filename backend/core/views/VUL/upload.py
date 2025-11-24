@@ -1,112 +1,76 @@
+# core/views/VUL/upload.py
 import json
 import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Dict, Tuple, Any
-
 import pandas as pd
 from django.apps import apps
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from core.views.common.utils import add_cors_headers
+from core.views.VUL.normalize import normalize_headers_vul
+from core.views.VUL.duplicates import detect_duplicates
+from core.views.VUL.risk_logic import assign_ids_and_merge_vul, ensure_due_vul
 
-from core.views.common.utils import add_cors_headers, load_json_data
-
-# ==========================
-# Rutas y archivo de datos
-# ==========================
 CORE_DIR = Path(apps.get_app_config("core").path)
 DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
-
-# ✅ Ajuste: vul_Data.json ahora está en subcarpeta CSIRT
 JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"
 
-# ==========================
-# Duplicados (clave compuesta)
-# ==========================
-def _norm(val: Any) -> str:
-    return ("" if val is None else str(val)).strip().lower()
 
-def _key(item: Dict) -> Tuple[str, str]:
-    """
-    Clave compuesta para VUL:
-    - Vulnerability ID
-    - VUL Code
-    """
-    return (_norm(item.get("Vulnerability ID", "")), _norm(item.get("VUL Code", "")))
-
-def _build_lookup(rows: List[Dict]) -> Dict[Tuple[str, str], Dict]:
-    idx: Dict[Tuple[str, str], Dict] = {}
-    for r in rows:
-        idx[_key(r)] = r
-    return idx
-
-def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
-    """
-    Devuelve (duplicates, unique_new_entries)
-    """
-    lookup = _build_lookup(existing_data)
-    duplicates = []
-    unique_new_entries = []
-
-    for entry in new_entries:
-        k = _key(entry)
-        if k in lookup:
-            duplicates.append({"existing": lookup[k], "incoming": entry})
-        else:
-            unique_new_entries.append(entry)
-
-    return duplicates, unique_new_entries
-
-# ==========================
-# Upload handler
-# ==========================
 @csrf_exempt
 def upload_data(request):
-    """
-    Handler para subida de datos VUL.
-    """
     if request.method == "OPTIONS":
         return add_cors_headers(JsonResponse({"message": "Preflight OK"}))
 
     if request.method != "POST":
-        return add_cors_headers(JsonResponse({"error": "Method not allowed"}, status=405))
+        return add_cors_headers(
+            JsonResponse({"error": "Method not allowed"}, status=405)
+        )
 
     try:
         if "file" not in request.FILES:
             raise ValueError("No file was uploaded.")
 
-        file = request.FILES["file"]
-
-        # Soportar Excel y CSV
-        name = getattr(file, "name", "").lower()
-        if name.endswith(".csv"):
-            df = pd.read_csv(file)
-        else:
-            df = pd.read_excel(file, engine="openpyxl")
-
+        excel_file = request.FILES["file"]
+        df = pd.read_excel(excel_file, engine="openpyxl")
+        df = normalize_headers_vul(df)
         new_entries = df.to_dict(orient="records")
 
-        # Cargar datos existentes
-        existing_data = load_json_data("CSIRT/vul_Data.json")
+        for entry in new_entries:
+            if isinstance(entry, dict):
+                entry = ensure_due_vul(entry)
+
+        if JSON_PATH.exists():
+            with JSON_PATH.open("r", encoding="utf-8") as f:
+                existing_data = json.load(f)
+        else:
+            existing_data = []
+
         if not isinstance(existing_data, list):
             existing_data = [existing_data]
 
-        # Detectar duplicados
         duplicates, unique_new_entries = detect_duplicates(existing_data, new_entries)
 
         if not duplicates:
-            updated = existing_data + unique_new_entries
+            updated_data = assign_ids_and_merge_vul(existing_data, unique_new_entries)
             with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
-                json.dump(updated, tmp, ensure_ascii=False, indent=2)
+                json.dump(updated_data, tmp, ensure_ascii=False, indent=2)
                 tmp_name = tmp.name
             os.replace(tmp_name, JSON_PATH)
-
-            resp = JsonResponse({"message": "Data added successfully", "new": [], "duplicates": []})
+            response = JsonResponse(
+                {"message": "Data added successfully", "new": [], "duplicates": []}
+            )
         else:
-            resp = JsonResponse({"message": "Duplicates detected", "new": unique_new_entries, "duplicates": duplicates})
+            response = JsonResponse(
+                {
+                    "message": "Duplicates detected",
+                    "new": unique_new_entries,
+                    "duplicates": duplicates,
+                }
+            )
 
     except Exception as e:
-        resp = JsonResponse({"error": str(e)}, status=400)
+        response = JsonResponse({"error": str(e)}, status=400)
 
-    return add_cors_headers(resp)
+    return add_cors_headers(response)

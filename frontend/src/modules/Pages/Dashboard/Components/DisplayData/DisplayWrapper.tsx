@@ -1,3 +1,5 @@
+
+// src/modules/Components/DisplayWrapper.tsx
 import { useEffect, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
@@ -64,7 +66,7 @@ interface Props {
   onResetView?: () => void;
   setShowUploadModal?: (val: boolean) => void;
   hideToggle?: boolean;
-  onOpenModal: (item: Item) => void; // ✅ Añadido
+  onOpenModal: (item: Item) => void;
 }
 
 export default function DisplayWrapper({
@@ -75,7 +77,7 @@ export default function DisplayWrapper({
   onResetView,
   setShowUploadModal,
   hideToggle = false,
-  onOpenModal, // ✅ Recibido
+  onOpenModal,
 }: Props) {
   const [viewType, _setViewType] = useState<ViewType>(() => {
     const saved = localStorage.getItem(LS_VIEW);
@@ -128,9 +130,10 @@ export default function DisplayWrapper({
   }, [viewType, visibleColumns, allowedColumns]);
 
   const handleUploadByKind = (kind: ViewKind) => {
-    if (kind !== 'VIT') return;
-    setUploadOpen(true);
-    setShowUploadModal?.(true);
+    if (kind === 'VIT' || kind === 'VUL') {
+      setUploadOpen(true);
+      setShowUploadModal?.(true);
+    }
   };
 
   const handleUploadClose = (success: boolean) => {
@@ -141,7 +144,6 @@ export default function DisplayWrapper({
     }
   };
 
-  const endpoints = SCHEMA.VIT;
   const current = SCHEMA[viewType];
 
   return (
@@ -171,11 +173,16 @@ export default function DisplayWrapper({
         viewType={viewType}
         setShowUploadModal={setShowUploadModal}
         hasLink={hasLink}
-        onOpenModal={onOpenModal} // ✅ Pasamos la función al DisplayTable
+        onOpenModal={onOpenModal}
       />
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>
         <Box p={3}>
-          <UploadFileWrapper onClose={handleUploadClose} uploadUrl={endpoints.uploadUrl} saveUrl={endpoints.saveUrl} listUrlForMutate={current.listUrl} />
+          <UploadFileWrapper
+            onClose={handleUploadClose}
+            uploadUrl={current.uploadUrl}
+            saveUrl={current.saveUrl}
+            listUrlForMutate={current.listUrl}
+          />
         </Box>
       </Dialog>
     </>

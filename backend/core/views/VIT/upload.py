@@ -1,3 +1,4 @@
+# core/views/VIT/upload.py
 import json
 import os
 from pathlib import Path
@@ -11,15 +12,14 @@ from core.views.VIT.normalize import normalize_headers
 from core.views.VIT.duplicates import detect_duplicates
 from core.views.VIT.risk_logic import assign_ids_and_merge, calculate_due_date
 
-# ==========================
-# Rutas y archivo de datos
-# ==========================
+
 CORE_DIR = Path(apps.get_app_config("core").path)
 DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-# ✅ Ajuste: vit_Data.json ahora está en subcarpeta CSIRT
+
 JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"
+
 
 @csrf_exempt
 def upload_data(request):
@@ -27,7 +27,9 @@ def upload_data(request):
         return add_cors_headers(JsonResponse({"message": "Preflight OK"}))
 
     if request.method != "POST":
-        return add_cors_headers(JsonResponse({"error": "Method not allowed"}, status=405))
+        return add_cors_headers(
+            JsonResponse({"error": "Method not allowed"}, status=405)
+        )
 
     try:
         if "file" not in request.FILES:
@@ -40,7 +42,9 @@ def upload_data(request):
 
         for entry in new_entries:
             if isinstance(entry, dict) and not entry.get("dueDate"):
-                entry["dueDate"] = calculate_due_date(entry.get("creado"), entry.get("prioridad"))
+                entry["dueDate"] = calculate_due_date(
+                    entry.get("creado"), entry.get("prioridad")
+                )
 
         if JSON_PATH.exists():
             with JSON_PATH.open("r", encoding="utf-8") as f:
@@ -59,9 +63,17 @@ def upload_data(request):
                 json.dump(updated_data, tmp, ensure_ascii=False, indent=2)
                 tmp_name = tmp.name
             os.replace(tmp_name, JSON_PATH)
-            response = JsonResponse({"message": "Data added successfully", "new": [], "duplicates": []})
+            response = JsonResponse(
+                {"message": "Data added successfully", "new": [], "duplicates": []}
+            )
         else:
-            response = JsonResponse({"message": "Duplicates detected", "new": unique_new_entries, "duplicates": duplicates})
+            response = JsonResponse(
+                {
+                    "message": "Duplicates detected",
+                    "new": unique_new_entries,
+                    "duplicates": duplicates,
+                }
+            )
 
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=400)

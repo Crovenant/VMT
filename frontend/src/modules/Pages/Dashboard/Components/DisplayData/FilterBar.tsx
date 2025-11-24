@@ -1,3 +1,4 @@
+
 // src/modules/Pages/Dashboard/Components/DisplayData/FilterBar.tsx
 import { useState, useCallback, memo } from 'react';
 import { Box, IconButton, Tooltip, Popover, Typography } from '@mui/material';
@@ -12,7 +13,7 @@ type ViewType = 'VIT' | 'VUL';
 type Props = {
   handleDownload: () => void;
   onResetView?: () => void;
-  onUpload: (type: ViewKind) => void;
+  onUpload: (type: ViewKind | 'VUL' | 'VIT') => void;
   hideToggle?: boolean;
   viewType: ViewType;
   onSwitchView: (v: ViewType) => void;
@@ -92,8 +93,11 @@ export default function FilterBar({
 
   const act = useCallback(
     (kind: ViewKind) => {
-      if (kind !== 'VIT') return;
-      onUpload('VIT');
+      if (kind === 'VIT') {
+        onUpload('VIT');
+      } else {
+        onUpload('VUL');
+      }
       closeMenu();
     },
     [onUpload, closeMenu],
@@ -134,8 +138,8 @@ export default function FilterBar({
         keepMounted
       >
         <Box sx={{ display: 'flex', gap: 0.75 }}>
-          <Tile label="" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')}/>
           <Tile label="" src="/upload_vit_icon.svg" onClick={() => act('VIT')} />
+          <Tile label="" src="/upload_vul_icon.svg" onClick={() => act('VUL_CSIRT')}/>
         </Box>
       </Popover>
     </Box>

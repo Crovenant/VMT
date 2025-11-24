@@ -1,3 +1,4 @@
+
 // src/modules/Shared/hooks/useUploadFile.ts
 import { useState } from 'react';
 import { mutate } from 'swr';
@@ -6,9 +7,9 @@ export interface Entry { [key: string]: unknown }
 export interface DuplicatePair { existing: Entry; incoming: Entry }
 
 type Endpoints = {
-  uploadUrl: string;         // POST Excel
-  saveUrl: string;           // POST selección final
-  listUrlForMutate?: string; // SWR revalidate
+  uploadUrl: string;
+  saveUrl: string;
+  listUrlForMutate?: string;
 };
 
 type UploadResponse = {
@@ -17,6 +18,18 @@ type UploadResponse = {
   error?: string;
   message?: string;
 };
+
+function sanitizeEntry(entry: Record<string, any>): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(entry)) {
+    if (value === null || value === undefined || (typeof value === 'number' && isNaN(value))) {
+      sanitized[key] = '';
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
 
 export function useUploadFile(onClose: (success: boolean) => void, endpoints: Endpoints) {
   const { uploadUrl, saveUrl, listUrlForMutate } = endpoints;
@@ -32,8 +45,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
-    if (event.target) event.target.value = ''; // permitir re-subir el mismo archivo
+    if (event.target) event.target.value = '';
 
     if (!file) {
       setMensaje('❌ No se seleccionó ningún archivo.');
@@ -52,8 +64,10 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
 
       let result: UploadResponse = {};
       const contentType = response.headers.get('content-type') || '';
+
       if (contentType.includes('application/json')) {
-        result = (await response.json()) as UploadResponse;
+        const rawText = await response.text();
+        result = JSON.parse(rawText) as UploadResponse;
       } else if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -64,13 +78,19 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       }
 
       if (Array.isArray(result.duplicates) && result.duplicates.length > 0) {
-        setDuplicates(result.duplicates);
-        setNewEntries(Array.isArray(result.new) ? result.new : []);
+        const sanitizedDuplicates = result.duplicates.map(pair => ({
+          existing: sanitizeEntry(pair.existing),
+          incoming: sanitizeEntry(pair.incoming),
+        }));
+
+        setDuplicates(sanitizedDuplicates);
+        setNewEntries(Array.isArray(result.new) ? result.new.map(sanitizeEntry) : []);
         setSelectedOptions(Array(result.duplicates.length).fill('incoming'));
         setResolverOpen(true);
         setMensaje('⚠️ Se detectaron duplicados. Elige qué líneas guardar.');
       } else {
-        await guardarFinal(Array.isArray(result.new) ? result.new : []);
+        const sanitizedNew = Array.isArray(result.new) ? result.new.map(sanitizeEntry) : [];
+        await guardarFinal(sanitizedNew);
         setMensaje('✅ Archivo subido correctamente.');
         onClose(true);
         safeMutate();
@@ -80,7 +100,6 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
         typeof error === 'object' && error && 'message' in error
           ? String((error as { message?: unknown }).message ?? 'desconocido')
           : 'desconocido';
-      console.error('Error al subir el archivo:', error);
       setMensaje(`❌ Error al subir el archivo: ${msg}`);
       onClose(false);
     } finally {
@@ -89,10 +108,12 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
   };
 
   const guardarFinal = async (finalEntries: Entry[]) => {
+    const sanitizedFinal = finalEntries.map(sanitizeEntry);
+
     const res = await fetch(saveUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entries: finalEntries }),
+      body: JSON.stringify({ entries: sanitizedFinal }),
     });
 
     if (!res.ok) {
@@ -124,7 +145,6 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
         typeof e === 'object' && e && 'message' in e
           ? String((e as { message?: unknown }).message ?? 'Error al guardar selección')
           : 'Error al guardar selección';
-      console.error(e);
       setMensaje(`❌ ${msg}`);
       onClose(false);
     } finally {
