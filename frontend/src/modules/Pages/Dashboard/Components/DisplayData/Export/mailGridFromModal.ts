@@ -88,7 +88,7 @@ export async function mailGridFromModal(
   const mailtoCompose =
     `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextTable)}`;
 
-  // 1) Intentar abrir Outlook App con ms-outlook:// en nueva ventana (algunos navegadores bloquean handlers embebidos)
+
   let opened = false;
   try {
     const w = window.open(msOutlookCompose, '_blank');
@@ -97,7 +97,6 @@ export async function mailGridFromModal(
     opened = false;
   }
 
-  // 2) Si no se pudo abrir o no genera borrador con contenido, usar mailto como fallback
   if (!opened) {
     try {
       window.location.href = mailtoCompose;
@@ -107,11 +106,10 @@ export async function mailGridFromModal(
     }
   }
 
-  // 3) Copia al portapapeles (si el handler no pre-rellena, el usuario puede pegar con CTRL+V)
-  //    No interfiere con los pasos anteriores y mejora UX en casos donde el cuerpo llega vacío.
+
   try {
     await navigator.clipboard.writeText(plainTextTable);
   } catch {
-    // Silenciar errores de clipboard (puede requerir HTTPS/permiso del usuario)
+
   }
 }
