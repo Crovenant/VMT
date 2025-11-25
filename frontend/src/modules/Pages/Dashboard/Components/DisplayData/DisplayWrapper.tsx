@@ -1,6 +1,6 @@
 
 // src/modules/Components/DisplayWrapper.tsx
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
 import Title from '../Title/Title';
@@ -12,7 +12,6 @@ import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 import type { Item } from '../../../../Types/item';
 
 type ViewType = 'VIT' | 'VUL';
-type ViewKind = 'VIT' | 'VUL' | 'VUL_TO_VIT' | 'VUL_CSIRT' | 'VUL_CSO';
 
 const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: string; defaultColumns: string[] }> = {
   VIT: {
@@ -103,8 +102,6 @@ export default function DisplayWrapper({
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
 
-  const hasLink = useCallback((item: Item): boolean => Boolean(item.hasLink), []);
-
   useEffect(() => {
     const allowed = new Set(allowedColumns);
     const saved = localStorage.getItem(LS_COLS(viewType));
@@ -129,11 +126,9 @@ export default function DisplayWrapper({
     localStorage.setItem(LS_COLS(viewType), JSON.stringify(filtered.length ? filtered : SCHEMA[viewType].defaultColumns));
   }, [viewType, visibleColumns, allowedColumns]);
 
-  const handleUploadByKind = (kind: ViewKind) => {
-    if (kind === 'VIT' || kind === 'VUL') {
-      setUploadOpen(true);
-      setShowUploadModal?.(true);
-    }
+  const handleUploadClick = () => {
+    setUploadOpen(true);
+    setShowUploadModal?.(true);
   };
 
   const handleUploadClose = (success: boolean) => {
@@ -158,7 +153,7 @@ export default function DisplayWrapper({
               if (typeof window.exportFilteredDataToExcel === 'function') window.exportFilteredDataToExcel();
             }}
             onResetView={onResetView}
-            onUpload={handleUploadByKind}
+            onUpload={handleUploadClick}
             hideToggle={hideToggle}
             viewType={viewType}
             onSwitchView={(v) => setViewType(v)}
@@ -172,7 +167,7 @@ export default function DisplayWrapper({
         showFilterPanel={showFilterPanel}
         viewType={viewType}
         setShowUploadModal={setShowUploadModal}
-        hasLink={hasLink}
+        hasLink={(item: Item) => Boolean(item.hasLink)}
         onOpenModal={onOpenModal}
       />
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>

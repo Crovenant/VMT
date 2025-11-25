@@ -89,8 +89,8 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
         throw new Error(msg);
       }
 
+      // Duplicados
       if (Array.isArray(result.duplicates) && result.duplicates.length > 0) {
-        // Flujo con duplicados
         const sanitizedDuplicates = result.duplicates.map(pair => ({
           existing: sanitizeEntry(pair.existing),
           incoming: sanitizeEntry(pair.incoming),
@@ -106,17 +106,17 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
           setRelations(result.relations);
         }
       } else {
-        // Flujo sin duplicados
+        // Sin duplicados
         const sanitizedNew = Array.isArray(result.new) ? result.new.map(sanitizeEntry) : [];
 
         if (result.relations && result.relations.length > 0) {
-          // Si hay relaciones, NO guardar todavía
+          // Si hay relaciones, NO guardar todavía (gating por modal)
           setNewEntries(sanitizedNew);
           setRelations(result.relations);
           setRelationModalOpen(true);
           setMensaje('⚠️ Se detectaron relaciones. Confirma antes de guardar.');
         } else {
-          // Si no hay relaciones, guardar directamente
+          // Sin relaciones: guardado directo
           await guardarFinal(sanitizedNew);
           setMensaje('✅ Archivo subido correctamente.');
           onClose(true);
@@ -166,12 +166,12 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       setResolverOpen(false);
 
       if (relations.length > 0) {
-        // NO guardar todavía. Pasamos las seleccionadas al siguiente paso (relaciones).
+        // Gating: NO guardar hasta confirmar relaciones
         setNewEntries(finalEntries);
         setRelationModalOpen(true);
         setMensaje('⚠️ Se detectaron relaciones. Confirma antes de guardar.');
       } else {
-        // Si no hay relaciones, guardamos ya.
+        // No hay relaciones: podemos guardar
         await guardarFinal(finalEntries);
         setMensaje('✅ Selección guardada correctamente.');
         onClose(true);
@@ -193,13 +193,15 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     if (loading) return;
     setLoading(true);
     try {
-      // Guardar las VIT primero (si no se guardaron antes)
+      // Guardar las entradas (VIT o VUL) solo al confirmar el modal de relaciones
       if (newEntries.length > 0) {
         await guardarFinal(newEntries);
       }
 
-      // Aplicar relaciones en VUL
-      const res = await fetch(`${uploadUrl.replace('/upload/', '/apply-relations/')}`, {
+      // Aplicar relaciones (detectamos si es VIT o VUL por la URL base)
+      const applyUrl = uploadUrl.replace('/upload/', '/apply-relations/');
+
+      const res = await fetch(applyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ relations }),
@@ -243,7 +245,13 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     relationModalOpen,
     relations,
     handleConfirmRelations,
-    closeRelationModal: () => setRelationModalOpen(false),
+    closeRelationModal: () => {
+      // Cancelar: NO se guarda nada y se limpia el estado para evitar persistencias accidentales
+      setRelationModalOpen(false);
+      setRelations([]);
+      setNewEntries([]);
+      setMensaje('❌ Operación cancelada. No se guardó ningún cambio.');
+    },
     RelationResolverModal,
   };
 }

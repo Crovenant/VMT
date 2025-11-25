@@ -12,6 +12,7 @@ from core.views.VIT.apply_relations import apply_relations  # <-- Añadido
 from core.views.VUL.list_view import get_vul_risk_data
 from core.views.VUL.upload import upload_data as vul_upload_data
 from core.views.VUL.save_selection import save_selection as vul_save_selection
+from core.views.VUL.apply_relations import apply_relations_vul  # <-- NUEVO
 
 
 @csrf_exempt
@@ -24,12 +25,13 @@ def home_view(_request):
                     "list": "/vit/risk-data/",
                     "upload": "/vit/upload/",
                     "save": "/vit/save-selection/",
-                    "apply-relations": "/vit/apply-relations/",  # <-- Añadido en el JSON de info
+                    "apply-relations": "/vit/apply-relations/",  # <-- Añadido
                 },
                 "VUL": {
                     "list": "/vul/risk-data/",
                     "upload": "/vul/upload/",
                     "save": "/vul/save-selection/",
+                    "apply-relations": "/vul/apply-relations/",  # <-- NUEVO
                 },
             },
         }
@@ -47,4 +49,5 @@ urlpatterns = [
     path("vul/risk-data/", get_vul_risk_data),
     path("vul/upload/", vul_upload_data),
     path("vul/save-selection/", vul_save_selection),
+    path("vul/apply-relations/", apply_relations_vul),
 ]

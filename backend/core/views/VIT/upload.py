@@ -17,7 +17,7 @@ DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"
-VUL_JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"  # Para leer VUL existentes
+VUL_JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"
 
 
 @csrf_exempt
@@ -83,7 +83,8 @@ def upload_data(request):
                     (before_vits + "," + vit_num).strip(",") if before_vits else vit_num
                 )
                 # Solo añadir si realmente hay cambio
-                if vit_num not in before_vits.split(","):
+                before_list = [s.strip() for s in before_vits.split(",") if s.strip()]
+                if vit_num not in before_list:
                     relations.append(
                         {
                             "vulNumero": vul_num,
@@ -93,9 +94,12 @@ def upload_data(request):
                         }
                     )
 
-        # Si no hay duplicados, guardar directamente
-        if not duplicates:
+        # ===== REGLA DE GUARDADO =====
+        # NO guardar NADA si hay duplicados o relaciones (se requiere confirmación en el frontend).
+        # Guardar solo si NO hay duplicados y NO hay relaciones.
+        if not duplicates and not relations:
             updated_data = assign_ids_and_merge(existing_data, unique_new_entries)
+            JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
             with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
                 json.dump(updated_data, tmp, ensure_ascii=False, indent=2)
                 tmp_name = tmp.name
@@ -105,14 +109,14 @@ def upload_data(request):
                     "message": "Data added successfully",
                     "new": [],
                     "duplicates": [],
-                    "relations": relations,  # Devolver relaciones aunque no haya duplicados
+                    "relations": [],
                 }
             )
         else:
-            # Si hay duplicados, devolverlos junto con relaciones
+            # Devolver los datos para resolución en frontend, sin persistir aún.
             response = JsonResponse(
                 {
-                    "message": "Duplicates detected",
+                    "message": "Pending resolution",
                     "new": unique_new_entries,
                     "duplicates": duplicates,
                     "relations": relations,
