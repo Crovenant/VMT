@@ -1,3 +1,5 @@
+
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable.tsx
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { Box } from '@mui/material';
@@ -36,7 +38,9 @@ export default function DisplayTable({
   setVisibleColumns,
   viewType,
   hasLink,
-  onOpenModal, // ✅ Prop para abrir modal desde el wrapper
+  onOpenModal,
+  setSelectedCount,
+  setSelectedIds,
 }: {
   rows: Item[];
   visibleColumns: string[];
@@ -46,6 +50,8 @@ export default function DisplayTable({
   setShowUploadModal?: (val: boolean) => void;
   hasLink?: (item: Item) => boolean;
   onOpenModal: (item: Item) => void;
+  setSelectedCount?: React.Dispatch<React.SetStateAction<number>>;
+  setSelectedIds?: React.Dispatch<React.SetStateAction<string[]>>;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
 
@@ -92,7 +98,6 @@ export default function DisplayTable({
 
   const toggleColDef = useMemo(() => createToggleColDef(expanded, toggleExpand), [expanded, toggleExpand]);
   const businessColDefs = useMemo(() => createBusinessColDefs(visibleColumns, columnKeyMap), [visibleColumns, columnKeyMap]);
-
   const eyeColDef = useMemo(() => createEyeColDef((item: Item) => onOpenModal(item), hasLink), [onOpenModal, hasLink]);
 
   const columnDefs: ColDef<GridRow>[] = useMemo(
@@ -192,6 +197,14 @@ export default function DisplayTable({
             isRowSelectable={(p) => !isDetailRow(p?.data as DisplayRow)}
             onColumnMoved={onColumnMoved}
             onColumnResized={onColumnResized}
+            onSelectionChanged={(params) => {
+              const selectedRows = params.api.getSelectedRows();
+              if (setSelectedCount) setSelectedCount(selectedRows.length);
+              if (setSelectedIds) {
+                const ids = selectedRows.map((r: any) => String(r.id ?? r.numero));
+                setSelectedIds(ids);
+              }
+            }}
           />
         </Box>
         <SideFilterPanel
