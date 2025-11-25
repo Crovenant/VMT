@@ -1,4 +1,3 @@
-// src/modules/Components/DuplicateResolver/ResolverDialog.tsx
 
 import {
   Dialog,
@@ -45,11 +44,11 @@ export default function ResolverDialog({
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Box sx={{ flex: 1, border: '1px solid #ccc', p: 1 }}>
                 <Typography variant="caption">Registered Item data</Typography>
-                {renderEntry(pair.existing)}
+                {renderEntry(pair.existing, pair.incoming)}
               </Box>
               <Box sx={{ flex: 1, border: '1px solid #ccc', p: 1 }}>
                 <Typography variant="caption">New Item data</Typography>
-                {renderEntry(pair.incoming)}
+                {renderEntry(pair.incoming, pair.existing)}
               </Box>
             </Box>
 

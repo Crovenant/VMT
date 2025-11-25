@@ -1,5 +1,4 @@
 
-// src/modules/Shared/Components/UploadFileWrapper.tsx
 import { useRef } from 'react';
 import DuplicateResolver from '../../Pages/Dashboard/Components/DuplicateResolver/ResolverWrapper';
 import RelationResolverModal from '../../Pages/Dashboard/Components/upload/Vit to Vul/RelationResolverModal';
@@ -32,6 +31,8 @@ export default function UploadFileWrapper({
     closeResolver,
     relationModalOpen,
     relations,
+    relationSelections,
+    setRelationSelections,
     handleConfirmRelations,
     closeRelationModal,
   } = useUploadFile(onClose, { uploadUrl, saveUrl, listUrlForMutate });
@@ -84,6 +85,8 @@ export default function UploadFileWrapper({
       <RelationResolverModal
         open={relationModalOpen}
         relations={relations}
+        selectedOptions={relationSelections}
+        setSelectedOptions={setRelationSelections}
         onConfirm={handleConfirmRelations}
         onCancel={closeRelationModal}
       />

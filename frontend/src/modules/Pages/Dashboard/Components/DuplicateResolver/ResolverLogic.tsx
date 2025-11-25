@@ -1,12 +1,9 @@
 
-// src/modules/Components/DuplicateResolver/ResolverLogic.tsx
-
 import { Typography, Box } from '@mui/material';
 import type { Entry } from '../../../../Types/item';
 
 const fieldLabels: { [key: string]: string } = {
   // VIT
-
   numero: 'Número',
   idExterno: 'ID externo',
   estado: 'Estado',
@@ -37,16 +34,24 @@ const fieldLabels: { [key: string]: string } = {
   VITS: 'VITS',
 };
 
-export function renderEntry(entry: Entry) {
+export function renderEntry(entry: Entry, compareWith?: Entry) {
   return (
     <Box sx={{ fontSize: 12, lineHeight: 1.4 }}>
       {Object.entries(fieldLabels)
         .filter(([key]) => key in entry)
-        .map(([key, label]) => (
-          <Typography key={key} variant="body2">
-            <strong>{label}:</strong> {String(entry[key] ?? '')}
-          </Typography>
-        ))}
+        .map(([key, label]) => {
+          const value = String(entry[key] ?? '');
+          const isChanged = compareWith && compareWith[key] !== entry[key];
+          return (
+            <Typography
+              key={key}
+              variant="body2"
+              sx={{ color: isChanged ? 'red' : 'inherit' }}
+            >
+              <strong>{label}:</strong> {value}
+            </Typography>
+          );
+        })}
     </Box>
   );
 }

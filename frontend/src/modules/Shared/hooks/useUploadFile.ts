@@ -1,5 +1,4 @@
 
-// src/modules/Shared/hooks/useUploadFile.ts
 import { useState } from 'react';
 import { mutate } from 'swr';
 import RelationResolverModal from './../../Pages/Dashboard/Components/upload/Vit to Vul/RelationResolverModal';
@@ -52,6 +51,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
 
   const [relationModalOpen, setRelationModalOpen] = useState(false);
   const [relations, setRelations] = useState<RelationChange[]>([]);
+  const [relationSelections, setRelationSelections] = useState<('apply' | 'ignore')[]>([]);
 
   const safeMutate = () => { if (listUrlForMutate) mutate(listUrlForMutate); };
 
@@ -104,6 +104,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
 
         if (result.relations && result.relations.length > 0) {
           setRelations(result.relations);
+          setRelationSelections(new Array(result.relations.length).fill('apply'));
         }
       } else {
         // Sin duplicados
@@ -113,6 +114,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
           // Si hay relaciones, NO guardar todavía (gating por modal)
           setNewEntries(sanitizedNew);
           setRelations(result.relations);
+          setRelationSelections(new Array(result.relations.length).fill('apply'));
           setRelationModalOpen(true);
           setMensaje('⚠️ Se detectaron relaciones. Confirma antes de guardar.');
         } else {
@@ -193,6 +195,16 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     if (loading) return;
     setLoading(true);
     try {
+      // Filtrar solo las relaciones marcadas como "apply"
+      const relacionesAplicadas = relations.filter((_, idx) => relationSelections[idx] === 'apply');
+
+      if (relacionesAplicadas.length === 0) {
+        setMensaje('❌ No se aplicó ninguna relación.');
+        setRelationModalOpen(false);
+        onClose(false);
+        return;
+      }
+
       // Guardar las entradas (VIT o VUL) solo al confirmar el modal de relaciones
       if (newEntries.length > 0) {
         await guardarFinal(newEntries);
@@ -204,7 +216,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       const res = await fetch(applyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ relations }),
+        body: JSON.stringify({ relations: relacionesAplicadas }),
       });
 
       if (!res.ok) {
@@ -244,11 +256,14 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     closeResolver: () => setResolverOpen(false),
     relationModalOpen,
     relations,
+    relationSelections,
+    setRelationSelections,
     handleConfirmRelations,
     closeRelationModal: () => {
       // Cancelar: NO se guarda nada y se limpia el estado para evitar persistencias accidentales
       setRelationModalOpen(false);
       setRelations([]);
+      setRelationSelections([]);
       setNewEntries([]);
       setMensaje('❌ Operación cancelada. No se guardó ningún cambio.');
     },
