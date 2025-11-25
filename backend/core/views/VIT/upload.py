@@ -39,14 +39,12 @@ def upload_data(request):
         df = normalize_headers(df)
         new_entries = df.to_dict(orient="records")
 
-        # Calcular dueDate para nuevas entradas
         for entry in new_entries:
             if isinstance(entry, dict) and not entry.get("dueDate"):
                 entry["dueDate"] = calculate_due_date(
                     entry.get("creado"), entry.get("prioridad")
                 )
 
-        # Leer datos existentes de VIT
         if JSON_PATH.exists():
             with JSON_PATH.open("r", encoding="utf-8") as f:
                 existing_data = json.load(f)
@@ -56,10 +54,8 @@ def upload_data(request):
         if not isinstance(existing_data, list):
             existing_data = [existing_data]
 
-        # Detectar duplicados
         duplicates, unique_new_entries = detect_duplicates(existing_data, new_entries)
 
-        # Leer datos existentes de VUL para detectar relaciones
         if VUL_JSON_PATH.exists():
             with VUL_JSON_PATH.open("r", encoding="utf-8") as f:
                 vul_data = json.load(f)
@@ -69,7 +65,6 @@ def upload_data(request):
         if not isinstance(vul_data, list):
             vul_data = [vul_data]
 
-        # Detectar relaciones VIT ↔ VUL
         relations = []
         vul_map = {str(v.get("Número", "")).strip(): v for v in vul_data}
 
@@ -82,7 +77,7 @@ def upload_data(request):
                 after_vits = (
                     (before_vits + "," + vit_num).strip(",") if before_vits else vit_num
                 )
-                # Solo añadir si realmente hay cambio
+
                 before_list = [s.strip() for s in before_vits.split(",") if s.strip()]
                 if vit_num not in before_list:
                     relations.append(
@@ -94,9 +89,6 @@ def upload_data(request):
                         }
                     )
 
-        # ===== REGLA DE GUARDADO =====
-        # NO guardar NADA si hay duplicados o relaciones (se requiere confirmación en el frontend).
-        # Guardar solo si NO hay duplicados y NO hay relaciones.
         if not duplicates and not relations:
             updated_data = assign_ids_and_merge(existing_data, unique_new_entries)
             JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -113,7 +105,7 @@ def upload_data(request):
                 }
             )
         else:
-            # Devolver los datos para resolución en frontend, sin persistir aún.
+
             response = JsonResponse(
                 {
                     "message": "Pending resolution",
