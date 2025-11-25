@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from core.views.VIT.list_view import get_vit_risk_data
 from core.views.VIT.upload import upload_data as vit_upload_data
 from core.views.VIT.save_selection import save_selection as vit_save_selection
+from core.views.VIT.apply_relations import apply_relations  # <-- Añadido
 
 # ===== VUL =====
 from core.views.VUL.list_view import get_vul_risk_data
@@ -23,24 +24,25 @@ def home_view(_request):
                     "list": "/vit/risk-data/",
                     "upload": "/vit/upload/",
                     "save": "/vit/save-selection/",
+                    "apply-relations": "/vit/apply-relations/",  # <-- Añadido en el JSON de info
                 },
                 "VUL": {
                     "list": "/vul/risk-data/",
                     "upload": "/vul/upload/",
                     "save": "/vul/save-selection/",
                 },
-            }
+            },
         }
     )
 
+
 urlpatterns = [
     path("", home_view),
-
     # ======== ENDPOINTS VIT ========
     path("vit/risk-data/", get_vit_risk_data),
     path("vit/upload/", vit_upload_data),
     path("vit/save-selection/", vit_save_selection),
-
+    path("vit/apply-relations/", apply_relations),
     # ======== ENDPOINTS VUL ========
     path("vul/risk-data/", get_vul_risk_data),
     path("vul/upload/", vul_upload_data),

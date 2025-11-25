@@ -2,9 +2,17 @@
 // src/modules/Shared/hooks/useUploadFile.ts
 import { useState } from 'react';
 import { mutate } from 'swr';
+import RelationResolverModal from './../../Pages/Dashboard/Components/upload/Vit to Vul/RelationResolverModal';
 
 export interface Entry { [key: string]: unknown }
 export interface DuplicatePair { existing: Entry; incoming: Entry }
+
+type RelationChange = {
+  vulNumero: string;
+  vitNumero: string;
+  before: string;
+  after: string;
+};
 
 type Endpoints = {
   uploadUrl: string;
@@ -15,6 +23,7 @@ type Endpoints = {
 type UploadResponse = {
   duplicates?: DuplicatePair[];
   new?: Entry[];
+  relations?: RelationChange[];
   error?: string;
   message?: string;
 };
@@ -40,6 +49,9 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
   const [newEntries, setNewEntries] = useState<Entry[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<('existing' | 'incoming')[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [relationModalOpen, setRelationModalOpen] = useState(false);
+  const [relations, setRelations] = useState<RelationChange[]>([]);
 
   const safeMutate = () => { if (listUrlForMutate) mutate(listUrlForMutate); };
 
@@ -78,6 +90,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       }
 
       if (Array.isArray(result.duplicates) && result.duplicates.length > 0) {
+        // Flujo con duplicados
         const sanitizedDuplicates = result.duplicates.map(pair => ({
           existing: sanitizeEntry(pair.existing),
           incoming: sanitizeEntry(pair.incoming),
@@ -88,12 +101,27 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
         setSelectedOptions(Array(result.duplicates.length).fill('incoming'));
         setResolverOpen(true);
         setMensaje('⚠️ Se detectaron duplicados. Elige qué líneas guardar.');
+
+        if (result.relations && result.relations.length > 0) {
+          setRelations(result.relations);
+        }
       } else {
+        // Flujo sin duplicados
         const sanitizedNew = Array.isArray(result.new) ? result.new.map(sanitizeEntry) : [];
-        await guardarFinal(sanitizedNew);
-        setMensaje('✅ Archivo subido correctamente.');
-        onClose(true);
-        safeMutate();
+
+        if (result.relations && result.relations.length > 0) {
+          // Si hay relaciones, NO guardar todavía
+          setNewEntries(sanitizedNew);
+          setRelations(result.relations);
+          setRelationModalOpen(true);
+          setMensaje('⚠️ Se detectaron relaciones. Confirma antes de guardar.');
+        } else {
+          // Si no hay relaciones, guardar directamente
+          await guardarFinal(sanitizedNew);
+          setMensaje('✅ Archivo subido correctamente.');
+          onClose(true);
+          safeMutate();
+        }
       }
     } catch (error: unknown) {
       const msg =
@@ -134,17 +162,67 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
         choice === 'incoming' ? duplicates[idx].incoming : duplicates[idx].existing
       );
       const finalEntries = [...newEntries, ...seleccionadas];
-      await guardarFinal(finalEntries);
 
       setResolverOpen(false);
-      setMensaje('✅ Selección guardada correctamente.');
-      onClose(true);
-      safeMutate();
+
+      if (relations.length > 0) {
+        // NO guardar todavía. Pasamos las seleccionadas al siguiente paso (relaciones).
+        setNewEntries(finalEntries);
+        setRelationModalOpen(true);
+        setMensaje('⚠️ Se detectaron relaciones. Confirma antes de guardar.');
+      } else {
+        // Si no hay relaciones, guardamos ya.
+        await guardarFinal(finalEntries);
+        setMensaje('✅ Selección guardada correctamente.');
+        onClose(true);
+        safeMutate();
+      }
     } catch (e: unknown) {
       const msg =
         typeof e === 'object' && e && 'message' in e
           ? String((e as { message?: unknown }).message ?? 'Error al guardar selección')
           : 'Error al guardar selección';
+      setMensaje(`❌ ${msg}`);
+      onClose(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmRelations = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      // Guardar las VIT primero (si no se guardaron antes)
+      if (newEntries.length > 0) {
+        await guardarFinal(newEntries);
+      }
+
+      // Aplicar relaciones en VUL
+      const res = await fetch(`${uploadUrl.replace('/upload/', '/apply-relations/')}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ relations }),
+      });
+
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try {
+          const j = await res.json();
+          msg = j?.error || msg;
+        } catch { /* ignore */ }
+        throw new Error(`Error al aplicar relaciones: ${msg}`);
+      }
+
+      setRelationModalOpen(false);
+      setMensaje('✅ Relaciones aplicadas correctamente.');
+      onClose(true);
+      safeMutate();
+    } catch (e: unknown) {
+      const msg =
+        typeof e === 'object' && e && 'message' in e
+          ? String((e as { message?: unknown }).message ?? 'Error al aplicar relaciones')
+          : 'Error al aplicar relaciones';
       setMensaje(`❌ ${msg}`);
       onClose(false);
     } finally {
@@ -162,5 +240,10 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     handleFileUpload,
     handleConfirmDuplicates,
     closeResolver: () => setResolverOpen(false),
+    relationModalOpen,
+    relations,
+    handleConfirmRelations,
+    closeRelationModal: () => setRelationModalOpen(false),
+    RelationResolverModal,
   };
 }

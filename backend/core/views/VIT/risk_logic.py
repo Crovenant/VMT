@@ -89,7 +89,6 @@ def _ensure_due(entry: Dict) -> Dict:
 
 
 def _is_nan_value(v: Any) -> bool:
-
     try:
         if isinstance(v, float) and math.isnan(v):
             return True
@@ -107,21 +106,18 @@ def _is_nan_value(v: Any) -> bool:
 
 
 def _sanitize_any(entry: Dict) -> Dict:
-
     if not isinstance(entry, dict):
         return entry
     for k, v in list(entry.items()):
         if _is_nan_value(v):
             entry[k] = ""
         else:
-
             if not isinstance(v, (dict, list, bool, int, float)):
                 entry[k] = str(v)
     return entry
 
 
 def _sanitize_link(entry: Dict) -> Dict:
-
     vul_val = entry.get("VUL")
     if _is_nan_value(vul_val):
         entry["VUL"] = ""
@@ -138,7 +134,6 @@ def assign_ids_and_merge(
     merged = list(existing_data)
     used_ids, next_id = _collect_used_ids(existing_data)
     for entry in unique_new_entries:
-
         entry = _sanitize_any(entry)
         entry = _ensure_due(entry)
         entry = _sanitize_link(entry)
@@ -151,7 +146,6 @@ def assign_ids_and_merge(
         for k, v in entry.items():
             if k != "id":
                 od[k] = v
-
         od = _sanitize_any(od)
         od = _sanitize_link(od)
         merged.append(od)
@@ -172,7 +166,6 @@ def update_selected_entries(
     updated_rows: List[Dict] = []
     keys_to_remove = set()
     for entry in selected_entries:
-
         entry = _sanitize_any(entry)
         entry = _ensure_due(entry)
         entry = _sanitize_link(entry)
@@ -202,7 +195,6 @@ def update_selected_entries(
         for field, val in entry.items():
             if field != "id":
                 od[field] = val
-
         od = _sanitize_any(od)
         od = _sanitize_link(od)
         updated_rows.append(od)
@@ -224,6 +216,17 @@ def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
         if vul_id in vul_map:
             vit["vulData"] = vul_map[vul_id]
             vit["hasLink"] = True
+            # Actualizar VUL.VITS si falta esta VIT
+            vul_obj = vul_map[vul_id]
+            current_vits = str(vul_obj.get("VITS", "")).strip()
+            vit_num = str(vit.get("numero", "")).strip()
+            if vit_num and vit_num not in current_vits.split(","):
+                new_vits = (
+                    (current_vits + "," + vit_num).strip(",")
+                    if current_vits
+                    else vit_num
+                )
+                vul_obj["VITS"] = new_vits
         else:
             vit["vulData"] = None
             vit["hasLink"] = False
@@ -231,7 +234,6 @@ def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
 
 
 def sanitize_duplicate_pairs(pairs: List[Dict[str, Dict]]) -> List[Dict[str, Dict]]:
-
     sanitized: List[Dict[str, Dict]] = []
     for p in pairs:
         existing = _sanitize_any(dict(p.get("existing", {})))
@@ -243,7 +245,6 @@ def sanitize_duplicate_pairs(pairs: List[Dict[str, Dict]]) -> List[Dict[str, Dic
 
 
 def sanitize_upload_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
-
     if not isinstance(payload, dict):
         return payload
     out: Dict[str, Any] = dict(payload)
