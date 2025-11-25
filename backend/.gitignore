@@ -21,3 +21,6 @@ __pycache__/
 # Migraciones compiladas
 core/migrations/__pycache__/
 core/__pycache__/
+
+#Json sensibles.
+core/data/
