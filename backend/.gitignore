@@ -22,5 +22,7 @@ __pycache__/
 core/migrations/__pycache__/
 core/__pycache__/
 
-#Json sensibles.
+
+# Ignorar JSON dentro de core/data y subcarpetas
+core/data/*.json
 core/data/**/*.json
