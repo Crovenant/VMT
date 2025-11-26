@@ -4,7 +4,7 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff'; // Icono más vistoso/grueso
+import DeleteIcon from '@mui/icons-material/Delete'; // Papelera
 import LatchWidget from './Widgets/LatchWidget';
 
 type ViewType = 'VIT' | 'VUL';
@@ -13,7 +13,7 @@ type Props = {
   handleDownload: () => void;
   onResetView?: () => void;
   onUpload: () => void;
-  onDelete?: () => void; // nueva acción para borrar filas seleccionadas
+  onDelete?: () => void; // acción para borrar filas seleccionadas
   hideToggle?: boolean;
   viewType: ViewType;
   onSwitchView: (v: ViewType) => void;
@@ -58,16 +58,16 @@ export default function FilterBar({
         </IconButton>
       </Tooltip>
 
-      {/* Icono de borrado más vistoso y separado del Upload */}
+      {/* Papelera azul para borrar filas seleccionadas */}
       <Tooltip title="Delete selected rows">
         <IconButton
           aria-label="Delete rows"
-          color="error"
+          color="primary"
           size="small"
           onClick={onDelete}
-          sx={{ ml: 0.5 }} // leve separación respecto al upload
+          sx={{ ml: 0.5 }}
         >
-          <HighlightOffIcon sx={{ fontSize: 22 }} /> {/* más grueso/visible que Close */}
+          <DeleteIcon sx={{ fontSize: 22 }} />
         </IconButton>
       </Tooltip>
     </Box>
