@@ -33,7 +33,6 @@ def apply_relations_vul(request):
         if not isinstance(relations, list) or not relations:
             raise ValueError("No relations provided.")
 
-        # Leer datos existentes
         vul_data = []
         vit_data = []
 
@@ -49,31 +48,27 @@ def apply_relations_vul(request):
         if not isinstance(vit_data, list):
             vit_data = [vit_data]
 
-        vul_map = {str(v.get("Número", "")).strip(): v for v in vul_data}
+        vul_map = {str(v.get("numero", "")).strip(): v for v in vul_data}
         vit_map = {str(v.get("numero", "")).strip(): v for v in vit_data}
 
-        # Aplicar relaciones inversas
         for rel in relations:
             vul_num = str(rel.get("vulNumero", "")).strip()
             vit_num = str(rel.get("vitNumero", "")).strip()
 
-            # Actualizar VUL (añadir vit_num en VITS)
             if vul_num in vul_map:
                 vul_obj = vul_map[vul_num]
-                current_vits = str(vul_obj.get("VITS", "")).strip()
+                current_vits = str(vul_obj.get("vits", "")).strip()
                 current_list = [s.strip() for s in current_vits.split(",") if s.strip()]
                 if vit_num not in current_list:
                     current_list.append(vit_num)
-                    vul_obj["VITS"] = ",".join(current_list)
+                    vul_obj["vits"] = ",".join(current_list)
 
-            # Actualizar VIT (añadir vul_num en VUL)
             if vit_num in vit_map:
                 vit_obj = vit_map[vit_num]
-                current_vul = str(vit_obj.get("VUL", "")).strip()
+                current_vul = str(vit_obj.get("vul", "")).strip()
                 if vul_num and vul_num != current_vul:
-                    vit_obj["VUL"] = vul_num
+                    vit_obj["vul"] = vul_num
 
-        # Guardar cambios en ambos archivos
         VUL_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
         with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp_vul:
             json.dump(list(vul_map.values()), tmp_vul, ensure_ascii=False, indent=2)

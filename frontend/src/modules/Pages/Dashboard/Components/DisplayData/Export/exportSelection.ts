@@ -1,4 +1,5 @@
-// src/modules/Pages/Dashboard/Components/DisplayData/Export/exportSelection.ts
+
+// File: src/modules/Pages/Dashboard/Components/DisplayData/Export/exportSelection.ts
 import ExcelJS from 'exceljs';
 import type { Item } from '../../../../../Types/item';
 
@@ -16,14 +17,14 @@ const vitColumnMap: Record<string, keyof Item> = {
   'Creado': 'creado',
   'Actualizado': 'actualizado',
   'Sites': 'sites',
-  'Vulnerability solution': 'vulnerabilitySolution',
+  'Solución': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
   'Due date': 'dueDate',
   'VUL': 'vul',
 };
 
 const vulColumnMap: Record<string, keyof Item> = {
-  'Numero': 'numero',
+  'Número': 'numero',
   'Activo': 'activo',
   'Elementos vulnerables': 'elementosVulnerables',
   'Asignado a': 'asignadoA',
@@ -31,16 +32,13 @@ const vulColumnMap: Record<string, keyof Item> = {
   'Prioridad': 'prioridad',
   'Estado': 'estado',
   'Actualizado': 'actualizado',
+  'Due date': 'dueDate',
   'VITS': 'vits',
 };
 
 function styleHeader(row: ExcelJS.Row) {
   row.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '4472C4' },
-    };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } };
     cell.font = { bold: true, color: { argb: 'FFFFFF' } };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     cell.border = {

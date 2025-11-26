@@ -1,4 +1,4 @@
-# core/views/VUL/normalize.py
+# backend/core/views/VUL/normalize.py
 import pandas as pd
 
 _SEVERITY_CANON = {
@@ -13,18 +13,25 @@ _SEVERITY_CANON = {
     "bajo": "Low",
 }
 
-_DATE_COLUMNS = ["Actualizado"]
-
 _HEADER_MAP = {
-    "numero": "Número",
-    "activo": "Activo",
-    "elementos vulnerables": "Elementos vulnerables",
-    "asignado a": "Asignado a",
-    "grupo de asignación": "Grupo de asignación",
-    "prioridad": "Prioridad",
-    "estado": "Estado",
-    "actualizado": "Actualizado",
-    "vits": "VITS",
+    "Número": "numero",
+    "numero": "numero",
+    "Activo": "activo",
+    "activo": "activo",
+    "Elementos vulnerables": "elementosVulnerables",
+    "elementos vulnerables": "elementosVulnerables",
+    "Asignado a": "asignadoA",
+    "asignado a": "asignadoA",
+    "Grupo de asignación": "grupoAsignacion",
+    "grupo de asignacion": "grupoAsignacion",
+    "Prioridad": "prioridad",
+    "prioridad": "prioridad",
+    "Estado": "estado",
+    "estado": "estado",
+    "Actualizado": "actualizado",
+    "actualizado": "actualizado",
+    "VITS": "vits",
+    "vits": "vits",
     "id": "id",
 }
 
@@ -38,24 +45,19 @@ def _norm_severity(x: object) -> object:
 
 def normalize_headers_vul(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
+    out.columns = [_HEADER_MAP.get(str(c).strip(), str(c).strip()) for c in out.columns]
+    # Manage columns that may not exist in _HEADER_MAP
 
-    # Normalizar cabeceras
-    out.columns = [
-        _HEADER_MAP.get(str(c).strip().lower(), str(c).strip()) for c in out.columns
-    ]
+    if "prioridad" in out.columns:
+        out["prioridad"] = out["prioridad"].map(_norm_severity)
 
-    # Normalizar severidad en Prioridad
-    if "Prioridad" in out.columns:
-        out["Prioridad"] = out["Prioridad"].map(_norm_severity)
-
-    # Convertir fechas a string
-    for col in _DATE_COLUMNS:
+    for col in [
+        "numero",
+        "id",
+        "vits",
+        "activo",
+        "elementosVulnerables",
+        "actualizado",
+    ]:
         if col in out.columns:
             out[col] = out[col].astype(str)
-
-    # Convertir claves importantes a string
-    for col in ["Número", "id", "VITS", "Activo", "Elementos vulnerables"]:
-        if col in out.columns:
-            out[col] = out[col].astype(str)
-
-    return out

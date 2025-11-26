@@ -66,14 +66,13 @@ async function extractHeaders(file: File): Promise<string[]> {
   return headerRow.filter(Boolean);
 }
 
+// Firmas actualizadas con claves canónicas
 const VIT_SIGNATURES = [
-  'Número', 'ID externo', 'Estado', 'Resumen', 'Asignado a', 'Creado', 'Actualizado',
-  'numero', 'idExterno', 'estado', 'resumen', 'asignadoA', 'creado', 'actualizado'
+  'numero', 'idexterno', 'estado', 'resumen', 'asignadoa', 'creado', 'actualizado', 'prioridad'
 ].map(normHeader);
 
 const VUL_SIGNATURES = [
-  'Número', 'Estado', 'Prioridad', 'VITS', 'Actualizado', 'id',
-  'numero', 'estado', 'prioridad', 'vits'
+  'numero', 'estado', 'prioridad', 'vits', 'actualizado', 'id', 'activo'
 ].map(normHeader);
 
 function detectFileType(headers: string[]): FileType {

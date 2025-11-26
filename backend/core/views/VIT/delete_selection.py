@@ -27,7 +27,6 @@ def delete_selection(request):
             id_variants = {
                 str(item.get("id")),
                 str(item.get("numero")),
-                str(item.get("Número")),
             }
             if ids_to_delete.isdisjoint(id_variants):
                 new_data.append(item)

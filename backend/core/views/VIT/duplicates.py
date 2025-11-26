@@ -48,11 +48,11 @@ def _sanitize_any(entry: Dict) -> Dict:
 
 
 def _sanitize_link(entry: Dict) -> Dict:
-    vul_val = entry.get("VUL")
+    vul_val = entry.get("vul")
     if _is_nan_value(vul_val):
-        entry["VUL"] = ""
+        entry["vul"] = ""
     else:
-        entry["VUL"] = str(vul_val) if vul_val is not None else ""
+        entry["vul"] = str(vul_val) if vul_val is not None else ""
     if "hasLink" not in entry:
         entry["hasLink"] = False
     return entry

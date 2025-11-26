@@ -118,11 +118,11 @@ def _sanitize_any(entry: Dict) -> Dict:
 
 
 def _sanitize_link(entry: Dict) -> Dict:
-    vul_val = entry.get("VUL")
+    vul_val = entry.get("vul")
     if _is_nan_value(vul_val):
-        entry["VUL"] = ""
+        entry["vul"] = ""
     else:
-        entry["VUL"] = str(vul_val) if vul_val is not None else ""
+        entry["vul"] = str(vul_val) if vul_val is not None else ""
     if "hasLink" not in entry:
         entry["hasLink"] = False
     return entry
@@ -206,19 +206,18 @@ def update_selected_entries(
 
 def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
     vul_map = {
-        str(v.get("Número", "")).strip().lower(): _sanitize_any(dict(v))
+        str(v.get("numero", "")).strip().lower(): _sanitize_any(dict(v))
         for v in vul_list
     }
     for vit in vit_list:
         vit = _sanitize_any(vit)
         vit = _sanitize_link(vit)
-        vul_id = str(vit.get("VUL", "")).strip().lower()
+        vul_id = str(vit.get("vul", "")).strip().lower()
         if vul_id in vul_map:
             vit["vulData"] = vul_map[vul_id]
             vit["hasLink"] = True
-            # Actualizar VUL.VITS si falta esta VIT
             vul_obj = vul_map[vul_id]
-            current_vits = str(vul_obj.get("VITS", "")).strip()
+            current_vits = str(vul_obj.get("vits", "")).strip()
             vit_num = str(vit.get("numero", "")).strip()
             if vit_num and vit_num not in current_vits.split(","):
                 new_vits = (
@@ -226,7 +225,7 @@ def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
                     if current_vits
                     else vit_num
                 )
-                vul_obj["VITS"] = new_vits
+                vul_obj["vits"] = new_vits
         else:
             vit["vulData"] = None
             vit["hasLink"] = False
@@ -257,6 +256,3 @@ def sanitize_upload_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         for e in news:
             e = _sanitize_any(dict(e))
             e = _sanitize_link(e)
-            cleaned_news.append(e)
-        out["new"] = cleaned_news
-    return out

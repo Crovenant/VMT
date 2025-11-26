@@ -1,3 +1,5 @@
+
+// src/modules/Hooks/useItems.ts
 import { useEffect, useState } from 'react';
 import type { Item } from '../../Types/item';
 import { VUL_MAP } from '../../Pages/Dashboard/Components/DisplayData/DisplayTable/constants/columnMaps';
@@ -37,8 +39,7 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
   return fallback;
 }
 
-/* ---------- mapeos ---------- */
-
+/* ---------- mapeos para CSO feed ---------- */
 function CsoToItem(row: Record<string, unknown>): Item {
   const numero = pick(row, ['Vulnerability ID', 'ID Test', 'VUL Code', 'VIT Code']);
   const resumen = pick(row, ['Vulnerability Title', 'Threat Description', 'Details']);
@@ -57,7 +58,6 @@ function CsoToItem(row: Record<string, unknown>): Item {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
-  // Base común VUL -> Item
   const base: Item = {
     id: String(id),
     nombre: resumen,
@@ -78,7 +78,6 @@ function CsoToItem(row: Record<string, unknown>): Item {
     creado: String(creado),
     actualizado: String(actualizado),
   } as Item;
-
 
   const filled: Item = { ...base };
 
@@ -105,12 +104,7 @@ function CsoToItem(row: Record<string, unknown>): Item {
 
   (Object.entries(VUL_MAP) as [string, keyof Item][]).forEach(([label, key]) => {
     if (SPECIAL_KEYS.includes(key)) return;
-
-
-    const raw =
-      row[label] ??
-      (row as Record<string, unknown>)[key as string];
-
+    const raw = row[label] ?? (row as Record<string, unknown>)[key as string];
     if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
       (filled as unknown as Record<string, unknown>)[key as string] = raw;
     }
@@ -119,6 +113,7 @@ function CsoToItem(row: Record<string, unknown>): Item {
   return filled;
 }
 
+/* ---------- mapeo para CSIRT feed (backend canónico) ---------- */
 function CsirtToItem(row: Record<string, unknown>): Item {
   const id =
     (row['id'] as string) ??
@@ -146,11 +141,14 @@ function CsirtToItem(row: Record<string, unknown>): Item {
     vulnerabilitySolution: String((row['vulnerabilitySolution'] as string) ?? ''),
     creado: String((row['creado'] as string) ?? ''),
     actualizado: String((row['actualizado'] as string) ?? ''),
+    dueDate: String((row['dueDate'] as string) ?? ''),
+    vul: String((row['vul'] as string) ?? ''),
+    vits: String((row['vits'] as string) ?? ''),
+    hasLink: Boolean(row['hasLink']),
   } as Item;
 }
 
-/* ---------- flags (followUp / soonDue) ---------- */
-
+/* ---------- flags ---------- */
 function computeFlags(items: Item[]): Item[] {
   const msPerDay = 1000 * 60 * 60 * 24;
   const horizonDaysByPriority: Record<Item['prioridad'], number> = {
@@ -182,7 +180,6 @@ export default function useItems(
   viewType: ViewType = 'Csirt'
 ): { items: Item[] } {
   const [items, setItems] = useState<Item[]>([]);
-
   const effectiveList = listUrl ?? DEFAULT_Csirt_LIST;
 
   useEffect(() => {

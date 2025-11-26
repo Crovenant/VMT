@@ -1,3 +1,4 @@
+
 // src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/constants/columnMaps.ts
 import type { Item } from '../../../../../../Types/item';
 
@@ -20,16 +21,13 @@ export const VIT_MAP: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Vulnerabilidad': 'vulnerabilidad',
   'Solución': 'vulnerabilitySolution',
-  'Vulnerability solution': 'vulnerabilitySolution',
   'Aplazado por': 'aplazadoPor',
   'Fecha de aplazamiento': 'fechaAplazamiento',
   'Notas de aplazamiento': 'notasAplazamiento',
   'Software vulnerable': 'softwareVulnerable',
   'Resolución': 'resolucion',
   'Comentarios': 'comentarios',
-
-  // NUEVO CAMPO para relación inversa VIT → VUL
-  'VUL': 'vul',
+  'VUL': 'vul', 
 };
 
 export const VUL_MAP: Record<string, keyof Item> = {
@@ -41,5 +39,6 @@ export const VUL_MAP: Record<string, keyof Item> = {
   'Prioridad': 'prioridad',
   'Estado': 'estado',
   'Actualizado': 'actualizado',
+  'Due date': 'dueDate',
   'VITS': 'vits',
 };

@@ -58,7 +58,6 @@ export default function FilterBar({
         </IconButton>
       </Tooltip>
 
-      {/* Papelera azul para borrar filas seleccionadas */}
       <Tooltip title="Delete selected rows">
         <IconButton
           aria-label="Delete rows"

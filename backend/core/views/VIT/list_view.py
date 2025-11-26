@@ -14,17 +14,12 @@ def get_vit_risk_data(request):
             JsonResponse({"error": "Método no permitido"}, status=405)
         )
     try:
-        # Cargar datos base
         vit_data = load_json_data("CSIRT/vit_Data.json")
         vul_data = load_json_data("CSIRT/vul_Data.json")
 
-        # Añadir hasLink
         vit_data, _ = add_has_link(vit_data, vul_data)
-
-        # Enriquecer VIT con VUL asociado
         vit_data = enrich_vit(vit_data, vul_data)
 
-        # Responder con datos completos
         response = JsonResponse(vit_data, safe=False)
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=500)

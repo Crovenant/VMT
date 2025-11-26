@@ -15,8 +15,7 @@ def _norm(s: str) -> str:
 
 
 def _key(item: Dict) -> Tuple[str, str]:
-
-    return (_norm(item.get("Número", "")), _norm(item.get("Activo", "")))
+    return (_norm(item.get("numero", "")), _norm(item.get("activo", "")))
 
 
 def _is_nan_value(v: Any) -> bool:
@@ -49,11 +48,11 @@ def _sanitize_any(entry: Dict) -> Dict:
 
 
 def _sanitize_link(entry: Dict) -> Dict:
-    vits_val = entry.get("VITS")
+    vits_val = entry.get("vits")
     if _is_nan_value(vits_val):
-        entry["VITS"] = ""
+        entry["vits"] = ""
     else:
-        entry["VITS"] = str(vits_val) if vits_val is not None else ""
+        entry["vits"] = str(vits_val) if vits_val is not None else ""
     if "hasLink" not in entry:
         entry["hasLink"] = False
     return entry
@@ -68,8 +67,8 @@ def build_lookup(existing_data: List[Dict]) -> Dict[Tuple[str, str], Dict]:
 
 def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
     by_both = {_key(r): r for r in existing_data}
-    by_num = {_norm(r.get("Número", "")): r for r in existing_data if r.get("Número")}
-    by_act = {_norm(r.get("Activo", "")): r for r in existing_data if r.get("Activo")}
+    by_num = {_norm(r.get("numero", "")): r for r in existing_data if r.get("numero")}
+    by_act = {_norm(r.get("activo", "")): r for r in existing_data if r.get("activo")}
 
     duplicates = []
     unique_new_entries = []
@@ -79,8 +78,8 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
         entry = _sanitize_link(entry)
 
         k_both = _key(entry)
-        k_num = _norm(entry.get("Número", ""))
-        k_act = _norm(entry.get("Activo", ""))
+        k_num = _norm(entry.get("numero", ""))
+        k_act = _norm(entry.get("activo", ""))
 
         existing_row = None
         if k_both in by_both:
@@ -96,5 +95,3 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
             duplicates.append({"existing": existing_row, "incoming": entry})
         else:
             unique_new_entries.append(entry)
-
-    return duplicates, unique_new_entries

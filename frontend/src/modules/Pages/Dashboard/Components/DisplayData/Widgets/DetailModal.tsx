@@ -1,3 +1,5 @@
+
+// src/modules/Pages/Dashboard/Components/DisplayData/DetailModal.tsx
 import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -32,7 +34,7 @@ type Props = {
   item: Item | null;
   viewType: ViewType;
   onNavigateToItem: (item: Item) => void;
-};mailGridFromModal
+};
 
 const DEFAULT_VUL_CARD_FIELDS: string[] = [
   'Número',
@@ -145,20 +147,16 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
   const comments: string[] =
     (item?.comentarios ? [item.comentarios] : (item as Item & { comments?: string[] })?.comments) ?? [];
 
-  // Botón superior (export principal)
   const handleExportModalGrid = () => {
     console.log('Export main item:', item);
-    // Aquí podrías usar exportGridFromModal([item], [], viewType === 'VUL')
   };
 
-  // Botón inferior (export grid asociado)
   const handleExportAssociatedGrid = () => {
     const api = gridRef.current?.api;
     const selectedRows = api?.getSelectedRows?.() ?? [];
     exportGridFromModal(relatedRows, selectedRows as Item[], viewType === 'VUL');
   };
 
-  // Botón inferior (mail)
   const handleSendMail = () => {
     const api = gridRef.current?.api;
     const selectedRows = api?.getSelectedRows?.() ?? [];

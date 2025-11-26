@@ -17,71 +17,53 @@ DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 VUL_JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"
-VIT_JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"  # Para leer VIT existentes
+VIT_JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"
 
 
 @csrf_exempt
 def upload_data(request):
     if request.method == "OPTIONS":
         return add_cors_headers(JsonResponse({"message": "Preflight OK"}))
-
     if request.method != "POST":
         return add_cors_headers(
             JsonResponse({"error": "Method not allowed"}, status=405)
         )
-
     try:
         if "file" not in request.FILES:
             raise ValueError("No file was uploaded.")
-
         excel_file = request.FILES["file"]
         df = pd.read_excel(excel_file, engine="openpyxl")
         df = normalize_headers_vul(df)
         new_entries = df.to_dict(orient="records")
-
-        # Asegurar dueDate en nuevas entradas
         for entry in new_entries:
             if isinstance(entry, dict):
                 entry = ensure_due_vul(entry)
-
-        # Leer datos existentes de VUL
         if VUL_JSON_PATH.exists():
             with VUL_JSON_PATH.open("r", encoding="utf-8") as f:
                 existing_data = json.load(f)
         else:
             existing_data = []
-
         if not isinstance(existing_data, list):
             existing_data = [existing_data]
-
-        # Detectar duplicados en VUL
         duplicates, unique_new_entries = detect_duplicates(existing_data, new_entries)
-
-        # Leer datos existentes de VIT para detectar relaciones inversas
         if VIT_JSON_PATH.exists():
             with VIT_JSON_PATH.open("r", encoding="utf-8") as f:
                 vit_data = json.load(f)
         else:
             vit_data = []
-
         if not isinstance(vit_data, list):
             vit_data = [vit_data]
-
         vit_map = {str(v.get("numero", "")).strip(): v for v in vit_data}
-
-        # Detectar relaciones inversas: VUL -> VIT
         relations = []
         for vul in unique_new_entries:
-            vul_num = str(vul.get("Número", "")).strip()
+            vul_num = str(vul.get("numero", "")).strip()
             if not vul_num:
                 continue
-
-            # Buscar VIT que referencien esta VUL
             for vit in vit_data:
                 vit_num = str(vit.get("numero", "")).strip()
-                vit_vul_field = str(vit.get("VUL", "")).strip()
+                vit_vul_field = str(vit.get("vul", "")).strip()
                 if vit_vul_field == vul_num and vit_num:
-                    before_vits = str(vul.get("VITS", "")).strip()
+                    before_vits = str(vul.get("vits", "")).strip()
                     after_vits = (
                         (before_vits + "," + vit_num).strip(",")
                         if before_vits
@@ -98,11 +80,8 @@ def upload_data(request):
                                 "after": after_vits,
                             }
                         )
-
-        # Flujo de respuesta/guardado
         if not duplicates:
             if relations:
-                # NO guardar todavía si hay relaciones. Devolver para confirmación en frontend.
                 response = JsonResponse(
                     {
                         "message": "Relations detected",
@@ -112,7 +91,6 @@ def upload_data(request):
                     }
                 )
             else:
-                # Sin duplicados ni relaciones: guardado directo
                 updated_data = assign_ids_and_merge_vul(
                     existing_data, unique_new_entries
                 )
@@ -130,7 +108,6 @@ def upload_data(request):
                     }
                 )
         else:
-            # Si hay duplicados, devolverlos junto con relaciones (NO guardar aún)
             response = JsonResponse(
                 {
                     "message": "Duplicates detected",
@@ -139,8 +116,6 @@ def upload_data(request):
                     "relations": relations,
                 }
             )
-
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=400)
-
     return add_cors_headers(response)

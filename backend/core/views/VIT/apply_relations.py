@@ -32,7 +32,6 @@ def apply_relations(request):
         if not isinstance(relations, list) or not relations:
             raise ValueError("No relations provided.")
 
-        # Leer datos existentes de VUL
         if VUL_JSON_PATH.exists():
             with VUL_JSON_PATH.open("r", encoding="utf-8") as f:
                 vul_data = json.load(f)
@@ -42,24 +41,22 @@ def apply_relations(request):
         if not isinstance(vul_data, list):
             vul_data = [vul_data]
 
-        vul_map = {str(v.get("Número", "")).strip(): v for v in vul_data}
+        vul_map = {str(v.get("numero", "")).strip(): v for v in vul_data}
 
-        # Aplicar relaciones
         for rel in relations:
             vul_num = str(rel.get("vulNumero", "")).strip()
             vit_num = str(rel.get("vitNumero", "")).strip()
             if vul_num and vit_num and vul_num in vul_map:
                 vul_obj = vul_map[vul_num]
-                current_vits = str(vul_obj.get("VITS", "")).strip()
+                current_vits = str(vul_obj.get("vits", "")).strip()
                 if vit_num not in current_vits.split(","):
                     new_vits = (
                         (current_vits + "," + vit_num).strip(",")
                         if current_vits
                         else vit_num
                     )
-                    vul_obj["VITS"] = new_vits
+                    vul_obj["vits"] = new_vits
 
-        # Guardar cambios en vul_Data.json
         updated_data = list(vul_map.values())
         with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
             json.dump(updated_data, tmp, ensure_ascii=False, indent=2)

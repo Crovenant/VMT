@@ -79,11 +79,11 @@ def _sanitize_any(entry: Dict) -> Dict:
 
 
 def _sanitize_link(entry: Dict) -> Dict:
-    vits_val = entry.get("VITS")
+    vits_val = entry.get("vits")
     if _is_nan_value(vits_val):
-        entry["VITS"] = ""
+        entry["vits"] = ""
     else:
-        entry["VITS"] = str(vits_val) if vits_val is not None else ""
+        entry["vits"] = str(vits_val) if vits_val is not None else ""
     if "hasLink" not in entry:
         entry["hasLink"] = False
     return entry
@@ -92,12 +92,12 @@ def _sanitize_link(entry: Dict) -> Dict:
 def ensure_due_vul(entry: Dict) -> Dict:
     if not isinstance(entry, dict):
         return entry
-    if not entry.get("Due date"):
+    if not entry.get("dueDate"):
         computed = calculate_due_date_vul(
-            entry.get("Actualizado"), entry.get("Prioridad")
+            entry.get("actualizado"), entry.get("prioridad")
         )
         if computed:
-            entry["Due date"] = computed
+            entry["dueDate"] = computed
     return entry
 
 
@@ -140,9 +140,9 @@ def update_selected_entries_vul(
     existing_data: List[Dict], selected_entries: List[Dict]
 ) -> List[Dict]:
     by_num = {
-        str(r.get("Número", "")).strip().lower(): r
+        str(r.get("numero", "")).strip().lower(): r
         for r in existing_data
-        if r.get("Número")
+        if r.get("numero")
     }
     used_ids, next_id = _collect_used_ids(existing_data)
     updated_rows: List[Dict] = []
@@ -151,7 +151,7 @@ def update_selected_entries_vul(
         entry = _sanitize_any(entry)
         entry = ensure_due_vul(entry)
         entry = _sanitize_link(entry)
-        k_num = str(entry.get("Número", "")).strip().lower()
+        k_num = str(entry.get("numero", "")).strip().lower()
         chosen = by_num.get(k_num)
         od = OrderedDict()
         if chosen and chosen.get("id"):
@@ -173,7 +173,7 @@ def update_selected_entries_vul(
     final_data = [
         row
         for row in existing_data
-        if str(row.get("Número", "")).strip().lower() not in keys_to_remove
+        if str(row.get("numero", "")).strip().lower() not in keys_to_remove
     ]
     final_data.extend(updated_rows)
     return final_data
@@ -187,7 +187,7 @@ def enrich_vul(vul_list: List[Dict], vit_list: List[Dict]) -> List[Dict]:
     for vul in vul_list:
         vul = _sanitize_any(vul)
         vul = _sanitize_link(vul)
-        vits_raw = vul.get("VITS", "")
+        vits_raw = vul.get("vits", "")
         vits_numbers = [
             v.strip().lower() for v in str(vits_raw).split(",") if v.strip()
         ]
@@ -203,13 +203,13 @@ def enrich_vul(vul_list: List[Dict], vit_list: List[Dict]) -> List[Dict]:
 
 def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
     vul_map = {
-        str(v.get("Número", "")).strip().lower(): _sanitize_any(dict(v))
+        str(v.get("numero", "")).strip().lower(): _sanitize_any(dict(v))
         for v in vul_list
     }
     for vit in vit_list:
         vit = _sanitize_any(vit)
         vit = _sanitize_link(vit)
-        vul_num = str(vit.get("VUL", "")).strip().lower()
+        vul_num = str(vit.get("vul", "")).strip().lower()
         if vul_num in vul_map:
             vit["vulData"] = vul_map[vul_num]
             vit["hasLink"] = True

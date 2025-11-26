@@ -24,60 +24,48 @@ VUL_JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"
 def upload_data(request):
     if request.method == "OPTIONS":
         return add_cors_headers(JsonResponse({"message": "Preflight OK"}))
-
     if request.method != "POST":
         return add_cors_headers(
             JsonResponse({"error": "Method not allowed"}, status=405)
         )
-
     try:
         if "file" not in request.FILES:
             raise ValueError("No file was uploaded.")
-
         excel_file = request.FILES["file"]
         df = pd.read_excel(excel_file, engine="openpyxl")
         df = normalize_headers(df)
         new_entries = df.to_dict(orient="records")
-
         for entry in new_entries:
             if isinstance(entry, dict) and not entry.get("dueDate"):
                 entry["dueDate"] = calculate_due_date(
                     entry.get("creado"), entry.get("prioridad")
                 )
-
         if JSON_PATH.exists():
             with JSON_PATH.open("r", encoding="utf-8") as f:
                 existing_data = json.load(f)
         else:
             existing_data = []
-
         if not isinstance(existing_data, list):
             existing_data = [existing_data]
-
         duplicates, unique_new_entries = detect_duplicates(existing_data, new_entries)
-
         if VUL_JSON_PATH.exists():
             with VUL_JSON_PATH.open("r", encoding="utf-8") as f:
                 vul_data = json.load(f)
         else:
             vul_data = []
-
         if not isinstance(vul_data, list):
             vul_data = [vul_data]
-
         relations = []
-        vul_map = {str(v.get("Número", "")).strip(): v for v in vul_data}
-
+        vul_map = {str(v.get("numero", "")).strip(): v for v in vul_data}
         for vit in unique_new_entries:
-            vul_num = str(vit.get("VUL", "")).strip()
+            vul_num = str(vit.get("vul", "")).strip()
             vit_num = str(vit.get("numero", "")).strip()
             if vul_num and vul_num in vul_map and vit_num:
                 vul_obj = vul_map[vul_num]
-                before_vits = str(vul_obj.get("VITS", "")).strip()
+                before_vits = str(vul_obj.get("vits", "")).strip()
                 after_vits = (
                     (before_vits + "," + vit_num).strip(",") if before_vits else vit_num
                 )
-
                 before_list = [s.strip() for s in before_vits.split(",") if s.strip()]
                 if vit_num not in before_list:
                     relations.append(
@@ -88,7 +76,6 @@ def upload_data(request):
                             "after": after_vits,
                         }
                     )
-
         if not duplicates and not relations:
             updated_data = assign_ids_and_merge(existing_data, unique_new_entries)
             JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -105,7 +92,6 @@ def upload_data(request):
                 }
             )
         else:
-
             response = JsonResponse(
                 {
                     "message": "Pending resolution",
@@ -114,8 +100,6 @@ def upload_data(request):
                     "relations": relations,
                 }
             )
-
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=400)
-
     return add_cors_headers(response)

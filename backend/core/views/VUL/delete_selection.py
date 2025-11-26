@@ -24,7 +24,7 @@ def delete_selection(request):
         new_data = [
             item
             for item in data
-            if str(item.get("id") or item.get("Número")) not in ids_to_delete
+            if str(item.get("id") or item.get("numero")) not in ids_to_delete
         ]
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(new_data, f, ensure_ascii=False, indent=2)

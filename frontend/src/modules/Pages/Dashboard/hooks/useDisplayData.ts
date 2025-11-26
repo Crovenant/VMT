@@ -1,3 +1,4 @@
+
 // src/modules/Pages/Dashboard/hooks/useDisplayData.ts
 import { useEffect, useState } from 'react';
 import type { Item } from '../../../Types/item';
@@ -35,79 +36,80 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
   return fallback;
 }
 
-
+/* ---------- mapeo para VUL ---------- */
 function mapVUL(row: Record<string, unknown>): Item {
-  const numero = pick(row, ['Número']);
-  const activo = pick(row, ['Activo']);
-  const elementosVulnerables = pick(row, ['Elementos vulnerables']);
-  const asignadoA = pick(row, ['Asignado a']);
-  const grupoAsignacion = pick(row, ['Grupo de asignación']);
-  const prioridad = normalizePriority(pick(row, ['Prioridad']));
-  const estado = pick(row, ['Estado']);
-  const actualizado = pick(row, ['Actualizado']);
-  const vits = pick(row, ['VITS']);
+  const numero = String(row['numero'] ?? '');
+  const activo = String(row['activo'] ?? '');
+  const elementosVulnerables = String(row['elementosVulnerables'] ?? '');
+  const asignadoA = String(row['asignadoA'] ?? '');
+  const grupoAsignacion = String(row['grupoAsignacion'] ?? '');
+  const prioridad = normalizePriority(row['prioridad']);
+  const estado = String(row['estado'] ?? '');
+  const actualizado = String(row['actualizado'] ?? '');
+  const vits = String(row['vits'] ?? '');
+  const dueDate = String(row['dueDate'] ?? '');
 
   const id =
-    pick(row, ['id']) ||
-    numero ||
+    String(row['id'] ?? numero) ||
     (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
-    ...row, // 
-    id: String(id),
+    ...row,
+    id,
     nombre: numero,
-    numero: String(numero),
-    idExterno: String(numero),
-    estado: String(estado),
+    numero,
+    idExterno: numero,
+    estado,
     resumen: '',
     breveDescripcion: '',
     elementoConfiguracion: '',
     fechaCreacion: '',
     prioridad,
     puntuacionRiesgo: 0,
-    grupoAsignacion: String(grupoAsignacion),
-    asignadoA: String(asignadoA),
+    grupoAsignacion,
+    asignadoA,
     sites: '',
     vulnerabilidad: '',
     vulnerabilitySolution: '',
     creado: '',
-    actualizado: String(actualizado),
-    dueDate: '',
-    activo: String(activo),
-    elementosVulnerables: String(elementosVulnerables),
-    vits: String(vits),
-    hasLink: Boolean(row.hasLink) || Boolean(vits && vits.trim() !== ''),
+    actualizado,
+    dueDate,
+    activo,
+    elementosVulnerables,
+    vits,
+    hasLink: Boolean(row['hasLink']) || Boolean(vits && vits.trim() !== ''),
   } as Item;
 }
 
+/* ---------- mapeo para VIT ---------- */
 function mapVIT(row: Record<string, unknown>): Item {
-  const numero = pick(row, ['numero', 'Número']);
-  const idExterno = pick(row, ['idExterno', 'ID externo']);
-  const estado = pick(row, ['estado', 'Estado']);
-  const resumen = pick(row, ['resumen', 'Resumen']);
-  const breveDescripcion = pick(row, ['breveDescripcion', 'Breve descripción']);
-  const elementoConfiguracion = pick(row, ['elementoConfiguracion', 'Elemento de configuración']);
-  const direccionIp = pick(row, ['direccionIp', 'Dirección IP']);
-  const prioridad = normalizePriority(pick(row, ['prioridad', 'Prioridad']));
-  const puntuacionRiesgo = toNumber(pick(row, ['puntuacionRiesgo', 'Puntuación de riesgo'])) || 0;
-  const grupoAsignacion = pick(row, ['grupoAsignacion', 'Grupo de asignación']);
-  const asignadoA = pick(row, ['asignadoA', 'Asignado a']);
-  const creado = pick(row, ['creado', 'Creado']);
-  const actualizado = pick(row, ['actualizado', 'Actualizado']);
-  const fechaCreacion = pick(row, ['fechaCreacion', 'Fecha creación']);
-  const dueDate = pick(row, ['dueDate', 'Due date']);
-  const sites = pick(row, ['sites', 'Sites']);
-  const vulnerabilidad = pick(row, ['vulnerabilidad', 'Vulnerabilidad']);
-  const vulnerabilitySolution = pick(row, ['vulnerabilitySolution', 'Solución']);
-  const comentarios = pick(row, ['comentarios', 'Comentarios']);
-  const aplazadoPor = pick(row, ['aplazadoPor', 'Aplazado por']);
-  const fechaAplazamiento = pick(row, ['fechaAplazamiento', 'Fecha de aplazamiento']);
-  const notasAplazamiento = pick(row, ['notasAplazamiento', 'Notas de aplazamiento']);
-  const softwareVulnerable = pick(row, ['softwareVulnerable', 'Software vulnerable']);
-  const resolucion = pick(row, ['resolucion', 'Resolución']);
-  const vul = pick(row, ['VUL', 'vul']); // 
+  const numero = String(row['numero'] ?? '');
+  const idExterno = String(row['idExterno'] ?? '');
+  const estado = String(row['estado'] ?? '');
+  const resumen = String(row['resumen'] ?? '');
+  const breveDescripcion = String(row['breveDescripcion'] ?? '');
+  const elementoConfiguracion = String(row['elementoConfiguracion'] ?? '');
+  const direccionIp = String(row['direccionIp'] ?? '');
+  const prioridad = normalizePriority(row['prioridad']);
+  const puntuacionRiesgo = toNumber(row['puntuacionRiesgo']);
+  const grupoAsignacion = String(row['grupoAsignacion'] ?? '');
+  const asignadoA = String(row['asignadoA'] ?? '');
+  const creado = String(row['creado'] ?? '');
+  const actualizado = String(row['actualizado'] ?? '');
+  const fechaCreacion = String(row['fechaCreacion'] ?? '');
+  const dueDate = String(row['dueDate'] ?? '');
+  const sites = String(row['sites'] ?? '');
+  const vulnerabilidad = String(row['vulnerabilidad'] ?? '');
+  const vulnerabilitySolution = String(row['vulnerabilitySolution'] ?? '');
+  const comentarios = String(row['comentarios'] ?? '');
+  const aplazadoPor = String(row['aplazadoPor'] ?? '');
+  const fechaAplazamiento = String(row['fechaAplazamiento'] ?? '');
+  const notasAplazamiento = String(row['notasAplazamiento'] ?? '');
+  const softwareVulnerable = String(row['softwareVulnerable'] ?? '');
+  const resolucion = String(row['resolucion'] ?? '');
+  const vul = String(row['vul'] ?? '');
 
   const id =
     numero ||
@@ -116,38 +118,39 @@ function mapVIT(row: Record<string, unknown>): Item {
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
   return {
-    ...row, // ✅ preserva todos los campos originales
-    id: String(id),
+    ...row,
+    id,
     nombre: resumen || breveDescripcion || numero,
-    numero: String(numero),
-    idExterno: String(idExterno),
-    estado: String(estado),
-    resumen: String(resumen),
-    breveDescripcion: String(breveDescripcion),
-    elementoConfiguracion: String(elementoConfiguracion),
-    direccionIp: String(direccionIp),
-    fechaCreacion: String(fechaCreacion || creado),
+    numero,
+    idExterno,
+    estado,
+    resumen,
+    breveDescripcion,
+    elementoConfiguracion,
+    direccionIp,
+    fechaCreacion: fechaCreacion || creado,
     prioridad,
     puntuacionRiesgo,
-    grupoAsignacion: String(grupoAsignacion),
-    asignadoA: String(asignadoA),
-    sites: String(sites),
-    vulnerabilidad: String(vulnerabilidad),
-    vulnerabilitySolution: String(vulnerabilitySolution),
-    aplazadoPor: String(aplazadoPor),
-    fechaAplazamiento: String(fechaAplazamiento),
-    notasAplazamiento: String(notasAplazamiento),
-    softwareVulnerable: String(softwareVulnerable),
-    resolucion: String(resolucion),
-    comentarios: String(comentarios),
-    creado: String(creado),
-    actualizado: String(actualizado),
-    dueDate: String(dueDate),
-    hasLink: Boolean(row.hasLink),
-    vul: String(vul), // ✅ añadido
+    grupoAsignacion,
+    asignadoA,
+    sites,
+    vulnerabilidad,
+    vulnerabilitySolution,
+    aplazadoPor,
+    fechaAplazamiento,
+    notasAplazamiento,
+    softwareVulnerable,
+    resolucion,
+    comentarios,
+    creado,
+    actualizado,
+    dueDate,
+    hasLink: Boolean(row['hasLink']),
+    vul,
   } as Item;
 }
 
+/* ---------- extra helpers ---------- */
 function extractArray(raw: unknown): unknown[] {
   if (Array.isArray(raw)) return raw;
   if (raw && typeof raw === 'object') {
@@ -162,6 +165,7 @@ function isAbortError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { name?: string }).name === 'AbortError';
 }
 
+/* ---------- HOOK ---------- */
 export default function useDisplayData({
   refreshKey,
   priorityFilter,

@@ -1,37 +1,53 @@
 # backend/core/views/VIT/normalize.py
 import pandas as pd
 
+
 def normalize_headers(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Normaliza cabeceras del Excel a las claves usadas por el backend VIT.
-    Convierte 'puntuacionRiesgo' a numérico y fechas a str.
-    """
     header_mapping = {
         "Número": "numero",
+        "numero": "numero",
         "ID externo": "idExterno",
+        "id externo": "idExterno",
         "Estado": "estado",
+        "estado": "estado",
         "Resumen": "resumen",
+        "resumen": "resumen",
         "Breve descripción": "breveDescripcion",
+        "breve descripcion": "breveDescripcion",
         "Elemento de configuración": "elementoConfiguracion",
+        "elemento de configuracion": "elementoConfiguracion",
         "Prioridad": "prioridad",
+        "prioridad": "prioridad",
         "Puntuación de riesgo": "puntuacionRiesgo",
+        "puntuacion de riesgo": "puntuacionRiesgo",
         "Grupo de asignación": "grupoAsignacion",
+        "grupo de asignacion": "grupoAsignacion",
         "Asignado a": "asignadoA",
+        "asignado a": "asignadoA",
         "Creado": "creado",
+        "creado": "creado",
         "Actualizado": "actualizado",
+        "actualizado": "actualizado",
         "Sites": "sites",
+        "sites": "sites",
         "Vulnerability solution": "vulnerabilitySolution",
+        "vulnerability solution": "vulnerabilitySolution",
         "Vulnerabilidad": "vulnerabilidad",
+        "vulnerabilidad": "vulnerabilidad",
+        "VITS": "vits",
+        "vits": "vits",
+        "Activo": "activo",
+        "activo": "activo",
     }
 
     df = df.copy()
-    df.rename(columns=header_mapping, inplace=True)
+    df.columns = [
+        header_mapping.get(str(c).strip(), str(c).strip()) for c in df.columns
+    ]
 
-    # Riesgo → numérico
     if "puntuacionRiesgo" in df.columns:
         df["puntuacionRiesgo"] = pd.to_numeric(df["puntuacionRiesgo"], errors="coerce")
 
-    # Fechas a string (conserva formato actual)
     for col in ["creado", "actualizado"]:
         if col in df.columns:
             df[col] = df[col].astype(str)

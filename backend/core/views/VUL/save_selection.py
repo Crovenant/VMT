@@ -13,6 +13,7 @@ from core.views.VUL.risk_logic import update_selected_entries_vul, ensure_due_vu
 CORE_DIR = Path(apps.get_app_config("core").path)
 DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
+
 JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"
 
 

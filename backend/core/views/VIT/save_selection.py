@@ -14,7 +14,6 @@ CORE_DIR = Path(apps.get_app_config("core").path)
 DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-
 JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"
 
 
@@ -29,12 +28,8 @@ def save_selection(request):
         )
 
     try:
-        print("📥 [VIT] Recibiendo datos en save_selection...")
         body = json.loads(request.body.decode("utf-8"))
-        print("🔍 Cuerpo recibido:", body)
-
         selected_entries = body.get("entries", [])
-        print("📋 Entradas seleccionadas:", selected_entries)
 
         if not isinstance(selected_entries, list):
             raise ValueError("Invalid data format: 'entries' must be a list.")
@@ -55,21 +50,14 @@ def save_selection(request):
         lookup = build_lookup(existing_data)
         final_data = update_selected_entries(existing_data, selected_entries, lookup)
 
-        print(
-            "🧾 [VIT] Datos finales que se van a guardar:",
-            json.dumps(final_data, indent=2, ensure_ascii=False),
-        )
-
         with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
             json.dump(final_data, tmp, ensure_ascii=False, indent=2)
             tmp_name = tmp.name
         os.replace(tmp_name, JSON_PATH)
 
-        print(f"✅ [VIT] Datos guardados en {JSON_PATH}")
         response = JsonResponse({"message": "Selection saved successfully"})
 
     except Exception as e:
-        print("❌ [VIT] Error en save_selection:", str(e))
         response = JsonResponse({"error": str(e)}, status=400)
 
     return add_cors_headers(response)

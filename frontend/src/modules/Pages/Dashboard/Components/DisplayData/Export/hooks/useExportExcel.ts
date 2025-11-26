@@ -1,3 +1,4 @@
+
 // src/modules/Pages/Dashboard/Components/DisplayData/Export/hooks/useExportExcel.ts
 import { useEffect } from 'react';
 import { exportVITToExcel, exportVULToExcel } from '../exportExcel';
@@ -19,6 +20,7 @@ export function useExportExcel(
       const selected = api?.getSelectedRows?.() ?? [];
       const base = (selected as Item[]).length > 0 ? (selected as Item[]) : rows;
 
+      // Detecta si la vista es VUL por las columnas visibles
       const isVULView = visibleColumns.includes('Activo') || visibleColumns.includes('Elementos vulnerables');
 
       if (isVULView) {

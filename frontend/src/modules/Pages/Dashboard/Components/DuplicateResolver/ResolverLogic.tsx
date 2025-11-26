@@ -1,4 +1,5 @@
 
+// File: frontend/src/modules/Pages/Dashboard/Components/DuplicateResolver/ResolverLogic.tsx
 import { Typography, Box } from '@mui/material';
 import type { Entry } from '../../../../Types/item';
 
@@ -17,21 +18,15 @@ const fieldLabels: { [key: string]: string } = {
   creado: 'Creado',
   actualizado: 'Actualizado',
   sites: 'Sites',
-  vulnerabilitySolution: 'Vulnerability solution',
+  vulnerabilitySolution: 'Solución',
   vulnerabilidad: 'Vulnerabilidad',
   dueDate: 'Fecha límite',
-  VUL: 'VUL',
+  vul: 'VUL',
 
   // VUL
-  Número: 'Número',
-  Activo: 'Activo',
-  'Elementos vulnerables': 'Elementos vulnerables',
-  'Asignado a': 'Asignado a',
-  'Grupo de asignación': 'Grupo de asignación',
-  Prioridad: 'Prioridad',
-  Estado: 'Estado',
-  Actualizado: 'Actualizado',
-  VITS: 'VITS',
+  activo: 'Activo',
+  elementosVulnerables: 'Elementos vulnerables',
+  vits: 'VITS',
 };
 
 export function renderEntry(entry: Entry, compareWith?: Entry) {

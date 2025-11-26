@@ -1,8 +1,8 @@
+
 // src/modules/Pages/Dashboard/Components/DisplayData/Export/exportGridFromModal.ts
 import ExcelJS from 'exceljs';
 import type { Item } from '../../../../../Types/item';
 
-// Mapeos completos
 const vitColumnMap: Record<string, keyof Item> = {
   'Número': 'numero',
   'ID externo': 'idExterno',
@@ -17,14 +17,14 @@ const vitColumnMap: Record<string, keyof Item> = {
   'Creado': 'creado',
   'Actualizado': 'actualizado',
   'Sites': 'sites',
-  'Vulnerability solution': 'vulnerabilitySolution',
+  'Solución': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
   'Due date': 'dueDate',
   'VUL': 'vul',
 };
 
 const vulColumnMap: Record<string, keyof Item> = {
-  'Numero': 'numero',
+  'Número': 'numero',
   'Activo': 'activo',
   'Elementos vulnerables': 'elementosVulnerables',
   'Asignado a': 'asignadoA',
@@ -32,24 +32,16 @@ const vulColumnMap: Record<string, keyof Item> = {
   'Prioridad': 'prioridad',
   'Estado': 'estado',
   'Actualizado': 'actualizado',
+  'Due date': 'dueDate',
   'VITS': 'vits',
 };
 
 function styleHeader(row: ExcelJS.Row) {
   row.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '4472C4' },
-    };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } };
     cell.font = { bold: true, color: { argb: 'FFFFFF' } };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = {
-      top: { style: 'thin' },
-      left: { style: 'thin' },
-      bottom: { style: 'thin' },
-      right: { style: 'thin' },
-    };
+    cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
   });
 }
 
@@ -58,18 +50,9 @@ function styleRows(worksheet: ExcelJS.Worksheet) {
     if (rowNumber > 1) {
       const isEven = rowNumber % 2 === 0;
       row.eachCell((cell) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: isEven ? 'EAF2F8' : 'FFFFFF' },
-        };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'EAF2F8' : 'FFFFFF' } };
         cell.alignment = { horizontal: 'left', vertical: 'middle' };
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
-        };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       });
     }
   });
@@ -98,24 +81,10 @@ async function downloadExcel(workbook: ExcelJS.Workbook, fileName: string) {
   link.click();
 }
 
-/**
- * Exporta datos desde el modal:
- * - Si hay selección en el grid, exporta solo esos items.
- * - Si no hay selección, exporta todos los items del grid.
- * @param allRows Todos los items del grid
- * @param selectedRows Items seleccionados en el grid
- * @param isVULView true si el modal es VUL, false si es VIT
- */
-export async function exportGridFromModal(
-  allRows: Item[],
-  selectedRows: Item[],
-  isVULView: boolean
-) {
+export async function exportGridFromModal(allRows: Item[], selectedRows: Item[], isVULView: boolean) {
   const dataToExport = selectedRows.length > 0 ? selectedRows : allRows;
   if (!dataToExport || dataToExport.length === 0) return;
 
-  // Si el modal es VUL → exportamos VIT asociados
-  // Si el modal es VIT → exportamos VUL asociados
   const map = isVULView ? vitColumnMap : vulColumnMap;
   const headers = Object.keys(map);
 
@@ -136,10 +105,7 @@ export async function exportGridFromModal(
   styleRows(worksheet);
   adjustColumnWidth(worksheet);
 
-  worksheet.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 1, column: headers.length },
-  };
+  worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
 
   await downloadExcel(workbook, isVULView ? 'VIT_associated.xlsx' : 'VUL_associated.xlsx');
 }
