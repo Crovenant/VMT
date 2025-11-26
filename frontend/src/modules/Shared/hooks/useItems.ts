@@ -79,8 +79,7 @@ function CsoToItem(row: Record<string, unknown>): Item {
     actualizado: String(actualizado),
   } as Item;
 
-  // EXTRA: rellenamos TODOS los campos VUL usando VUL_MAP
-  // leyendo tanto por label ("VIT Code") como por clave camelCase ("vitCode")
+
   const filled: Item = { ...base };
 
   const SPECIAL_KEYS: (keyof Item)[] = [
@@ -107,7 +106,7 @@ function CsoToItem(row: Record<string, unknown>): Item {
   (Object.entries(VUL_MAP) as [string, keyof Item][]).forEach(([label, key]) => {
     if (SPECIAL_KEYS.includes(key)) return;
 
-    // 👇 Intentamos primero por label ("VIT Code") y luego por nombre de clave ("vitCode")
+
     const raw =
       row[label] ??
       (row as Record<string, unknown>)[key as string];

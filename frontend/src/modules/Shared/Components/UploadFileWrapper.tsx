@@ -1,4 +1,5 @@
 
+// src/modules/Shared/components/UploadFileWrapper.tsx
 import { useRef, useState } from 'react';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DuplicateResolver from '../../Pages/Dashboard/Components/DuplicateResolver/ResolverWrapper';
@@ -44,18 +45,21 @@ export default function UploadFileWrapper({
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (fileInputRef.current) {
-        fileInputRef.current.files = e.dataTransfer.files;
-      }
       handleFileUpload({ target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>);
     }
   };
 
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div style={{ textAlign: 'center', padding: '20px' }}>
-      <h3>Select Excel File</h3>
+      <h3>Selecciona un archivo Excel</h3>
 
+      {/* Área Drag & Drop + Click */}
       <div
+        onClick={handleClick}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -78,19 +82,18 @@ export default function UploadFileWrapper({
       >
         <CloudUploadIcon sx={{ fontSize: 48, color: '#1976d2', marginBottom: '10px' }} />
         <span style={{ fontSize: '16px', fontWeight: 500 }}>
-          {dragOver ? 'Suelta el archivo aquí' : 'Drag & Drop, or brwose.'}
+          {dragOver ? 'Suelta el archivo aquí' : 'Drag & Drop, o haz clic para seleccionar'}
         </span>
       </div>
 
-
+      {/* Input oculto */}
       <input
         type="file"
         ref={fileInputRef}
         accept=".xls,.xlsx,.csv"
         onChange={handleFileUpload}
-        style={{ marginBottom: '1rem' }}
+        style={{ display: 'none' }}
       />
-      <br />
 
       <button
         onClick={() => {
@@ -106,7 +109,7 @@ export default function UploadFileWrapper({
         <div
           style={{
             marginTop: '1rem',
-            color: mensaje.startsWith('✅') ? 'green' : 'red',
+            color: mensaje.startsWith('✅') ? 'green' : mensaje.startsWith('ℹ️') ? '#1976d2' : 'red',
           }}
         >
           {mensaje}
