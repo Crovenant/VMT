@@ -38,6 +38,8 @@ def normalize_headers(df: pd.DataFrame) -> pd.DataFrame:
         "vits": "vits",
         "Activo": "activo",
         "activo": "activo",
+        "VUL": "VUL",
+        "vul": "vul",
     }
 
     df = df.copy()
@@ -48,7 +50,7 @@ def normalize_headers(df: pd.DataFrame) -> pd.DataFrame:
     if "puntuacionRiesgo" in df.columns:
         df["puntuacionRiesgo"] = pd.to_numeric(df["puntuacionRiesgo"], errors="coerce")
 
-    for col in ["creado", "actualizado"]:
+    for col in ["creado", "actualizado", "vul", "vits"]:
         if col in df.columns:
             df[col] = df[col].astype(str)
 

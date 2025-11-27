@@ -13,59 +13,68 @@ DATA_DIR = CORE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 VUL_JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"
+VIT_JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"
 
 
 @csrf_exempt
 def apply_relations(request):
     if request.method == "OPTIONS":
         return add_cors_headers(JsonResponse({"message": "Preflight OK"}))
-
     if request.method != "POST":
         return add_cors_headers(
             JsonResponse({"error": "Method not allowed"}, status=405)
         )
-
     try:
         body = json.loads(request.body.decode("utf-8"))
         relations = body.get("relations", [])
-
         if not isinstance(relations, list) or not relations:
             raise ValueError("No relations provided.")
-
         if VUL_JSON_PATH.exists():
             with VUL_JSON_PATH.open("r", encoding="utf-8") as f:
                 vul_data = json.load(f)
         else:
             vul_data = []
-
+        if VIT_JSON_PATH.exists():
+            with VIT_JSON_PATH.open("r", encoding="utf-8") as f:
+                vit_data = json.load(f)
+        else:
+            vit_data = []
         if not isinstance(vul_data, list):
             vul_data = [vul_data]
-
+        if not isinstance(vit_data, list):
+            vit_data = [vit_data]
         vul_map = {str(v.get("numero", "")).strip(): v for v in vul_data}
-
+        vit_map = {str(v.get("numero", "")).strip(): v for v in vit_data}
         for rel in relations:
             vul_num = str(rel.get("vulNumero", "")).strip()
             vit_num = str(rel.get("vitNumero", "")).strip()
             if vul_num and vit_num and vul_num in vul_map:
                 vul_obj = vul_map[vul_num]
                 current_vits = str(vul_obj.get("vits", "")).strip()
-                if vit_num not in current_vits.split(","):
+                if vit_num not in [
+                    s.strip() for s in current_vits.split(",") if s.strip()
+                ]:
                     new_vits = (
-                        (current_vits + "," + vit_num).strip(",")
+                        ((current_vits + "," + vit_num).strip(","))
                         if current_vits
                         else vit_num
                     )
                     vul_obj["vits"] = new_vits
-
-        updated_data = list(vul_map.values())
-        with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
-            json.dump(updated_data, tmp, ensure_ascii=False, indent=2)
-            tmp_name = tmp.name
-        os.replace(tmp_name, VUL_JSON_PATH)
-
+            if vul_num and vit_num and vit_num in vit_map:
+                vit_obj = vit_map[vit_num]
+                current_vul = str(vit_obj.get("vul", "")).strip()
+                if vul_num and vul_num != current_vul:
+                    vit_obj["vul"] = vul_num
+        updated_vul = list(vul_map.values())
+        updated_vit = list(vit_map.values())
+        with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp_vul:
+            json.dump(updated_vul, tmp_vul, ensure_ascii=False, indent=2)
+            tmp_vul_name = tmp_vul.name
+        os.replace(tmp_vul_name, VUL_JSON_PATH)
+        with NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp_vit:
+            json.dump(updated_vit, tmp_vit, ensure_ascii=False, indent=2)
+            tmp_vit_name = tmp_vit.name
+        os.replace(tmp_vit_name, VIT_JSON_PATH)
         response = JsonResponse({"message": "Relations applied successfully."})
-
     except Exception as e:
         response = JsonResponse({"error": str(e)}, status=400)
-
-    return add_cors_headers(response)

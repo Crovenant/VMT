@@ -109,7 +109,7 @@ function mapVIT(row: Record<string, unknown>): Item {
   const notasAplazamiento = String(row['notasAplazamiento'] ?? '');
   const softwareVulnerable = String(row['softwareVulnerable'] ?? '');
   const resolucion = String(row['resolucion'] ?? '');
-  const vul = String(row['vul'] ?? '');
+  const vul = String(row['vul'] ?? row['VUL'] ?? '');
 
   const id =
     numero ||

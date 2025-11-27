@@ -124,7 +124,7 @@ def assign_ids_and_merge_vul(
         while str(next_id) in used_ids:
             next_id += 1
         od = OrderedDict()
-        od["id"] = f"SOUP-{next_id:03d}"
+        od["id"] = next_id
         used_ids.add(str(next_id))
         next_id += 1
         for k, v in entry.items():
@@ -160,7 +160,7 @@ def update_selected_entries_vul(
         else:
             while str(next_id) in used_ids:
                 next_id += 1
-            od["id"] = f"SOUP-{next_id:03d}"
+            od["id"] = next_id
             used_ids.add(str(next_id))
             next_id += 1
         for field, val in entry.items():
