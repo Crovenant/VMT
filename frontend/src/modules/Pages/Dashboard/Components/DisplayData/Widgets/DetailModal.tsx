@@ -9,6 +9,7 @@ import {
   Typography,
   Divider,
   Button,
+  TextField,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { AgGridReact } from 'ag-grid-react';
@@ -28,6 +29,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 type ViewType = 'VIT' | 'VUL';
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -35,6 +37,15 @@ type Props = {
   viewType: ViewType;
   onNavigateToItem: (item: Item) => void;
 };
+
+type Comment = {
+  id: number;
+  author: string;
+  text: string;
+  created_at: string;
+};
+
+const API_BASE = 'http://localhost:8000';
 
 const DEFAULT_VUL_CARD_FIELDS: string[] = [
   'Número',
@@ -67,6 +78,13 @@ function formatHeaderLabel(label?: string): string | undefined {
   const first = words.slice(0, 2).join(' ');
   const rest = words.slice(2).join(' ');
   return `${first}\n${rest}`;
+}
+
+function formatDateTime(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString();
 }
 
 export default function DetailModal({ open, onClose, item, viewType, onNavigateToItem }: Props) {
@@ -121,6 +139,13 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
   const [relatedRows, setRelatedRows] = useState<Item[]>([]);
   const gridRef = useRef<AgGridReact<any>>(null);
 
+  // 🔹 Comentarios del item
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isAddingComment, setIsAddingComment] = useState(false);
+  const [commentText, setCommentText] = useState('');
+
+  const idLabel = item?.numero ?? item?.id ?? 'INC-???';
+
   useEffect(() => {
     if (!open || !item) {
       setRelatedRows([]);
@@ -135,6 +160,46 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
       const normalizedAssociatedVul = associatedVul ? mapVUL(associatedVul) : null;
       setRelatedRows(normalizedAssociatedVul ? [normalizedAssociatedVul] : []);
     }
+  }, [open, item, viewType]);
+
+  // 🔹 Cargar comentarios desde backend cuando abrimos el modal o cambia el item
+  useEffect(() => {
+    if (!open || !item) {
+      setComments([]);
+      setIsAddingComment(false);
+      setCommentText('');
+      return;
+    }
+
+    const numero = String(item.numero ?? item.id ?? '');
+    if (!numero) return;
+
+    const base =
+      viewType === 'VUL'
+        ? `${API_BASE}/vul/comments/`
+        : `${API_BASE}/vit/comments/`;
+    const url = `${base}${encodeURIComponent(numero)}/`;
+
+    let cancelled = false;
+
+    const loadComments = async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = (await res.json()) as Comment[];
+        if (!cancelled) {
+          setComments(Array.isArray(data) ? data : []);
+        }
+      } catch {
+        // silencioso
+      }
+    };
+
+    loadComments();
+
+    return () => {
+      cancelled = true;
+    };
   }, [open, item, viewType]);
 
   const vulCardPairs = useMemo(() => {
@@ -172,9 +237,6 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
     [vulGridColumnDefs, selectedVulCardFields],
   );
 
-  const comments: string[] =
-    (item?.comentarios ? [item.comentarios] : (item as Item & { comments?: string[] })?.comments) ?? [];
-
   const handleExportModalGrid = () => {
     console.log('Export main item:', item);
   };
@@ -205,13 +267,59 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
     if (ids.length) colApi.autoSizeColumns(ids, true);
   }, []);
 
-  const onFirstDataRendered = useCallback((e: any) => {
-    autoSizeVisibleColumns(e.api as GridApi, e.columnApi as ColumnApi);
-  }, [autoSizeVisibleColumns]);
+  const onFirstDataRendered = useCallback(
+    (e: any) => {
+      autoSizeVisibleColumns(e.api as GridApi, e.columnApi as ColumnApi);
+    },
+    [autoSizeVisibleColumns],
+  );
 
-  const onModelUpdated = useCallback((e: any) => {
-    autoSizeVisibleColumns(e.api as GridApi, e.columnApi as ColumnApi);
-  }, [autoSizeVisibleColumns]);
+  const onModelUpdated = useCallback(
+    (e: any) => {
+      autoSizeVisibleColumns(e.api as GridApi, e.columnApi as ColumnApi);
+    },
+    [autoSizeVisibleColumns],
+  );
+
+  // 🔹 Handlers de comentarios en el modal
+  const handleStartAddComment = () => {
+    setIsAddingComment(true);
+  };
+
+  const handleCancelAddComment = () => {
+    setIsAddingComment(false);
+    setCommentText('');
+  };
+
+  const handleSaveComment = async () => {
+    if (!item) return;
+    const text = commentText.trim();
+    if (!text) return;
+
+    const numero = String(item.numero ?? item.id ?? '');
+    if (!numero) return;
+
+    const base =
+      viewType === 'VUL'
+        ? `${API_BASE}/vul/comments/`
+        : `${API_BASE}/vit/comments/`;
+    const url = `${base}${encodeURIComponent(numero)}/`;
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, author: 'Krovean' }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as Comment[];
+      setComments(Array.isArray(data) ? data : []);
+      setCommentText('');
+      setIsAddingComment(false);
+    } catch {
+      // silencioso
+    }
+  };
 
   return (
     <Dialog
@@ -275,27 +383,35 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
             <Box sx={{ gridColumn: 2, p: 2 }}>
               <Box sx={{ mb: 2 }}>
                 <Grid container spacing={1.5}>
-                  {(viewType === 'VUL' ? filteredVulCardPairs : filteredVitCardPairs).map(({ label, value }) => (
-                    <Grid key={label} item xs={12} sm={6}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                        {label}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {String(value)}
-                      </Typography>
-                    </Grid>
-                  ))}
+                  {(viewType === 'VUL' ? filteredVulCardPairs : filteredVitCardPairs).map(
+                    ({ label, value }) => (
+                      <Grid key={label} item xs={12} sm={6}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                          {label}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          {String(value)}
+                        </Typography>
+                      </Grid>
+                    ),
+                  )}
                 </Grid>
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
+              {/* 🔹 Comments section (mismo backend que el grid) */}
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                     Comments
                   </Typography>
-                  <Button variant="text" size="small" sx={{ fontWeight: 700 }}>
+                  <Button
+                    variant="text"
+                    size="small"
+                    sx={{ fontWeight: 700 }}
+                    onClick={handleStartAddComment}
+                  >
                     ADD COMMENT
                   </Button>
                 </Box>
@@ -303,21 +419,47 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
                   sx={{
                     border: '1px solid #ddd',
                     borderRadius: 1,
-                    p: 1,
+                    p: 1.5,
                     bgcolor: '#f9f9f9',
                     minHeight: 50,
                   }}
                 >
                   {comments.length > 0 ? (
-                    comments.map((comment: string, idx: number) => (
-                      <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
-                        {comment}
-                      </Typography>
-                    ))
-                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {comments.map((c) => (
+                        <Box key={c.id} sx={{ display: 'flex', flexDirection: 'column' }}>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDateTime(c.created_at)}
+                          </Typography>
+                          <Typography variant="body2">• {c.text}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : !isAddingComment ? (
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                       No comments available
                     </Typography>
+                  ) : null}
+
+                  {isAddingComment && (
+                    <Box sx={{ mt: comments.length ? 2 : 0 }}>
+                      <TextField
+                        multiline
+                        fullWidth
+                        minRows={2}
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder={`New comment for ${idLabel}`}
+                      />
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, gap: 1 }}>
+                        <Button size="small" onClick={handleCancelAddComment}>
+                          CANCEL
+                        </Button>
+                        <Button size="small" variant="contained" onClick={handleSaveComment}>
+                          SAVE
+                        </Button>
+                      </Box>
+                    </Box>
                   )}
                 </Box>
               </Box>

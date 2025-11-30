@@ -34,7 +34,6 @@ import FullWidthRenderer from './DisplayTable/Renderers/FullWidthRenderer';
 type ViewType = 'VIT' | 'VUL';
 const LS_COLUMN_STATE = (v: ViewType) => `displayData.columnState.${v}`;
 
-// Inserta un salto de línea tras la segunda palabra si hay más de 2
 function formatHeaderLabel(label?: string): string | undefined {
   if (!label) return label;
   const words = String(label).split(/\s+/);
@@ -74,12 +73,9 @@ export default function DisplayTable({
     return m;
   }, [rows]);
 
-  // 1) Mapas base (VIT_MAP / VUL_MAP) como siempre
   const { map: staticColumnKeyMap, allColumns: staticAllColumns } = useColumnMap(viewType);
 
-  // 2) Extender mapas con campos nuevos que vengan en los datos (como "Krovean")
   const { columnKeyMap, allColumns } = useMemo(() => {
-    // Claves técnicas que NO queremos auto-convertir en columnas
     const technicalKeys = new Set<string>([
       'id',
       'nombre',
@@ -102,10 +98,7 @@ export default function DisplayTable({
       Object.keys(row as any).forEach((fieldKey) => {
         if (technicalKeys.has(fieldKey)) return;
         if (baseFieldKeys.has(fieldKey)) return;
-
-        // Usamos la propia clave como header (ej: "Krovean")
         const headerLabel = fieldKey;
-
         if (!extraMap[headerLabel]) {
           extraMap[headerLabel] = fieldKey;
         }
@@ -141,10 +134,10 @@ export default function DisplayTable({
       floatingFilter: false,
       wrapHeaderText: true,
       autoHeaderHeight: true,
-      wrapText: true, // salto de línea en celdas si hace falta
+      wrapText: true,
       autoHeight: true,
       headerClass: 'custom-header',
-      cellClass: 'cell-wrap-2', // clamp a 2 líneas
+      cellClass: 'cell-wrap-2',
       cellStyle: { whiteSpace: 'normal', lineHeight: '1.35' },
       suppressHeaderMenuButton: false,
       minWidth: 60,
@@ -157,7 +150,6 @@ export default function DisplayTable({
     [expanded, toggleExpand],
   );
 
-  // ColDefs de negocio con headerName modificado (salto tras palabra 2)
   const businessColDefs = useMemo(() => {
     const defs = createBusinessColDefs(visibleColumns, columnKeyMap as any);
     return defs.map((d) => {
@@ -203,7 +195,6 @@ export default function DisplayTable({
     localStorage.setItem(LS_COLUMN_STATE(viewType), JSON.stringify(state));
   }, [viewType]);
 
-  // Autosize por contenido (skipHeader = true)
   const autoSizeVisibleColumns = useCallback((api?: GridApi | null, colApi?: ColumnApi | null) => {
     if (!api || !colApi) return;
     const displayed = colApi.getAllDisplayedColumns?.() ?? [];
@@ -215,7 +206,7 @@ export default function DisplayTable({
         return true;
       })
       .map((c) => c.getColId());
-    if (ids.length) colApi.autoSizeColumns(ids, true /* skipHeader: calcula por celdas */);
+    if (ids.length) colApi.autoSizeColumns(ids, true);
   }, []);
 
   const applySavedColumnState = useCallback((): boolean => {
@@ -285,7 +276,7 @@ export default function DisplayTable({
         borderRadius: '15px 0 0 15px',
         overflow: 'hidden',
         '& .ag-header-cell-text': {
-          whiteSpace: 'pre-line', // respeta '\n' en headerName
+          whiteSpace: 'pre-line',
         },
         '& .ag-cell.cell-wrap-2': {
           display: '-webkit-box',
@@ -315,7 +306,7 @@ export default function DisplayTable({
             isDetailRow(p.rowNode?.data as DisplayRow | undefined)
           }
           fullWidthCellRenderer={(p: ICellRendererParams<GridRow>) => (
-            <FullWidthRenderer params={p} itemById={itemById} />
+            <FullWidthRenderer params={p} itemById={itemById} viewType={viewType} />
           )}
           getRowHeight={(p) => (isDetailRow(p.data as DisplayRow) ? 300 : undefined)}
           getRowStyle={getRowStyle}
