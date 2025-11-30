@@ -23,12 +23,11 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
     defaultColumns: [
       'Número',
       'Estado',
-      'Breve descripción',
       'Elemento de configuración',
       'Prioridad',
       'Asignado a',
-      'Creado',
       'Due date',
+      'VUL',      
     ],
   },
   VUL: {
@@ -39,9 +38,7 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
     defaultColumns: [
       'Número',
       'Activo',
-      'Elementos vulnerables',
       'Asignado a',
-      'Grupo de asignación',
       'Prioridad',
       'Estado',
       'Actualizado',

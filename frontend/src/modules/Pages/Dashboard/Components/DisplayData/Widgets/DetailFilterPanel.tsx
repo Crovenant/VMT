@@ -1,5 +1,5 @@
 // src/modules/Pages/Dashboard/Components/DisplayData/Widgets/DetailFilterPanel.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Accordion,
@@ -23,6 +23,36 @@ type Props = {
   setSelectedCsoFields: (fields: string[]) => void;
 };
 
+const headerMap: Record<string, string> = {
+  numero: 'Número',
+  idExterno: 'ID externo',
+  estado: 'Estado',
+  resumen: 'Resumen',
+  breveDescripcion: 'Breve descripción',
+  elementoConfiguracion: 'Elemento de configuración',
+  prioridad: 'Prioridad',
+  puntuacionRiesgo: 'Puntuación de riesgo',
+  grupoAsignacion: 'Grupo de asignación',
+  asignadoA: 'Asignado a',
+  sites: 'Sites',
+  vulnerabilidad: 'Vulnerabilidad',
+  vulnerabilitySolution: 'Solución',
+  creado: 'Creado',
+  actualizado: 'Actualizado',
+  vul: 'VUL',
+  activo: 'Activo',
+  elementosVulnerables: 'Elementos vulnerables',
+  vits: 'VITS',
+  direccionIp: 'Dirección IP',
+  breveDescripcionAlt: 'Breve descripción',
+  dueDate: 'Due date',
+  id: 'ID',
+  softwareVulnerable: 'Software vulnerable',
+  comentarios: 'Comentarios',
+  resolucion: 'Resolución',
+  hasLink: 'Has link'
+};
+
 // ✅ Campos VIT exactos según tu lista
 const csirtFields = [
   'Número',
@@ -38,10 +68,10 @@ const csirtFields = [
   'Creado',
   'Actualizado',
   'Sites',
-  'Solución', // vulnerabilitySolution
+  'Solución',
   'Vulnerabilidad',
   'Due date',
-  'VUL', // relación con vulnerabilidad
+  'VUL'
 ];
 
 // ✅ Campos VUL (sin cambios, según lógica actual)
@@ -54,7 +84,7 @@ const csoFields = [
   'Prioridad',
   'Estado',
   'Actualizado',
-  'VITS',
+  'VITS'
 ];
 
 export default function DetailSideFilterPanel({
@@ -67,11 +97,32 @@ export default function DetailSideFilterPanel({
 }: Props) {
   const [searchCsirt, setSearchCsirt] = useState('');
   const [searchCso, setSearchCso] = useState('');
+  const [vitKeys, setVitKeys] = useState<string[]>([]);
+  const [vulKeys, setVulKeys] = useState<string[]>([]);
 
-  const filteredCsirt = csirtFields.filter((f) =>
+  useEffect(() => {
+    Promise.all([
+      fetch('/common/get-schema/?viewType=VIT').then(r => r.json()).catch(() => ({ schema: [] })),
+      fetch('/common/get-schema/?viewType=VUL').then(r => r.json()).catch(() => ({ schema: [] }))
+    ]).then(([vit, vul]) => {
+      const vitSchema: string[] = Array.isArray(vit.schema) ? vit.schema : [];
+      const vulSchema: string[] = Array.isArray(vul.schema) ? vul.schema : [];
+
+      const vitLabels = vitSchema.map(k => headerMap[k] || k);
+      const vulLabels = vulSchema.map(k => headerMap[k] || k);
+
+      setVitKeys(vitLabels.length ? vitLabels : csirtFields);
+      setVulKeys(vulLabels.length ? vulLabels : csoFields);
+    }).catch(() => {
+      setVitKeys(csirtFields);
+      setVulKeys(csoFields);
+    });
+  }, []);
+
+  const filteredCsirt = (vitKeys.length ? vitKeys : csirtFields).filter((f) =>
     f.toLowerCase().includes(searchCsirt.toLowerCase()),
   );
-  const filteredCso = csoFields.filter((f) =>
+  const filteredCso = (vulKeys.length ? vulKeys : csoFields).filter((f) =>
     f.toLowerCase().includes(searchCso.toLowerCase()),
   );
 

@@ -1,6 +1,5 @@
-
 // src/modules/Pages/Dashboard/Components/DisplayData/DetailModal.tsx
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
+import { GridApi, ColumnApi } from 'ag-grid-community';
 import type { Item } from '../../../../../Types/item';
 import { VIT_MAP, VUL_MAP } from '../DisplayTable/constants/columnMaps';
 import DetailFilterPanel from './DetailFilterPanel';
@@ -60,6 +60,15 @@ const DEFAULT_VIT_GRID_FIELDS: string[] = [
   'VUL',
 ];
 
+function formatHeaderLabel(label?: string): string | undefined {
+  if (!label) return label;
+  const words = String(label).split(/\s+/);
+  if (words.length <= 2) return label;
+  const first = words.slice(0, 2).join(' ');
+  const rest = words.slice(2).join(' ');
+  return `${first}\n${rest}`;
+}
+
 export default function DetailModal({ open, onClose, item, viewType, onNavigateToItem }: Props) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedVulCardFields, setSelectedVulCardFields] = useState<string[]>(
@@ -80,6 +89,11 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
         minWidth: 120,
         wrapHeaderText: true,
         autoHeaderHeight: true,
+        wrapText: true,
+        autoHeight: true,
+        cellClass: 'cell-wrap-2',
+        headerClass: 'custom-header',
+        cellStyle: { whiteSpace: 'normal', lineHeight: '1.35' },
       })),
     [],
   );
@@ -95,6 +109,11 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
         minWidth: 120,
         wrapHeaderText: true,
         autoHeaderHeight: true,
+        wrapText: true,
+        autoHeight: true,
+        cellClass: 'cell-wrap-2',
+        headerClass: 'custom-header',
+        cellStyle: { whiteSpace: 'normal', lineHeight: '1.35' },
       })),
     [],
   );
@@ -137,11 +156,20 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
   const filteredVulCardPairs = vulCardPairs.filter((p) => selectedVulCardFields.includes(p.label));
   const filteredVitCardPairs = vitCardPairs.filter((p) => selectedVitGridFields.includes(p.label));
 
-  const filteredVitGridColumnDefs = vitGridColumnDefs.filter((col) =>
-    selectedVitGridFields.includes(col.headerName ?? ''),
+  const filteredVitGridColumnDefs = useMemo(
+    () =>
+      vitGridColumnDefs
+        .filter((col) => selectedVitGridFields.includes(col.headerName ?? ''))
+        .map((c) => ({ ...c, headerName: formatHeaderLabel(c.headerName as string) })),
+    [vitGridColumnDefs, selectedVitGridFields],
   );
-  const filteredVulGridColumnDefs = vulGridColumnDefs.filter((col) =>
-    selectedVulCardFields.includes(col.headerName ?? ''),
+
+  const filteredVulGridColumnDefs = useMemo(
+    () =>
+      vulGridColumnDefs
+        .filter((col) => selectedVulCardFields.includes(col.headerName ?? ''))
+        .map((c) => ({ ...c, headerName: formatHeaderLabel(c.headerName as string) })),
+    [vulGridColumnDefs, selectedVulCardFields],
   );
 
   const comments: string[] =
@@ -162,6 +190,28 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
     const selectedRows = api?.getSelectedRows?.() ?? [];
     mailGridFromModal(relatedRows, selectedRows as Item[], viewType === 'VUL');
   };
+
+  const autoSizeVisibleColumns = useCallback((api?: GridApi | null, colApi?: ColumnApi | null) => {
+    if (!api || !colApi) return;
+    const displayed = colApi.getAllDisplayedColumns?.() ?? [];
+    const ids = displayed
+      .filter((c) => {
+        const def = c.getColDef();
+        if (def.checkboxSelection) return false;
+        if (def.field === '__eye__') return false;
+        return true;
+      })
+      .map((c) => c.getColId());
+    if (ids.length) colApi.autoSizeColumns(ids, true);
+  }, []);
+
+  const onFirstDataRendered = useCallback((e: any) => {
+    autoSizeVisibleColumns(e.api as GridApi, e.columnApi as ColumnApi);
+  }, [autoSizeVisibleColumns]);
+
+  const onModelUpdated = useCallback((e: any) => {
+    autoSizeVisibleColumns(e.api as GridApi, e.columnApi as ColumnApi);
+  }, [autoSizeVisibleColumns]);
 
   return (
     <Dialog
@@ -200,7 +250,6 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               />
             </Box>
 
-            {/* Header */}
             <Box
               sx={{
                 gridColumn: 2,
@@ -223,9 +272,7 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
               </Box>
             </Box>
 
-            {/* Content */}
             <Box sx={{ gridColumn: 2, p: 2 }}>
-              {/* Parte superior */}
               <Box sx={{ mb: 2 }}>
                 <Grid container spacing={1.5}>
                   {(viewType === 'VUL' ? filteredVulCardPairs : filteredVitCardPairs).map(({ label, value }) => (
@@ -243,7 +290,6 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Comments */}
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -278,7 +324,6 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Parte inferior */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main' }}>
                   {viewType === 'VUL' ? 'VIT associated' : 'VUL associated'}
@@ -295,6 +340,14 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
                   border: '1px solid rgba(31,45,90,0.2)',
                   bgcolor: 'white',
                   p: 1,
+                  '& .ag-header-cell-text': { whiteSpace: 'pre-line' },
+                  '& .ag-cell.cell-wrap-2': {
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    whiteSpace: 'normal',
+                  },
                 }}
               >
                 <Box className="ag-theme-quartz" style={{ width: '100%' }}>
@@ -311,6 +364,8 @@ export default function DetailModal({ open, onClose, item, viewType, onNavigateT
                     rowSelection="multiple"
                     suppressRowClickSelection={true}
                     domLayout="autoHeight"
+                    onFirstDataRendered={onFirstDataRendered}
+                    onModelUpdated={onModelUpdated}
                   />
                 </Box>
               </Box>

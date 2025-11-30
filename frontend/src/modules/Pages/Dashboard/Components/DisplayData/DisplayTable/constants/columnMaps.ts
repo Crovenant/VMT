@@ -1,4 +1,3 @@
-
 // src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/constants/columnMaps.ts
 import type { Item } from '../../../../../../Types/item';
 
@@ -9,25 +8,17 @@ export const VIT_MAP: Record<string, keyof Item> = {
   'Resumen': 'resumen',
   'Breve descripción': 'breveDescripcion',
   'Elemento de configuración': 'elementoConfiguracion',
-  'Dirección IP': 'direccionIp',
   'Prioridad': 'prioridad',
   'Puntuación de riesgo': 'puntuacionRiesgo',
   'Grupo de asignación': 'grupoAsignacion',
   'Asignado a': 'asignadoA',
   'Creado': 'creado',
   'Actualizado': 'actualizado',
-  'Due date': 'dueDate',
-  'Fecha creación': 'fechaCreacion',
   'Sites': 'sites',
-  'Vulnerabilidad': 'vulnerabilidad',
   'Solución': 'vulnerabilitySolution',
-  'Aplazado por': 'aplazadoPor',
-  'Fecha de aplazamiento': 'fechaAplazamiento',
-  'Notas de aplazamiento': 'notasAplazamiento',
-  'Software vulnerable': 'softwareVulnerable',
-  'Resolución': 'resolucion',
-  'Comentarios': 'comentarios',
-  'VUL': 'vul', 
+  'Vulnerabilidad': 'vulnerabilidad',
+  'Due date': 'dueDate',
+  'VUL': 'vul',
 };
 
 export const VUL_MAP: Record<string, keyof Item> = {
@@ -39,6 +30,5 @@ export const VUL_MAP: Record<string, keyof Item> = {
   'Prioridad': 'prioridad',
   'Estado': 'estado',
   'Actualizado': 'actualizado',
-  'Due date': 'dueDate',
   'VITS': 'vits',
 };
