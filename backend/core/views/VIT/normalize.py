@@ -38,7 +38,7 @@ def normalize_headers(df: pd.DataFrame) -> pd.DataFrame:
         "vits": "vits",
         "Activo": "activo",
         "activo": "activo",
-        "VUL": "VUL",
+        "VUL": "vul",
         "vul": "vul",
     }
 

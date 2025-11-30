@@ -1,3 +1,4 @@
+// src/modules/Pages/Dashboard/Components/DisplayData/Widgets/DetailFilterPanel.tsx
 import { useState } from 'react';
 import {
   Box,

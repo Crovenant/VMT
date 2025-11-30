@@ -1,17 +1,16 @@
+
+// src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/GridComponents/components/SideFilterPanel.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, TextField, InputAdornment, Checkbox, FormControlLabel } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 const headerMap: Record<string, string> = {
-  // Mapeos por clave interna (no imprescindibles, se mantienen)
-  nombre: 'Nombre',
   numero: 'Número',
   idExterno: 'ID externo',
   estado: 'Estado',
   resumen: 'Resumen',
   breveDescripcion: 'Breve descripción',
   elementoConfiguracion: 'Elemento de configuración',
-  fechaCreacion: 'Fecha creación',
   prioridad: 'Prioridad',
   puntuacionRiesgo: 'Puntuación de riesgo',
   grupoAsignacion: 'Grupo de asignación',
@@ -21,34 +20,10 @@ const headerMap: Record<string, string> = {
   vulnerabilitySolution: 'Solución',
   creado: 'Creado',
   actualizado: 'Actualizado',
-
-  // ✅ Alias directos por etiqueta (lo que llega desde VIT_MAP/VUL_MAP)
-  'Número': 'Número',
-  'ID externo': 'ID externo',
-  'Estado': 'Estado',
-  'Resumen': 'Resumen',
-  'Breve descripción': 'Breve descripción',
-  'Elemento de configuración': 'Elemento de configuración',
-  'Prioridad': 'Prioridad',
-  'Puntuación de riesgo': 'Puntuación de riesgo',
-  'Grupo de asignación': 'Grupo de asignación',
-  'Asignado a': 'Asignado a',
-  'Creado': 'Creado',
-  'Actualizado': 'Actualizado',
-  'Sites': 'Sites',
-  'Vulnerabilidad': 'Vulnerabilidad',
-  'Solución': 'Solución',
-  'Vulnerability solution': 'Solución', // por si llega con el alias en inglés
-  'Fecha creación': 'Fecha creación',
-  'Due date': 'Due date',
-
-  // ➕ 6 nuevos campos VIT (Excel)
-  'Dirección IP': 'Dirección IP',
-  'Aplazado por': 'Aplazado por',
-  'Fecha de aplazamiento': 'Fecha de aplazamiento',
-  'Notas de aplazamiento': 'Notas de aplazamiento',
-  'Software vulnerable': 'Software vulnerable',
-  'Resolución': 'Resolución',
+  vul: 'VUL',
+  activo: 'Activo',
+  elementosVulnerables: 'Elementos vulnerables',
+  vits: 'VITS'
 };
 
 type Props = {
@@ -63,21 +38,37 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
     return saved ? JSON.parse(saved) : false;
   });
   const [search, setSearch] = useState('');
+  const [schema, setSchema] = useState<string[]>([]);
 
   useEffect(() => {
     localStorage.setItem('sideFilterPanel.isOpen', JSON.stringify(isOpen));
   }, [isOpen]);
 
-  const filteredFields = allHeaders.filter((f) =>
-    (headerMap[f] || f).toLowerCase().includes(search.toLowerCase()),
+  useEffect(() => {
+    try {
+      const vt = (window as any).__currentViewType as 'VIT' | 'VUL' | undefined;
+      if (vt) {
+        fetch(`/common/get-schema/?viewType=${vt}`)
+          .then(res => res.json())
+          .then(data => setSchema(Array.isArray(data.schema) ? data.schema : []))
+          .catch(() => setSchema([]));
+      } else {
+        setSchema([]);
+      }
+    } catch {
+      setSchema([]);
+    }
+  }, []);
+
+  const availableFields = schema.length > 0 ? schema : allHeaders;
+  const filteredFields = availableFields.filter(f =>
+    (headerMap[f] || f).toLowerCase().includes(search.toLowerCase())
   );
 
   const handleToggle = (field: string) => {
     const updated = visibleColumns.includes(field)
-      ? visibleColumns.filter((c) => c !== field)
+      ? visibleColumns.filter(c => c !== field)
       : [...visibleColumns, field];
-
-    // Persiste por vista en DisplayWrapper (VIT/VUL)
     setVisibleColumns(updated);
   };
 
@@ -92,10 +83,9 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
         border: '1px solid rgba(31, 45, 90, 0.25)',
         transition: 'width 0.3s ease',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'hidden'
       }}
     >
-      {/* Botón vertical */}
       <Box
         sx={{
           position: 'absolute',
@@ -108,7 +98,7 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
           justifyContent: 'center',
           cursor: 'pointer',
           backgroundColor: '#f5f6f8',
-          borderRight: '1px solid rgba(31, 45, 90, 0.25)',
+          borderRight: '1px solid rgba(31, 45, 90, 0.25)'
         }}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -118,53 +108,47 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
             textOrientation: 'mixed',
             fontSize: '16px',
             fontWeight: 'bold',
-            color: '#1f2d5a',
+            color: '#1f2d5a'
           }}
         >
           Filters
         </Box>
       </Box>
 
-      {/* Contenido */}
       <Box
         sx={{
           opacity: isOpen ? 1 : 0,
           transition: 'opacity 0.3s ease',
           p: isOpen ? 2 : 0,
           ml: isOpen ? '40px' : 0,
-          overflowY: 'auto',
+          overflowY: 'auto'
         }}
       >
         {isOpen && (
           <>
-            {/* Buscador */}
             <TextField
               size="small"
               placeholder="Search..."
               fullWidth
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               sx={{
                 backgroundColor: '#ffffff',
                 borderRadius: '4px',
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'rgba(31, 45, 90, 0.25)',
-                  },
-                },
+                  '& fieldset': { borderColor: 'rgba(31, 45, 90, 0.25)' }
+                }
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchIcon fontSize="small" sx={{ color: '#1f2d5a' }} />
                   </InputAdornment>
-                ),
+                )
               }}
             />
-
-            {/* Lista con checkbox */}
-            {filteredFields.map((field) => (
+            {filteredFields.map(field => (
               <FormControlLabel
                 key={field}
                 control={
@@ -175,12 +159,7 @@ const SideFilterPanel: React.FC<Props> = ({ visibleColumns, setVisibleColumns, a
                   />
                 }
                 label={headerMap[field] || field}
-                sx={{
-                  display: 'block',
-                  color: '#1f2d5a',
-                  fontSize: '13px',
-                  mb: 0.5,
-                }}
+                sx={{ display: 'block', color: '#1f2d5a', fontSize: '13px', mb: 0.5 }}
               />
             ))}
           </>

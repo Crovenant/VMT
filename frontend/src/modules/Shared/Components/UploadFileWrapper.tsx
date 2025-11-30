@@ -7,19 +7,17 @@ import RelationResolverModal from '../../Pages/Dashboard/Components/upload/Vit t
 import { useUploadFile } from '../hooks/useUploadFile';
 import type { DuplicatePair } from '../../Types/uploadTypes';
 
-interface UploadFileProps {
-  onClose: (success: boolean) => void;
-  uploadUrl: string;
-  saveUrl: string;
-  listUrlForMutate?: string;
-}
-
 export default function UploadFileWrapper({
   onClose,
   uploadUrl,
   saveUrl,
-  listUrlForMutate,
-}: UploadFileProps) {
+  listUrlForMutate
+}: {
+  onClose: (success: boolean) => void;
+  uploadUrl: string;
+  saveUrl: string;
+  listUrlForMutate?: string;
+}) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -38,6 +36,12 @@ export default function UploadFileWrapper({
     setRelationSelections,
     handleConfirmRelations,
     closeRelationModal,
+    NewFieldsModal,
+    newFieldsModalOpen,
+    newFieldsDetected,
+    handleConfirmNewFields,
+    pendingHeaders,
+    closeNewFieldsModal
   } = useUploadFile(onClose, { uploadUrl, saveUrl, listUrlForMutate });
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -55,15 +59,11 @@ export default function UploadFileWrapper({
 
   return (
     <div style={{ textAlign: 'center', padding: '20px' }}>
-      <h3>Selecciona un archivo Excel</h3>
+      <h3>Select an Excel file</h3>
 
-      {/* Área Drag & Drop + Click */}
       <div
         onClick={handleClick}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
+        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         style={{
@@ -77,16 +77,15 @@ export default function UploadFileWrapper({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'center'
         }}
       >
         <CloudUploadIcon sx={{ fontSize: 48, color: '#1976d2', marginBottom: '10px' }} />
         <span style={{ fontSize: '16px', fontWeight: 500 }}>
-          {dragOver ? 'Suelta el archivo aquí' : 'Drag & Drop, o haz clic para seleccionar'}
+          {dragOver ? 'Drop the file here' : 'Drag & Drop, or click to select'}
         </span>
       </div>
 
-      {/* Input oculto */}
       <input
         type="file"
         ref={fileInputRef}
@@ -102,14 +101,14 @@ export default function UploadFileWrapper({
         }}
         style={{ marginTop: '1rem' }}
       >
-        Cancelar
+        Cancel
       </button>
 
       {mensaje && (
         <div
           style={{
             marginTop: '1rem',
-            color: mensaje.startsWith('✅') ? 'green' : mensaje.startsWith('ℹ️') ? '#1976d2' : 'red',
+            color: mensaje.startsWith('✅') ? 'green' : mensaje.startsWith('ℹ️') ? '#1976d2' : 'red'
           }}
         >
           {mensaje}
@@ -121,10 +120,7 @@ export default function UploadFileWrapper({
         duplicates={duplicates as DuplicatePair[]}
         selectedOptions={selectedOptions}
         setSelectedOptions={setSelectedOptions}
-        onClose={() => {
-          closeResolver();
-          setSelectedOptions([]);
-        }}
+        onClose={() => { closeResolver(); setSelectedOptions([]); }}
         onConfirm={handleConfirmDuplicates}
       />
 
@@ -135,6 +131,14 @@ export default function UploadFileWrapper({
         setSelectedOptions={setRelationSelections}
         onConfirm={handleConfirmRelations}
         onCancel={closeRelationModal}
+      />
+
+      <NewFieldsModal
+        open={newFieldsModalOpen}
+        newFields={newFieldsDetected}
+        headers={pendingHeaders}
+        onConfirm={handleConfirmNewFields}
+        onCancel={closeNewFieldsModal}
       />
     </div>
   );

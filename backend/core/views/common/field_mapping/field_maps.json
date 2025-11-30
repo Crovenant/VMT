@@ -1,0 +1,32 @@
+
+{
+  "VIT": [
+    "numero",
+    "idExterno",
+    "estado",
+    "resumen",
+    "breveDescripcion",
+    "elementoConfiguracion",
+    "prioridad",
+    "puntuacionRiesgo",
+    "grupoAsignacion",
+    "asignadoA",
+    "creado",
+    "actualizado",
+    "sites",
+    "vulnerabilitySolution",
+    "vulnerabilidad",
+    "vul"
+  ],
+  "VUL": [
+    "numero",
+    "activo",
+    "elementosVulnerables",
+    "asignadoA",
+    "grupoAsignacion",
+    "prioridad",
+    "estado",
+    "actualizado",
+    "vits"
+  ]
+}
