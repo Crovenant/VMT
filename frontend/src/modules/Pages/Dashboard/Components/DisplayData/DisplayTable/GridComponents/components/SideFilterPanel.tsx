@@ -77,7 +77,10 @@ const SideFilterPanel: React.FC<Props> = ({
     const allSet = new Set((allHeaders || []).map((h) => String(h)));
     const baseSet = new Set(base);
 
+    // Solo los canónicos que realmente existen en el grid
     const canonicalPresent = base.filter((label) => allSet.has(label));
+
+    // Cualquier header nuevo que no esté en la lista canónica
     const extras = (allHeaders || [])
       .map((x) => String(x))
       .filter((x) => !baseSet.has(x))

@@ -53,6 +53,7 @@ export default function DisplayTable({
   onOpenModal,
   setSelectedCount,
   setSelectedIds,
+  showFilterPanel,
 }: {
   rows: Item[];
   visibleColumns: string[];
@@ -73,7 +74,49 @@ export default function DisplayTable({
     return m;
   }, [rows]);
 
-  const { map: columnKeyMap, allColumns } = useColumnMap(viewType);
+  // 1) Mapas base (VIT_MAP / VUL_MAP) como siempre
+  const { map: staticColumnKeyMap, allColumns: staticAllColumns } = useColumnMap(viewType);
+
+  // 2) Extender mapas con campos nuevos que vengan en los datos (como "Krovean")
+  const { columnKeyMap, allColumns } = useMemo(() => {
+    // Claves técnicas que NO queremos auto-convertir en columnas
+    const technicalKeys = new Set<string>([
+      'id',
+      'nombre',
+      'hasLink',
+      'followUp',
+      'soonDue',
+      'dueDate',
+      'logHistory',
+    ]);
+
+    const baseMap: Record<string, string> = {
+      ...(staticColumnKeyMap as Record<string, string>),
+    };
+    const baseColumns = [...staticAllColumns];
+    const baseFieldKeys = new Set<string>(Object.values(baseMap));
+
+    const extraMap: Record<string, string> = {};
+
+    rows.forEach((row) => {
+      Object.keys(row as any).forEach((fieldKey) => {
+        if (technicalKeys.has(fieldKey)) return;
+        if (baseFieldKeys.has(fieldKey)) return;
+
+        // Usamos la propia clave como header (ej: "Krovean")
+        const headerLabel = fieldKey;
+
+        if (!extraMap[headerLabel]) {
+          extraMap[headerLabel] = fieldKey;
+        }
+      });
+    });
+
+    const mergedMap: Record<string, string> = { ...baseMap, ...extraMap };
+    const mergedColumns = [...baseColumns, ...Object.keys(extraMap)];
+
+    return { columnKeyMap: mergedMap, allColumns: mergedColumns };
+  }, [rows, staticColumnKeyMap, staticAllColumns]);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
@@ -98,10 +141,10 @@ export default function DisplayTable({
       floatingFilter: false,
       wrapHeaderText: true,
       autoHeaderHeight: true,
-      wrapText: true,                        // salto de línea en celdas si hace falta
+      wrapText: true, // salto de línea en celdas si hace falta
       autoHeight: true,
       headerClass: 'custom-header',
-      cellClass: 'cell-wrap-2',              // clamp a 2 líneas
+      cellClass: 'cell-wrap-2', // clamp a 2 líneas
       cellStyle: { whiteSpace: 'normal', lineHeight: '1.35' },
       suppressHeaderMenuButton: false,
       minWidth: 60,
@@ -109,11 +152,14 @@ export default function DisplayTable({
     [],
   );
 
-  const toggleColDef = useMemo(() => createToggleColDef(expanded, toggleExpand), [expanded, toggleExpand]);
+  const toggleColDef = useMemo(
+    () => createToggleColDef(expanded, toggleExpand),
+    [expanded, toggleExpand],
+  );
 
   // ColDefs de negocio con headerName modificado (salto tras palabra 2)
   const businessColDefs = useMemo(() => {
-    const defs = createBusinessColDefs(visibleColumns, columnKeyMap);
+    const defs = createBusinessColDefs(visibleColumns, columnKeyMap as any);
     return defs.map((d) => {
       const nd: ColDef<GridRow> = { ...d };
       nd.headerName = formatHeaderLabel(d.headerName);
@@ -121,7 +167,10 @@ export default function DisplayTable({
     });
   }, [visibleColumns, columnKeyMap]);
 
-  const eyeColDef = useMemo(() => createEyeColDef((item: Item) => onOpenModal(item), hasLink), [onOpenModal, hasLink]);
+  const eyeColDef = useMemo(
+    () => createEyeColDef((item: Item) => onOpenModal(item), hasLink),
+    [onOpenModal, hasLink],
+  );
 
   const columnDefs: ColDef<GridRow>[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
@@ -163,8 +212,6 @@ export default function DisplayTable({
         const def = c.getColDef();
         if (def.checkboxSelection) return false;
         if (def.field === '__eye__') return false;
-        // El toggle no lo podemos comparar por identidad, mejor por field ad-hoc si lo tenéis así;
-        // si no, lo dejamos pasar y AG ajustará igual
         return true;
       })
       .map((c) => c.getColId());
@@ -194,26 +241,38 @@ export default function DisplayTable({
       const api = gridRef.current?.api ?? null;
       const colApi = gridRef.current?.columnApi ?? null;
       if (!applied) autoSizeVisibleColumns(api, colApi);
-      else autoSizeVisibleColumns(api, colApi); // aunque apliquemos orden, ajustamos por contenido
+      else autoSizeVisibleColumns(api, colApi);
     }, 0);
     return () => clearTimeout(t);
   }, [applySavedColumnState, columnDefs, autoSizeVisibleColumns]);
 
-  const onColumnMoved = useCallback((e: ColumnMovedEvent) => {
-    if (e.finished) persistColumnState();
-  }, [persistColumnState]);
+  const onColumnMoved = useCallback(
+    (e: ColumnMovedEvent) => {
+      if (e.finished) persistColumnState();
+    },
+    [persistColumnState],
+  );
 
-  const onColumnResized = useCallback((e: ColumnResizedEvent) => {
-    if (e.finished) persistColumnState();
-  }, [persistColumnState]);
+  const onColumnResized = useCallback(
+    (e: ColumnResizedEvent) => {
+      if (e.finished) persistColumnState();
+    },
+    [persistColumnState],
+  );
 
-  const onFirstDataRendered = useCallback((e: FirstDataRenderedEvent) => {
-    autoSizeVisibleColumns(e.api, e.columnApi);
-  }, [autoSizeVisibleColumns]);
+  const onFirstDataRendered = useCallback(
+    (e: FirstDataRenderedEvent) => {
+      autoSizeVisibleColumns(e.api, e.columnApi);
+    },
+    [autoSizeVisibleColumns],
+  );
 
-  const onModelUpdated = useCallback((e: ModelUpdatedEvent) => {
-    autoSizeVisibleColumns(e.api, e.columnApi);
-  }, [autoSizeVisibleColumns]);
+  const onModelUpdated = useCallback(
+    (e: ModelUpdatedEvent) => {
+      autoSizeVisibleColumns(e.api, e.columnApi);
+    },
+    [autoSizeVisibleColumns],
+  );
 
   return (
     <Box
@@ -273,11 +332,15 @@ export default function DisplayTable({
           }}
         />
       </Box>
-      <SideFilterPanel
-        allHeaders={allColumns}
-        visibleColumns={visibleColumns}
-        setVisibleColumns={setVisibleColumns}
-      />
+
+      {showFilterPanel && (
+        <SideFilterPanel
+          viewType={viewType}
+          allHeaders={allColumns}
+          visibleColumns={visibleColumns}
+          setVisibleColumns={setVisibleColumns}
+        />
+      )}
     </Box>
   );
 }
