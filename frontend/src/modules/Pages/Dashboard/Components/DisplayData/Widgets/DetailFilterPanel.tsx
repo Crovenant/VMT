@@ -1,5 +1,5 @@
 // src/modules/Pages/Dashboard/Components/DisplayData/Widgets/DetailFilterPanel.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 import {
   Box,
   Accordion,
@@ -9,19 +9,20 @@ import {
   FormControlLabel,
   Checkbox,
   TextField,
-  InputAdornment,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import SearchIcon from '@mui/icons-material/Search';
+  InputAdornment
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import SearchIcon from '@mui/icons-material/Search'
+import { getCanonicalSchema, MINIMAL_SCHEMA_CATALOG } from '../../../../../Shared/FieldMapping'
 
 type Props = {
-  isOpen: boolean;
-  setIsOpen: (val: boolean) => void;
-  selectedCsirtFields: string[];
-  setSelectedCsirtFields: (fields: string[]) => void;
-  selectedCsoFields: string[];
-  setSelectedCsoFields: (fields: string[]) => void;
-};
+  isOpen: boolean
+  setIsOpen: (val: boolean) => void
+  selectedCsirtFields: string[]
+  setSelectedCsirtFields: (fields: string[]) => void
+  selectedCsoFields: string[]
+  setSelectedCsoFields: (fields: string[]) => void
+}
 
 const headerMap: Record<string, string> = {
   numero: 'Número',
@@ -51,9 +52,8 @@ const headerMap: Record<string, string> = {
   comentarios: 'Comentarios',
   resolucion: 'Resolución',
   hasLink: 'Has link'
-};
+}
 
-// ✅ Campos VIT exactos según tu lista
 const csirtFields = [
   'Número',
   'ID externo',
@@ -72,9 +72,8 @@ const csirtFields = [
   'Vulnerabilidad',
   'Due date',
   'VUL'
-];
+]
 
-// ✅ Campos VUL (sin cambios, según lógica actual)
 const csoFields = [
   'Número',
   'Activo',
@@ -85,7 +84,7 @@ const csoFields = [
   'Estado',
   'Actualizado',
   'VITS'
-];
+]
 
 export default function DetailSideFilterPanel({
   isOpen,
@@ -93,55 +92,50 @@ export default function DetailSideFilterPanel({
   selectedCsirtFields,
   setSelectedCsirtFields,
   selectedCsoFields,
-  setSelectedCsoFields,
+  setSelectedCsoFields
 }: Props) {
-  const [searchCsirt, setSearchCsirt] = useState('');
-  const [searchCso, setSearchCso] = useState('');
-  const [vitKeys, setVitKeys] = useState<string[]>([]);
-  const [vulKeys, setVulKeys] = useState<string[]>([]);
-
+  const [searchCsirt, setSearchCsirt] = useState('')
+  const [searchCso, setSearchCso] = useState('')
+  const [vitKeys, setVitKeys] = useState<string[]>([])
+  const [vulKeys, setVulKeys] = useState<string[]>([])
   useEffect(() => {
     Promise.all([
-      fetch('/common/get-schema/?viewType=VIT').then(r => r.json()).catch(() => ({ schema: [] })),
-      fetch('/common/get-schema/?viewType=VUL').then(r => r.json()).catch(() => ({ schema: [] }))
-    ]).then(([vit, vul]) => {
-      const vitSchema: string[] = Array.isArray(vit.schema) ? vit.schema : [];
-      const vulSchema: string[] = Array.isArray(vul.schema) ? vul.schema : [];
-
-      const vitLabels = vitSchema.map(k => headerMap[k] || k);
-      const vulLabels = vulSchema.map(k => headerMap[k] || k);
-
-      setVitKeys(vitLabels.length ? vitLabels : csirtFields);
-      setVulKeys(vulLabels.length ? vulLabels : csoFields);
-    }).catch(() => {
-      setVitKeys(csirtFields);
-      setVulKeys(csoFields);
-    });
-  }, []);
-
+      getCanonicalSchema('VIT'),
+      getCanonicalSchema('VUL')
+    ])
+      .then(([vit, vul]) => {
+        const vitSchema: string[] = Array.isArray(vit) && vit.length ? vit : MINIMAL_SCHEMA_CATALOG.VIT.keys
+        const vulSchema: string[] = Array.isArray(vul) && vul.length ? vul : MINIMAL_SCHEMA_CATALOG.VUL.keys
+        const vitLabels = vitSchema.map((k) => headerMap[k] || k)
+        const vulLabels = vulSchema.map((k) => headerMap[k] || k)
+        setVitKeys(vitLabels.length ? vitLabels : csirtFields)
+        setVulKeys(vulLabels.length ? vulLabels : csoFields)
+      })
+      .catch(() => {
+        setVitKeys(csirtFields)
+        setVulKeys(csoFields)
+      })
+  }, [])
   const filteredCsirt = (vitKeys.length ? vitKeys : csirtFields).filter((f) =>
-    f.toLowerCase().includes(searchCsirt.toLowerCase()),
-  );
+    f.toLowerCase().includes(searchCsirt.toLowerCase())
+  )
   const filteredCso = (vulKeys.length ? vulKeys : csoFields).filter((f) =>
-    f.toLowerCase().includes(searchCso.toLowerCase()),
-  );
-
+    f.toLowerCase().includes(searchCso.toLowerCase())
+  )
   const toggleCsirt = (field: string) => {
     setSelectedCsirtFields(
       selectedCsirtFields.includes(field)
         ? selectedCsirtFields.filter((f) => f !== field)
-        : [...selectedCsirtFields, field],
-    );
-  };
-
+        : [...selectedCsirtFields, field]
+    )
+  }
   const toggleCso = (field: string) => {
     setSelectedCsoFields(
       selectedCsoFields.includes(field)
         ? selectedCsoFields.filter((f) => f !== field)
-        : [...selectedCsoFields, field],
-    );
-  };
-
+        : [...selectedCsoFields, field]
+    )
+  }
   return (
     <Box
       sx={{
@@ -153,10 +147,9 @@ export default function DetailSideFilterPanel({
         borderRight: '1px solid rgba(31, 45, 90, 0.25)',
         transition: 'width 0.3s ease',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'hidden'
       }}
     >
-      {/* Botón vertical */}
       <Box
         sx={{
           position: 'absolute',
@@ -169,7 +162,7 @@ export default function DetailSideFilterPanel({
           justifyContent: 'center',
           cursor: 'pointer',
           backgroundColor: '#f5f6f8',
-          borderRight: '1px solid rgba(31, 45, 90, 0.25)',
+          borderRight: '1px solid rgba(31, 45, 90, 0.25)'
         }}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -179,26 +172,23 @@ export default function DetailSideFilterPanel({
             textOrientation: 'mixed',
             fontSize: '16px',
             fontWeight: 'bold',
-            color: '#1f2d5a',
+            color: '#1f2d5a'
           }}
         >
           Filters
         </Box>
       </Box>
-
-      {/* Contenido */}
       <Box
         sx={{
           opacity: isOpen ? 1 : 0,
           transition: 'opacity 0.3s ease',
           p: isOpen ? 2 : 0,
           ml: isOpen ? '40px' : 0,
-          overflowY: 'auto',
+          overflowY: 'auto'
         }}
       >
         {isOpen && (
           <>
-            {/* VIT Fields */}
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography sx={{ fontWeight: 600 }}>Vit Fields</Typography>
@@ -216,7 +206,7 @@ export default function DetailSideFilterPanel({
                       <InputAdornment position="start">
                         <SearchIcon fontSize="small" sx={{ color: '#1f2d5a' }} />
                       </InputAdornment>
-                    ),
+                    )
                   }}
                 />
                 {filteredCsirt.map((field) => (
@@ -235,8 +225,6 @@ export default function DetailSideFilterPanel({
                 ))}
               </AccordionDetails>
             </Accordion>
-
-            {/* VUL Fields */}
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography sx={{ fontWeight: 600 }}>Vul Fields</Typography>
@@ -254,7 +242,7 @@ export default function DetailSideFilterPanel({
                       <InputAdornment position="start">
                         <SearchIcon fontSize="small" sx={{ color: '#1f2d5a' }} />
                       </InputAdornment>
-                    ),
+                    )
                   }}
                 />
                 {filteredCso.map((field) => (
@@ -277,5 +265,5 @@ export default function DetailSideFilterPanel({
         )}
       </Box>
     </Box>
-  );
+  )
 }

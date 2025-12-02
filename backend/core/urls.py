@@ -16,6 +16,12 @@ from core.views.VUL.apply_relations import apply_relations_vul
 from core.views.VUL import delete_selection as vul_delete_selection
 from core.views.VUL.comments import vul_comments_view
 
+from core.views.common.field_mapping.schema_view import (
+    get_all_schemas_view,
+    get_schema_view,
+    apply_new_fields_view,
+)
+
 
 @csrf_exempt
 def home_view(_request):
@@ -46,6 +52,9 @@ def home_view(_request):
 
 urlpatterns = [
     path("", home_view),
+    path("schema/", get_all_schemas_view),
+    path("schema/<str:view_type>/", get_schema_view),
+    path("schema/apply-new-fields/", apply_new_fields_view),
     path("vit/risk-data/", get_vit_risk_data),
     path("vit/upload/", vit_upload_data),
     path("vit/save-selection/", vit_save_selection),

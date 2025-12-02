@@ -1,33 +1,24 @@
-
 // src/modules/Pages/Dashboard/Components/DisplayData/Export/hooks/useExportExcel.ts
-import { useEffect } from 'react';
-import { exportVITToExcel, exportVULToExcel } from '../exportExcel';
-import type { GridApi } from 'ag-grid-community';
-import type { Item } from '../../../../../../Types/item';
-
-function isVULItem(item: Item): boolean {
-  return !!item.vits || !!item.elementosVulnerables || !!item.activo;
-}
+import { useEffect } from 'react'
+import { exportVITToExcel, exportVULToExcel } from '../exportExcel'
+import type { GridApi } from 'ag-grid-community'
+import type { Item } from '../../../../../../Types/item'
 
 export function useExportExcel(
   gridRef: React.RefObject<{ api: GridApi }>,
   rows: Item[],
-  visibleColumns: string[]
+  viewType: 'VIT' | 'VUL'
 ) {
   useEffect(() => {
     window.exportFilteredDataToExcel = () => {
-      const api = gridRef.current?.api;
-      const selected = api?.getSelectedRows?.() ?? [];
-      const base = (selected as Item[]).length > 0 ? (selected as Item[]) : rows;
-
-      // Detecta si la vista es VUL por las columnas visibles
-      const isVULView = visibleColumns.includes('Activo') || visibleColumns.includes('Elementos vulnerables');
-
-      if (isVULView) {
-        exportVULToExcel(base.filter(isVULItem));
+      const api = gridRef.current?.api
+      const selected = api?.getSelectedRows?.() ?? []
+      const base = (selected as Item[]).length > 0 ? (selected as Item[]) : rows
+      if (viewType === 'VUL') {
+        exportVULToExcel(base)
       } else {
-        exportVITToExcel(base.filter((item) => !isVULItem(item)));
+        exportVITToExcel(base)
       }
-    };
-  }, [gridRef, rows, visibleColumns]);
+    }
+  }, [gridRef, rows, viewType])
 }
