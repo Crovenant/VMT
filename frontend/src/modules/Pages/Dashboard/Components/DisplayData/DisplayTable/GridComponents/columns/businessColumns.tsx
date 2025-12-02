@@ -1,5 +1,4 @@
-
-//src: frontend/src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/GridComponents/columns/businessColumns.tsx
+// src: frontend/src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/GridComponents/columns/businessColumns.tsx
 import { useState } from 'react';
 import type { ColDef, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
 import type { GridRow, DisplayRow } from '../../hooks/useDisplayRows';
@@ -32,6 +31,7 @@ const STATUS_OPTIONS = [
 function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
   const d = params.data as DisplayRow | undefined;
   if (!d || isDetailRow(d)) return null;
+
   const item = d as Item;
   const initial = String(params.value ?? '');
   const [editing, setEditing] = useState(false);
@@ -43,22 +43,27 @@ function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
     setSelected(initial);
     setEditing(false);
   };
+
   const handleConfirm = async () => {
-    const id = String(item.id ?? item.numero ?? '');
-    if (!id || !updateUrl) {
+    const numero = String(item.numero ?? '');
+
+    if (!numero || !updateUrl) {
       setEditing(false);
       return;
     }
+
     try {
       const res = await fetch(updateUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, estado: selected }),
+        body: JSON.stringify({ numero, estado: selected }),
       });
+
       if (!res.ok) {
         setEditing(false);
         return;
       }
+
       params.node?.setDataValue('estado', selected);
       setEditing(false);
     } catch {
@@ -79,7 +84,16 @@ function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
           '&:hover .edit-icon': { opacity: 1, pointerEvents: 'auto' },
         }}
       >
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{initial}</span>
+        <span
+          style={{
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {initial}
+        </span>
         <Box
           className="edit-icon"
           sx={{
@@ -105,7 +119,6 @@ function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
       sx={{
         display: 'flex',
         justifyContent: 'left',
-  
       }}
     >
       <Select
@@ -217,7 +230,7 @@ export const createBusinessColDefs = (
     if (key === 'numero') Object.assign(baseDef, { width: 110 }, noWrap);
 
     if (key === 'estado') {
-      Object.assign(baseDef, { width: 200 }, noWrap);
+      Object.assign(baseDef, { minWidth: 190}, noWrap);
       baseDef.cellRenderer = EstadoCellRenderer;
     }
 
