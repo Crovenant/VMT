@@ -11,15 +11,14 @@ import UploadFileWrapper from '../../../../Shared/Components/UploadFileWrapper';
 import { useColumnMap } from './DisplayTable/hooks/useColumnMap';
 import DeleteSelection from './DisplayTable/GridComponents/components/DeleteSelection';
 import type { Item } from '../../../../Types/item';
-
 type ViewType = 'VIT' | 'VUL';
-
-const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: string; deleteUrl: string; defaultColumns: string[] }> = {
+const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: string; deleteUrl: string; updateUrl: string; defaultColumns: string[] }> = {
   VIT: {
     listUrl: 'http://localhost:8000/vit/risk-data/',
     uploadUrl: 'http://localhost:8000/vit/upload/',
     saveUrl: 'http://localhost:8000/vit/save-selection/',
     deleteUrl: 'http://localhost:8000/vit/delete-selection/',
+    updateUrl: 'http://localhost:8000/vit/update-status/',
     defaultColumns: [
       'Número',
       'Estado',
@@ -27,7 +26,7 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
       'Prioridad',
       'Asignado a',
       'Due date',
-      'VUL',      
+      'VUL',
     ],
   },
   VUL: {
@@ -35,6 +34,7 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
     uploadUrl: 'http://localhost:8000/vul/upload/',
     saveUrl: 'http://localhost:8000/vul/save-selection/',
     deleteUrl: 'http://localhost:8000/vul/delete-selection/',
+    updateUrl: 'http://localhost:8000/vul/update-status/',
     defaultColumns: [
       'Número',
       'Activo',
@@ -46,10 +46,8 @@ const SCHEMA: Record<ViewType, { listUrl: string; uploadUrl: string; saveUrl: st
     ],
   },
 };
-
 const LS_VIEW = 'displayData.viewType';
 const LS_COLS = (v: ViewType) => `displayData.visibleColumns.${v}`;
-
 interface Props {
   refreshKey: number;
   priorityFilter?: string | null;
@@ -60,7 +58,6 @@ interface Props {
   hideToggle?: boolean;
   onOpenModal: (item: Item) => void;
 }
-
 export default function DisplayWrapper({
   refreshKey,
   priorityFilter,
@@ -75,12 +72,10 @@ export default function DisplayWrapper({
     const saved = localStorage.getItem(LS_VIEW);
     return saved === 'VUL' || saved === 'VIT' ? (saved as ViewType) : 'VIT';
   });
-
   const setViewType = (v: ViewType) => {
     localStorage.setItem(LS_VIEW, v);
     _setViewType(v);
   };
-
   const { allColumns: allowedColumns } = useColumnMap(viewType);
   const [uploadOpen, setUploadOpen] = useState(false);
   const schema = SCHEMA[viewType];
@@ -92,9 +87,7 @@ export default function DisplayWrapper({
     viewType,
     listUrl: schema.listUrl,
   });
-
   const [visibleColumns, setVisibleColumns] = useState<string[]>(SCHEMA[viewType].defaultColumns);
-
   useEffect(() => {
     const allowed = new Set(allowedColumns);
     const saved = localStorage.getItem(LS_COLS(viewType));
@@ -110,18 +103,15 @@ export default function DisplayWrapper({
     }
     setVisibleColumns(SCHEMA[viewType].defaultColumns);
   }, [viewType, allowedColumns]);
-
   useEffect(() => {
     const allowed = new Set(allowedColumns);
     const filtered = visibleColumns.filter((c) => allowed.has(String(c)));
     localStorage.setItem(LS_COLS(viewType), JSON.stringify(filtered.length ? filtered : SCHEMA[viewType].defaultColumns));
   }, [viewType, visibleColumns, allowedColumns]);
-
   const handleUploadClick = () => {
     setUploadOpen(true);
     setShowUploadModal?.(true);
   };
-
   const handleUploadClose = (success: boolean) => {
     setUploadOpen(false);
     setShowUploadModal?.(false);
@@ -129,16 +119,13 @@ export default function DisplayWrapper({
       onResetView?.();
     }
   };
-
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedCount, setSelectedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   const handleDeleteClick = () => {
     if (selectedCount === 0) return;
     setDeleteOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     try {
       const response = await fetch(schema.deleteUrl, {
@@ -146,12 +133,10 @@ export default function DisplayWrapper({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds }),
       });
-
       if (!response.ok) {
         await response.text();
         return;
       }
-
       await response.json();
       onResetView?.();
     } catch {} finally {
@@ -160,13 +145,10 @@ export default function DisplayWrapper({
       setSelectedIds([]);
     }
   };
-
   const handleCancelDelete = () => {
     setDeleteOpen(false);
   };
-
   const current = SCHEMA[viewType];
-
   return (
     <>
       <Box display="grid" gridTemplateColumns="1fr auto" alignItems="center" columnGap={2} mb={0.5}>
@@ -198,6 +180,7 @@ export default function DisplayWrapper({
         onOpenModal={onOpenModal}
         setSelectedCount={setSelectedCount}
         setSelectedIds={setSelectedIds}
+        updateUrl={current.updateUrl}
       />
       <Dialog open={uploadOpen} onClose={() => handleUploadClose(false)} maxWidth="sm" fullWidth>
         <Box p={3}>
@@ -209,7 +192,6 @@ export default function DisplayWrapper({
           />
         </Box>
       </Dialog>
-
       <DeleteSelection
         open={deleteOpen}
         selectedCount={selectedCount}

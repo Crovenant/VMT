@@ -36,7 +36,6 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
   return fallback;
 }
 
-/* ---------- mapeo para VUL ---------- */
 function mapVUL(row: Record<string, unknown>): Item {
   const numero = String(row['numero'] ?? '');
   const activo = String(row['activo'] ?? '');
@@ -150,7 +149,6 @@ function mapVIT(row: Record<string, unknown>): Item {
   } as Item;
 }
 
-/* ---------- extra helpers ---------- */
 function extractArray(raw: unknown): unknown[] {
   if (Array.isArray(raw)) return raw;
   if (raw && typeof raw === 'object') {
@@ -165,7 +163,7 @@ function isAbortError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { name?: string }).name === 'AbortError';
 }
 
-/* ---------- HOOK ---------- */
+
 export default function useDisplayData({
   refreshKey,
   priorityFilter,

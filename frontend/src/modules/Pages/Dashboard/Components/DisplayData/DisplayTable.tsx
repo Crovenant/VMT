@@ -1,3 +1,4 @@
+
 // src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable.tsx
 import { useMemo, useRef, useCallback, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
@@ -30,10 +31,8 @@ import { createBusinessColDefs } from './DisplayTable/GridComponents/columns/bus
 import { useExportExcel } from '../DisplayData/Export/hooks/useExportExcel';
 import { useGridUtils } from './DisplayTable/GridComponents/hooks/useGridUtils';
 import FullWidthRenderer from './DisplayTable/Renderers/FullWidthRenderer';
-
 type ViewType = 'VIT' | 'VUL';
 const LS_COLUMN_STATE = (v: ViewType) => `displayData.columnState.${v}`;
-
 function formatHeaderLabel(label?: string): string | undefined {
   if (!label) return label;
   const words = String(label).split(/\s+/);
@@ -42,7 +41,6 @@ function formatHeaderLabel(label?: string): string | undefined {
   const rest = words.slice(2).join(' ');
   return `${first}\n${rest}`;
 }
-
 export default function DisplayTable({
   rows,
   visibleColumns,
@@ -53,6 +51,7 @@ export default function DisplayTable({
   setSelectedCount,
   setSelectedIds,
   showFilterPanel,
+  updateUrl,
 }: {
   rows: Item[];
   visibleColumns: string[];
@@ -64,17 +63,15 @@ export default function DisplayTable({
   onOpenModal: (item: Item) => void;
   setSelectedCount?: React.Dispatch<React.SetStateAction<number>>;
   setSelectedIds?: React.Dispatch<React.SetStateAction<string[]>>;
+  updateUrl: string;
 }) {
   const gridRef = useRef<AgGridReact<GridRow>>(null);
-
   const itemById = useMemo(() => {
     const m = new Map<string, Item>();
     for (const it of rows) m.set(String(it.id ?? it.numero), it);
     return m;
   }, [rows]);
-
   const { map: staticColumnKeyMap, allColumns: staticAllColumns } = useColumnMap(viewType);
-
   const { columnKeyMap, allColumns } = useMemo(() => {
     const technicalKeys = new Set<string>([
       'id',
@@ -85,15 +82,12 @@ export default function DisplayTable({
       'dueDate',
       'logHistory',
     ]);
-
     const baseMap: Record<string, string> = {
       ...(staticColumnKeyMap as Record<string, string>),
     };
     const baseColumns = [...staticAllColumns];
     const baseFieldKeys = new Set<string>(Object.values(baseMap));
-
     const extraMap: Record<string, string> = {};
-
     rows.forEach((row) => {
       Object.keys(row as any).forEach((fieldKey) => {
         if (technicalKeys.has(fieldKey)) return;
@@ -104,16 +98,12 @@ export default function DisplayTable({
         }
       });
     });
-
     const mergedMap: Record<string, string> = { ...baseMap, ...extraMap };
     const mergedColumns = [...baseColumns, ...Object.keys(extraMap)];
-
     return { columnKeyMap: mergedMap, allColumns: mergedColumns };
   }, [rows, staticColumnKeyMap, staticAllColumns]);
-
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const displayRows = useMemo(() => buildDisplayRows(rows, expanded), [rows, expanded]);
-
   const toggleExpand = useCallback((id: string) => {
     setExpanded((old) => {
       const next = new Set(old);
@@ -122,10 +112,8 @@ export default function DisplayTable({
       return next;
     });
   }, []);
-
   useExportExcel(gridRef as unknown as React.RefObject<{ api: GridApi }>, rows, visibleColumns);
   const { handleGridReady } = useGridUtils();
-
   const defaultColDef: ColDef<GridRow> = useMemo(
     () => ({
       resizable: true,
@@ -144,12 +132,7 @@ export default function DisplayTable({
     }),
     [],
   );
-
-  const toggleColDef = useMemo(
-    () => createToggleColDef(expanded, toggleExpand),
-    [expanded, toggleExpand],
-  );
-
+  const toggleColDef = useMemo(() => createToggleColDef(expanded, toggleExpand), [expanded, toggleExpand]);
   const businessColDefs = useMemo(() => {
     const defs = createBusinessColDefs(visibleColumns, columnKeyMap as any);
     return defs.map((d) => {
@@ -158,17 +141,14 @@ export default function DisplayTable({
       return nd;
     });
   }, [visibleColumns, columnKeyMap]);
-
   const eyeColDef = useMemo(
     () => createEyeColDef((item: Item) => onOpenModal(item), hasLink),
     [onOpenModal, hasLink],
   );
-
   const columnDefs: ColDef<GridRow>[] = useMemo(
     () => [selectionColDef, eyeColDef, toggleColDef, ...businessColDefs],
     [eyeColDef, toggleColDef, businessColDefs],
   );
-
   const getRowStyle = useCallback(
     (p: RowClassParams<GridRow, unknown>): RowStyle | undefined => {
       const data = p?.data as DisplayRow | undefined;
@@ -187,14 +167,12 @@ export default function DisplayTable({
     },
     [],
   );
-
   const persistColumnState = useCallback(() => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return;
     const state = colApi.getColumnState() as ColumnState[];
     localStorage.setItem(LS_COLUMN_STATE(viewType), JSON.stringify(state));
   }, [viewType]);
-
   const autoSizeVisibleColumns = useCallback((api?: GridApi | null, colApi?: ColumnApi | null) => {
     if (!api || !colApi) return;
     const displayed = colApi.getAllDisplayedColumns?.() ?? [];
@@ -208,7 +186,6 @@ export default function DisplayTable({
       .map((c) => c.getColId());
     if (ids.length) colApi.autoSizeColumns(ids, true);
   }, []);
-
   const applySavedColumnState = useCallback((): boolean => {
     const colApi = gridRef.current?.columnApi;
     if (!colApi) return false;
@@ -225,7 +202,6 @@ export default function DisplayTable({
     }
     return false;
   }, [viewType]);
-
   useEffect(() => {
     const t = setTimeout(() => {
       const applied = applySavedColumnState();
@@ -236,35 +212,30 @@ export default function DisplayTable({
     }, 0);
     return () => clearTimeout(t);
   }, [applySavedColumnState, columnDefs, autoSizeVisibleColumns]);
-
   const onColumnMoved = useCallback(
     (e: ColumnMovedEvent) => {
       if (e.finished) persistColumnState();
     },
     [persistColumnState],
   );
-
   const onColumnResized = useCallback(
     (e: ColumnResizedEvent) => {
       if (e.finished) persistColumnState();
     },
     [persistColumnState],
   );
-
   const onFirstDataRendered = useCallback(
     (e: FirstDataRenderedEvent) => {
       autoSizeVisibleColumns(e.api, e.columnApi);
     },
     [autoSizeVisibleColumns],
   );
-
   const onModelUpdated = useCallback(
     (e: ModelUpdatedEvent) => {
       autoSizeVisibleColumns(e.api, e.columnApi);
     },
     [autoSizeVisibleColumns],
   );
-
   return (
     <Box
       sx={{
@@ -321,9 +292,9 @@ export default function DisplayTable({
               setSelectedIds(ids);
             }
           }}
+          context={{ updateUrl, viewType }}
         />
       </Box>
-
       {showFilterPanel && (
         <SideFilterPanel
           viewType={viewType}
