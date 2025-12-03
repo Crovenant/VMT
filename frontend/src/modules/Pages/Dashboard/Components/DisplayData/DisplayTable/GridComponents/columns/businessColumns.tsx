@@ -1,6 +1,6 @@
-// src: frontend/src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/GridComponents/columns/businessColumns.tsx
-import { useState } from 'react';
-import type { ColDef, ICellRendererParams, ValueGetterParams } from 'ag-grid-community';
+
+import { useEffect, useState } from 'react';
+import type { ColDef, ICellRendererParams, ValueGetterParams, IHeaderParams } from 'ag-grid-community';
 import type { GridRow, DisplayRow } from '../../hooks/useDisplayRows';
 import type { Item } from '../../../../../../../Types/item';
 import { Box, Select, MenuItem } from '@mui/material';
@@ -8,6 +8,8 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { isDetailRow } from '../../hooks/useDisplayRows';
 import { getWarningColor } from '../../utils/getWarningColor';
 
@@ -26,12 +28,12 @@ const STATUS_OPTIONS = [
   'Falso positivo',
   'Aceptado el riesgo',
   'Informativa',
+  'Cerrado',
 ];
 
 function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
   const d = params.data as DisplayRow | undefined;
   if (!d || isDetailRow(d)) return null;
-
   const item = d as Item;
   const initial = String(params.value ?? '');
   const [editing, setEditing] = useState(false);
@@ -46,24 +48,20 @@ function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
 
   const handleConfirm = async () => {
     const numero = String(item.numero ?? '');
-
     if (!numero || !updateUrl) {
       setEditing(false);
       return;
     }
-
     try {
       const res = await fetch(updateUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ numero, estado: selected }),
       });
-
       if (!res.ok) {
         setEditing(false);
         return;
       }
-
       params.node?.setDataValue('estado', selected);
       setEditing(false);
     } catch {
@@ -115,14 +113,9 @@ function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'left',
-      }}
-    >
+    <Box sx={{ display: 'flex', justifyContent: 'left' }}>
       <Select
-        value={selected}
+        value={STATUS_OPTIONS.includes(selected) ? selected : ''}
         onChange={(e) => setSelected(String(e.target.value))}
         size="small"
         displayEmpty
@@ -200,6 +193,45 @@ function EstadoCellRenderer(params: ICellRendererParams<GridRow>) {
   );
 }
 
+function EstadoHeaderComponent(props: IHeaderParams) {
+  const [locked, setLocked] = useState(true);
+
+  useEffect(() => {
+    const api = props.api;
+    const model = api.getFilterModel();
+    model['estado'] = { type: 'notContains', filter: 'Resuelto' };
+    api.setFilterModel(model);
+  }, []);
+
+  const toggleLock = () => {
+    const api = props.api;
+    const model = api.getFilterModel();
+    if (locked) {
+      delete model['estado'];
+    } else {
+      model['estado'] = { type: 'notContains', filter: 'Resuelto' };
+    }
+    api.setFilterModel(model);
+    setLocked(!locked);
+  };
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <span>{props.displayName}</span>
+      <Box sx={{ marginLeft: '6px', marginRight: '6px', cursor: 'pointer' }} onClick={toggleLock}>
+        {locked ? (
+          <LockIcon sx={{ fontSize: 16, color: '#b0b0b0' }} />
+        ) : (
+          <LockOpenIcon sx={{ fontSize: 16, color: '#757575' }} />
+        )}
+      </Box>
+      <Box sx={{ cursor: 'pointer' }} onClick={(e) => props.showColumnMenu(e.currentTarget as HTMLElement)}>
+        <span className="ag-header-icon ag-header-cell-menu-button">☰</span>
+      </Box>
+    </Box>
+  );
+}
+
 export const createBusinessColDefs = (
   visibleColumns: string[],
   columnKeyMap: Record<string, string>
@@ -230,8 +262,9 @@ export const createBusinessColDefs = (
     if (key === 'numero') Object.assign(baseDef, { width: 110 }, noWrap);
 
     if (key === 'estado') {
-      Object.assign(baseDef, { minWidth: 190}, noWrap);
+      Object.assign(baseDef, { minWidth: 190, suppressMenu: true }, noWrap);
       baseDef.cellRenderer = EstadoCellRenderer;
+      (baseDef as any).headerComponent = EstadoHeaderComponent;
     }
 
     if (key === 'prioridad') {
@@ -254,3 +287,5 @@ export const createBusinessColDefs = (
 
   return defs;
 };
+
+export { EstadoHeaderComponent };

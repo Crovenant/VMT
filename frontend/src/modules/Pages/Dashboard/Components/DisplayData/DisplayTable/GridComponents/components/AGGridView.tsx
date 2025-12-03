@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -7,20 +8,23 @@ import type { Item } from '../../../../../../../Types/item';
 import FullWidthRenderer from '../../Renderers/FullWidthRenderer';
 import { isDetailRow } from '../../hooks/useDisplayRows';
 
+type ViewType = 'VIT' | 'VUL';
+
 interface Props {
   items: Item[];
   columnDefs: ColDef[];
   itemById: Map<string, Item>;
+  viewType: ViewType;
 }
 
-const AGGridView: React.FC<Props> = ({ items, columnDefs, itemById }) => {
+const AGGridView: React.FC<Props> = ({ items, columnDefs, itemById, viewType }) => {
   const [rowData] = useState(items);
 
   const defaultColDef: ColDef = useMemo(
     () => ({
       resizable: true,
       filter: 'agTextColumnFilter',
-      floatingFilter: false,
+      floatingFilter: true,
       sortable: true,
       suppressHeaderMenuButton: false,
     }),
@@ -52,15 +56,13 @@ const AGGridView: React.FC<Props> = ({ items, columnDefs, itemById }) => {
     [columnDefs]
   );
 
-  /** ✅ Altura fija para filas detalle */
   const getRowHeight = useCallback((params: RowHeightParams) => {
     if (isDetailRow(params.data)) {
-      return 220; // altura suficiente para Comments + Log
+      return 220;
     }
-    return 40; // altura normal para filas estándar
+    return 40;
   }, []);
 
-  /** ✅ Indica qué filas son full-width */
   const isFullWidthRow = useCallback((params: any) => {
     return isDetailRow(params.data);
   }, []);
@@ -80,7 +82,7 @@ const AGGridView: React.FC<Props> = ({ items, columnDefs, itemById }) => {
         getRowHeight={getRowHeight}
         components={{
           fullWidthRenderer: (props: any) => (
-            <FullWidthRenderer params={props} itemById={itemById} />
+            <FullWidthRenderer params={props} itemById={itemById} viewType={viewType} />
           ),
         }}
         fullWidthCellRenderer="fullWidthRenderer"
