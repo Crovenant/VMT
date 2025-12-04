@@ -1,4 +1,4 @@
-# core/views/VIT/upload.py
+# backend/core/views/VIT/upload.py
 import json
 import os
 from pathlib import Path
@@ -11,6 +11,7 @@ from core.views.common.utils import add_cors_headers
 from core.views.VIT.normalize import normalize_headers
 from core.views.VIT.duplicates import detect_duplicates
 from core.views.VIT.risk_logic import assign_ids_and_merge, calculate_due_date
+from datetime import datetime
 
 CORE_DIR = Path(apps.get_app_config("core").path)
 DATA_DIR = CORE_DIR / "data"
@@ -18,6 +19,22 @@ DATA_DIR.mkdir(exist_ok=True)
 
 JSON_PATH = DATA_DIR / "CSIRT" / "vit_Data.json"
 VUL_JSON_PATH = DATA_DIR / "CSIRT" / "vul_Data.json"
+
+_REQUIRED_CANON_MIN = {"numero", "prioridad", "estado"}
+
+
+def _ensure_front_fields(e: dict) -> dict:
+    if "closedDate" not in e or e.get("closedDate") is None:
+        e["closedDate"] = ""
+    if "closedDelayDays" not in e or e.get("closedDelayDays") is None:
+        e["closedDelayDays"] = ""
+    if "overdue" not in e:
+        e["overdue"] = False
+    if not e.get("dueDate"):
+        e["dueDate"] = calculate_due_date(
+            e.get("creado"), e.get("prioridad")
+        ) or datetime.now().strftime("%Y-%m-%d")
+    return e
 
 
 @csrf_exempt
@@ -34,12 +51,24 @@ def upload_data(request):
         excel_file = request.FILES["file"]
         df = pd.read_excel(excel_file, engine="openpyxl")
         df = normalize_headers(df)
-        new_entries = df.to_dict(orient="records")
-        for entry in new_entries:
-            if isinstance(entry, dict) and not entry.get("dueDate"):
-                entry["dueDate"] = calculate_due_date(
-                    entry.get("creado"), entry.get("prioridad")
+
+        got = set(map(str, df.columns))
+        missing = sorted(list(_REQUIRED_CANON_MIN - got))
+        if missing:
+            return add_cors_headers(
+                JsonResponse(
+                    {
+                        "error": "Normalized columns missing",
+                        "missing": missing,
+                        "got": sorted(list(got)),
+                    },
+                    status=400,
                 )
+            )
+
+        new_entries = df.to_dict(orient="records")
+        new_entries = [_ensure_front_fields(dict(e)) for e in new_entries]
+
         if JSON_PATH.exists():
             with JSON_PATH.open("r", encoding="utf-8") as f:
                 existing_data = json.load(f)
@@ -47,7 +76,9 @@ def upload_data(request):
             existing_data = []
         if not isinstance(existing_data, list):
             existing_data = [existing_data]
+
         duplicates, unique_new_entries = detect_duplicates(existing_data, new_entries)
+
         if VUL_JSON_PATH.exists():
             with VUL_JSON_PATH.open("r", encoding="utf-8") as f:
                 vul_data = json.load(f)
@@ -55,6 +86,7 @@ def upload_data(request):
             vul_data = []
         if not isinstance(vul_data, list):
             vul_data = [vul_data]
+
         relations = []
         vul_map = {str(v.get("numero", "")).strip(): v for v in vul_data}
         for vit in unique_new_entries:
@@ -76,6 +108,7 @@ def upload_data(request):
                             "after": after_vits,
                         }
                     )
+
         if not duplicates and not relations:
             updated_data = assign_ids_and_merge(existing_data, unique_new_entries)
             JSON_PATH.parent.mkdir(parents=True, exist_ok=True)

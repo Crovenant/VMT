@@ -58,6 +58,27 @@ def _sanitize_link(entry: Dict) -> Dict:
     return entry
 
 
+def _ensure_front_fields(entry: Dict) -> Dict:
+    dv = entry.get("dueDate")
+    if _is_nan_value(dv):
+        entry["dueDate"] = ""
+    else:
+        entry["dueDate"] = str(dv)
+    cd = entry.get("closedDate")
+    if _is_nan_value(cd):
+        entry["closedDate"] = ""
+    else:
+        entry["closedDate"] = str(cd)
+    cdd = entry.get("closedDelayDays")
+    if _is_nan_value(cdd):
+        entry["closedDelayDays"] = ""
+    else:
+        entry["closedDelayDays"] = str(cdd)
+    od = entry.get("overdue")
+    entry["overdue"] = od if isinstance(od, bool) else False
+    return entry
+
+
 def build_lookup(existing_data: List[Dict]) -> Dict[Tuple[str, str], Dict]:
     idx: Dict[Tuple[str, str], Dict] = {}
     for it in existing_data:
@@ -78,6 +99,7 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
     for entry in new_entries:
         entry = _sanitize_any(entry)
         entry = _sanitize_link(entry)
+        entry = _ensure_front_fields(entry)
 
         k_both = _key(entry)
         k_id = _norm(entry.get("idExterno", ""))
@@ -94,6 +116,7 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
         if existing_row:
             existing_row = _sanitize_any(existing_row)
             existing_row = _sanitize_link(existing_row)
+            existing_row = _ensure_front_fields(existing_row)
             duplicates.append({"existing": existing_row, "incoming": entry})
         else:
             unique_new_entries.append(entry)

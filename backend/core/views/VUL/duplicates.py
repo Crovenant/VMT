@@ -14,10 +14,6 @@ def _norm(s: str) -> str:
     return s
 
 
-def _key(item: Dict) -> Tuple[str, str]:
-    return (_norm(item.get("numero", "")), _norm(item.get("activo", "")))
-
-
 def _is_nan_value(v: Any) -> bool:
     try:
         if isinstance(v, float) and math.isnan(v):
@@ -58,17 +54,26 @@ def _sanitize_link(entry: Dict) -> Dict:
     return entry
 
 
-def build_lookup(existing_data: List[Dict]) -> Dict[Tuple[str, str], Dict]:
-    idx: Dict[Tuple[str, str], Dict] = {}
-    for it in existing_data:
-        idx[_key(it)] = it
-    return idx
+def _ensure_front_fields(entry: Dict) -> Dict:
+    if "dueDate" not in entry or _is_nan_value(entry.get("dueDate")):
+        entry["dueDate"] = ""
+    else:
+        entry["dueDate"] = str(entry.get("dueDate"))
+    if "closedDate" not in entry or _is_nan_value(entry.get("closedDate")):
+        entry["closedDate"] = ""
+    else:
+        entry["closedDate"] = str(entry.get("closedDate"))
+    if "closedDelayDays" not in entry or _is_nan_value(entry.get("closedDelayDays")):
+        entry["closedDelayDays"] = ""
+    else:
+        entry["closedDelayDays"] = str(entry.get("closedDelayDays"))
+    if "overdue" not in entry or entry.get("overdue") is None:
+        entry["overdue"] = False
+    return entry
 
 
 def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
-    by_both = {_key(r): r for r in existing_data}
     by_num = {_norm(r.get("numero", "")): r for r in existing_data if r.get("numero")}
-    by_act = {_norm(r.get("activo", "")): r for r in existing_data if r.get("activo")}
 
     duplicates = []
     unique_new_entries = []
@@ -76,22 +81,18 @@ def detect_duplicates(existing_data: List[Dict], new_entries: List[Dict]):
     for entry in new_entries:
         entry = _sanitize_any(entry)
         entry = _sanitize_link(entry)
+        entry = _ensure_front_fields(entry)
 
-        k_both = _key(entry)
         k_num = _norm(entry.get("numero", ""))
-        k_act = _norm(entry.get("activo", ""))
 
-        existing_row = None
-        if k_both in by_both:
-            existing_row = by_both[k_both]
-        elif k_num and k_num in by_num:
-            existing_row = by_num[k_num]
-        elif k_act and k_act in by_act:
-            existing_row = by_act[k_act]
+        existing_row = by_num.get(k_num) if k_num else None
 
         if existing_row:
             existing_row = _sanitize_any(existing_row)
             existing_row = _sanitize_link(existing_row)
+            existing_row = _ensure_front_fields(existing_row)
             duplicates.append({"existing": existing_row, "incoming": entry})
         else:
             unique_new_entries.append(entry)
+
+    return duplicates, unique_new_entries

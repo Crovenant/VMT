@@ -117,6 +117,40 @@ def _sanitize_any(entry: Dict) -> Dict:
     return entry
 
 
+def _ensure_closed_fields(entry: Dict) -> Dict:
+    if not isinstance(entry, dict):
+        return entry
+    if "closedDate" not in entry or entry.get("closedDate") is None:
+        entry["closedDate"] = str(entry.get("closedDate") or "")
+    if "closedDelayDays" not in entry:
+        entry["closedDelayDays"] = None
+    else:
+        v = entry.get("closedDelayDays")
+        if v == "" or v is None:
+            entry["closedDelayDays"] = None
+        else:
+            try:
+                entry["closedDelayDays"] = int(v)
+            except Exception:
+                entry["closedDelayDays"] = None
+    if "overdue" not in entry:
+        entry["overdue"] = None
+    else:
+        v = entry.get("overdue")
+        if v in ("", None):
+            entry["overdue"] = None
+        elif isinstance(v, bool):
+            entry["overdue"] = v
+        else:
+            sv = str(v).strip().lower()
+            entry["overdue"] = (
+                True
+                if sv in ("true", "1", "yes", "y")
+                else False if sv in ("false", "0", "no", "n") else None
+            )
+    return entry
+
+
 def _sanitize_link(entry: Dict) -> Dict:
     vul_val = entry.get("vul")
     if _is_nan_value(vul_val):
@@ -136,6 +170,7 @@ def assign_ids_and_merge(
     for entry in unique_new_entries:
         entry = _sanitize_any(entry)
         entry = _ensure_due(entry)
+        entry = _ensure_closed_fields(entry)
         entry = _sanitize_link(entry)
         while next_id in used_ids:
             next_id += 1
@@ -147,6 +182,7 @@ def assign_ids_and_merge(
             if k != "id":
                 od[k] = v
         od = _sanitize_any(od)
+        od = _ensure_closed_fields(od)
         od = _sanitize_link(od)
         merged.append(od)
     return merged
@@ -168,6 +204,7 @@ def update_selected_entries(
     for entry in selected_entries:
         entry = _sanitize_any(entry)
         entry = _ensure_due(entry)
+        entry = _ensure_closed_fields(entry)
         entry = _sanitize_link(entry)
         k_both = _key(entry)
         k_id = _norm(entry.get("idExterno", ""))
@@ -196,6 +233,7 @@ def update_selected_entries(
             if field != "id":
                 od[field] = val
         od = _sanitize_any(od)
+        od = _ensure_closed_fields(od)
         od = _sanitize_link(od)
         updated_rows.append(od)
         keys_to_remove.add(k_both)
@@ -206,11 +244,14 @@ def update_selected_entries(
 
 def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
     vul_map = {
-        str(v.get("numero", "")).strip().lower(): _sanitize_any(dict(v))
+        str(v.get("numero", ""))
+        .strip()
+        .lower(): _ensure_closed_fields(_sanitize_any(dict(v)))
         for v in vul_list
     }
     for vit in vit_list:
         vit = _sanitize_any(vit)
+        vit = _ensure_closed_fields(vit)
         vit = _sanitize_link(vit)
         vul_id = str(vit.get("vul", "")).strip().lower()
         if vul_id in vul_map:
@@ -221,7 +262,7 @@ def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
             vit_num = str(vit.get("numero", "")).strip()
             if vit_num and vit_num not in current_vits.split(","):
                 new_vits = (
-                    (current_vits + "," + vit_num).strip(",")
+                    ((current_vits + "," + vit_num).strip(","))
                     if current_vits
                     else vit_num
                 )
@@ -235,10 +276,12 @@ def enrich_vit(vit_list: List[Dict], vul_list: List[Dict]) -> List[Dict]:
 def sanitize_duplicate_pairs(pairs: List[Dict[str, Dict]]) -> List[Dict[str, Dict]]:
     sanitized: List[Dict[str, Dict]] = []
     for p in pairs:
-        existing = _sanitize_any(dict(p.get("existing", {})))
-        existing = _sanitize_link(existing)
-        incoming = _sanitize_any(dict(p.get("incoming", {})))
-        incoming = _sanitize_link(incoming)
+        existing = _ensure_closed_fields(
+            _sanitize_link(_sanitize_any(dict(p.get("existing", {}))))
+        )
+        incoming = _ensure_closed_fields(
+            _sanitize_link(_sanitize_any(dict(p.get("incoming", {}))))
+        )
         sanitized.append({"existing": existing, "incoming": incoming})
     return sanitized
 
@@ -255,4 +298,8 @@ def sanitize_upload_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         cleaned_news: List[Dict[str, Any]] = []
         for e in news:
             e = _sanitize_any(dict(e))
+            e = _ensure_closed_fields(e)
             e = _sanitize_link(e)
+            cleaned_news.append(e)
+        out["new"] = cleaned_news
+    return out
