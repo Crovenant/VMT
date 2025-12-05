@@ -1,4 +1,5 @@
-// src/modules/Pages/Reports/Components/Charts/radial/VulRadial.tsx
+
+// frontend/src/modules/Pages/Reports/Components/Charts/Radial/VulRadial.tsx
 import { Box, Typography } from '@mui/material';
 
 type Props = {
@@ -12,11 +13,11 @@ export default function VulRadial({ value, max = 100 }: Props): JSX.Element {
   const gradient = `conic-gradient(from 135deg, #f28b82 0%, #d32f2f ${pct}%, #e0e0e0 ${pct}% 100%)`;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
       <Box
         sx={{
           width: '100%',
-          maxWidth: 180,
+          maxWidth: 250,
           aspectRatio: '1',
           borderRadius: '50%',
           background: gradient,
@@ -27,7 +28,7 @@ export default function VulRadial({ value, max = 100 }: Props): JSX.Element {
         <Box
           sx={{
             position: 'absolute',
-            inset: '20%',
+            inset: '10%',
             borderRadius: '50%',
             background: '#fff',
             display: 'flex',

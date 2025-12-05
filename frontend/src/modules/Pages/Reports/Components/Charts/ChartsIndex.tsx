@@ -1,7 +1,7 @@
 //src: frontend/src/modules/Pages/Reports/Components/Charts/ChartsIndex.tsx
 import { Box } from '@mui/material';
-import VitRadial from './radial/VitRadial';
-import VulRadial from './radial/VulRadial';
+import VitRadial from './Radial/VitRadial';
+import VulRadial from './Radial/VulRadial';
 
 type Props = {
   vitTotal: number;

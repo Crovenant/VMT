@@ -37,10 +37,7 @@ const vulColumnMap: Record<string, keyof Item> = {
   'VITS': 'vits',
 };
 
-/**
- * Construye una tabla en texto plano (tabulada) con CRLF.
- * Esto es lo más compatible con handlers externos y mailto.
- */
+
 function buildPlainTextTable(data: Item[], map: Record<string, keyof Item>): string {
   const headers = Object.keys(map);
   let text = headers.join('\t') + '\r\n';
@@ -57,15 +54,7 @@ function buildPlainTextTable(data: Item[], map: Record<string, keyof Item>): str
   return text;
 }
 
-/**
- * Algunas apps de Outlook (One Outlook / App híbrida) no respetan subject/body
- * del protocolo ms-outlook://compose. En esos casos:
- *  - 1º: Intentamos abrir la app con ms-outlook:// y compose
- *  - 2º: Si no crea el borrador, usamos mailto:?subject&body como fallback
- *  - 3º: Copiamos al portapapeles el contenido para que el usuario lo pegue (CTRL+V)
- *
- * Cadena de fallbacks para maximizar compatibilidad en entorno corporativo.
- */
+
 export async function mailGridFromModal(
   allRows: Item[],
   selectedRows: Item[],
@@ -74,15 +63,12 @@ export async function mailGridFromModal(
   const dataToSend = selectedRows.length > 0 ? selectedRows : allRows;
   if (!dataToSend || dataToSend.length === 0) return;
 
-  // Modal VUL => manda VITS asociados; Modal VIT => manda VUL asociados
   const map = isVULView ? vitColumnMap : vulColumnMap;
   const plainTextTable = buildPlainTextTable(dataToSend, map);
 
-  // Asunto dinámico
   const ids = dataToSend.map((item) => item.numero).join(' - ');
   const subject = isVULView ? `VITS || ${ids} ||` : `VUL || ${ids} ||`;
 
-  // URIs candidatos
   const msOutlookCompose =
     `ms-outlook://compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(plainTextTable)}`;
   const mailtoCompose =

@@ -1,10 +1,16 @@
+
 // frontend/src/modules/Pages/Reports/Reports.tsx
 import { Box, CssBaseline, Container, Grid, Paper, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import DashboardHeader from '../Dashboard/Components/Dashboard/DashboardHeader';
 import { DashboardListItem, CsoListItem, ReportsListItem } from '../Dashboard/Components/ListItems/ListWrapper';
-import ChartsIndex from './Components/Charts/ChartsIndex';
+import VitRadial from './Components/Charts/Radial/VitRadial';
+import VulRadial from './Components/Charts/Radial/VulRadial';
 import useReports from './hooks/useReports';
+import FiltersIndex from './Components/Filters/FiltersIndex';
+import VitBarchart from './Components/Charts/BarChart/VitBarchart';
+import VulBarchart from './Components/Charts/BarChart/VulBarchart';
+import CicularBarPlot from './Components/Charts/CicularBarPlot/CircularBarPlotChart';
 
 const drawerWidth = 72;
 
@@ -20,7 +26,7 @@ const Sidebar = styled('div')(() => ({
 }));
 
 const FixedHeightPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
+  padding: 0,
   display: 'flex',
   flexDirection: 'column',
   boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
@@ -46,31 +52,48 @@ export default function Reports() {
               Reports Dashboard
             </Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={2}>
-                <FixedHeightPaper sx={{ height: 250 }}>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    Filters
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    Aquí irán los filtros para generar informes.
-                  </Typography>
+              <Grid item xs={12} md={6}>
+                <FixedHeightPaper sx={{ height: 375 }}>
+                  <Box sx={{ display: 'flex', height: '100%' }}>
+                    <Box sx={{ width: '40%', display: 'flex', alignItems: 'center', justifyContent: 'center', ml: '60px' }}>
+                      <VitRadial value={vitTotal} />
+                    </Box>
+                    <Box sx={{ width: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateX(-8px)', willChange: 'transform' }}>
+                      <CicularBarPlot width={300} height={300} />
+                    </Box>
+                  </Box>
                 </FixedHeightPaper>
               </Grid>
-              <Grid item xs={12} md={10}>
-                <FixedHeightPaper sx={{ height: 250 }}>
-                  <Typography variant="h6" sx={{ mb: 1 }}>
-                    Report Content
-                  </Typography>
-                  <Box
-                    sx={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <ChartsIndex vitTotal={vitTotal} vulTotal={vulTotal} />
+              <Grid item xs={12} md={6}>
+                <FixedHeightPaper sx={{ height: 375 }}>
+                  <Box sx={{ display: 'flex', height: '100%' }}>
+                    <Box sx={{ width: '40%', display: 'flex', alignItems: 'center', justifyContent: 'center', ml: '60px' }}>
+                      <VulRadial value={vulTotal} />
+                    </Box>
+                    <Box sx={{ width: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateX(-8px)', willChange: 'transform' }}>
+                      <CicularBarPlot width={300} height={300} />
+                    </Box>
                   </Box>
+                </FixedHeightPaper>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FixedHeightPaper sx={{ height: 96, justifyContent: 'center', alignItems: 'center' }}>
+                  <FiltersIndex />
+                </FixedHeightPaper>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FixedHeightPaper sx={{ height: 96, justifyContent: 'center', alignItems: 'center' }}>
+                  <FiltersIndex />
+                </FixedHeightPaper>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FixedHeightPaper sx={{ height: 300 }}>
+                  <VitBarchart />
+                </FixedHeightPaper>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FixedHeightPaper sx={{ height: 300 }}>
+                  <VulBarchart />
                 </FixedHeightPaper>
               </Grid>
             </Grid>

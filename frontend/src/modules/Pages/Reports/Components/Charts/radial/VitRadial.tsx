@@ -1,4 +1,5 @@
-// frontend/src/modules/Pages/Reports/Components/Charts/radial/VitRadial.tsx
+
+// frontend/src/modules/Pages/Reports/Components/Charts/Radial/VitRadial.tsx
 import { Box, Typography } from '@mui/material';
 
 type Props = {
@@ -12,11 +13,11 @@ export default function VitRadial({ value, max = 100 }: Props): JSX.Element {
   const gradient = `conic-gradient(from 135deg, #7bd89f 0%, #3f51b5 ${pct}%, #e0e0e0 ${pct}% 100%)`;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
       <Box
         sx={{
           width: '100%',
-          maxWidth: 180,
+          maxWidth: 250,
           aspectRatio: '1',
           borderRadius: '50%',
           background: gradient,
@@ -27,7 +28,7 @@ export default function VitRadial({ value, max = 100 }: Props): JSX.Element {
         <Box
           sx={{
             position: 'absolute',
-            inset: '20%',
+            inset: '10%',
             borderRadius: '50%',
             background: '#fff',
             display: 'flex',
@@ -39,7 +40,7 @@ export default function VitRadial({ value, max = 100 }: Props): JSX.Element {
           }}
         >
           <Typography variant="subtitle2" sx={{ color: '#888' }}>
-           VIT Items
+            VIT Items
           </Typography>
           <Typography variant="h5" sx={{ color: '#111', fontWeight: 700, lineHeight: 1 }}>
             {safe}
