@@ -40,18 +40,23 @@ const vulColumnMap: Record<string, keyof Item> = {
   'VITS': 'vits',
 };
 
-function hasClosedData(data: Item[]): boolean {
+function normalizeStatus(s: unknown): string {
+  return String(s ?? '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
+}
+
+function hasClosedStatus(data: Item[]): boolean {
   return Array.isArray(data) && data.some((r) => {
-    const cd = r?.closedDate;
-    const cdd = r?.closedDelayDays as unknown as string | number | undefined;
-    const hasCD = cd !== undefined && cd !== null && String(cd).trim() !== '';
-    const hasCDD = cdd !== undefined && cdd !== null && String(cdd).trim() !== '';
-    return hasCD || hasCDD;
+    const st = normalizeStatus(r?.estado);
+    return st === 'cerrado' || st === 'closed';
   });
 }
 
 function buildHeaders(baseMap: Record<string, keyof Item>, data: Item[]): string[] {
-  const includeClosed = hasClosedData(data);
+  const includeClosed = hasClosedStatus(data);
   const headers = Object.keys(baseMap);
   if (!includeClosed) {
     return headers.filter((h) => h !== 'Fecha de cierre' && h !== 'Retraso de cierre (días)');
@@ -60,40 +65,43 @@ function buildHeaders(baseMap: Record<string, keyof Item>, data: Item[]): string
 }
 
 function rowsFrom(data: Item[], headers: string[], map: Record<string, keyof Item>): (string | number | boolean)[][] {
-  return data.map((item) => {
-    return headers.map((header) => {
-      const key = map[header];
-      if (!key) return '';
-      let v = item[key] as unknown;
-      if (header === 'Fecha de cierre') v = item.closedDate ?? '';
-      if (header === 'Retraso de cierre (días)') v = (item.closedDelayDays ?? '') as unknown;
-      if (v === undefined || v === null) return '';
-      return v as string | number | boolean;
-    });
-  });
+  return data.map((item) => headers.map((header) => {
+    const key = map[header];
+    if (!key) return '';
+    let v = item[key] as unknown;
+    if (header === 'Fecha de cierre') v = item.closedDate ?? '';
+    if (header === 'Retraso de cierre (días)') v = (item.closedDelayDays ?? '') as unknown;
+    if (v === undefined || v === null) return '';
+    return v as string | number | boolean;
+  }));
 }
 
-/**
- * Detección robusta: si las filas tienen campos típicos de VUL (activo, elementosVulnerables, vits),
- * consideramos VUL; en otro caso, VIT. Esto evita errores si el flag que recibe el modal viene invertido.
- */
 function detectIsVULView(rows: Item[]): boolean {
   if (!Array.isArray(rows) || rows.length === 0) return false;
   const sample = rows[0];
-  const vulSignals = [
-    sample.activo,
-    sample.elementosVulnerables,
-    sample.vits,
-  ];
+  const vulSignals = [sample.activo, sample.elementosVulnerables, sample.vits];
   return vulSignals.some((s) => s !== undefined && s !== null);
 }
 
-/**
- * Export modal: si hay selectedRows, exporta esas; si no, allRows.
- * Map y cabeceras se eligen automáticamente en base a los datos (detectIsVULView),
- * y se incluyen closed* solo cuando haya datos cerrados.
- */
-export async function exportGridFromModal(allRows: Item[], selectedRows: Item[], isVULViewFlag: boolean) {
+function colorClosedDelayColumn(worksheet: ExcelJS.Worksheet, headers: string[]) {
+  const colIndex = headers.findIndex((h) => h === 'Retraso de cierre (días)');
+  if (colIndex === -1) return;
+  const excelCol = colIndex + 1;
+  const lastRow = worksheet.rowCount;
+  for (let r = 2; r <= lastRow; r++) {
+    const cell = worksheet.getRow(r).getCell(excelCol);
+    const raw = cell.value;
+    const num = raw === '' || raw == null ? null : Number(raw);
+    if (num == null || Number.isNaN(num)) continue;
+    if (num > 0) {
+      cell.font = { ...(cell.font || {}), bold: true, color: { argb: 'CC0000' } };
+    } else {
+      cell.font = { ...(cell.font || {}), bold: false, color: { argb: '2E7D32' } };
+    }
+  }
+}
+
+export async function exportGridFromModal(allRows: Item[], selectedRows: Item[]) {
   const dataToExport = selectedRows.length > 0 ? selectedRows : allRows;
   if (!dataToExport || dataToExport.length === 0) return;
 
@@ -109,7 +117,6 @@ export async function exportGridFromModal(allRows: Item[], selectedRows: Item[],
   const rows = rowsFrom(dataToExport, headers, map);
   rows.forEach((r) => worksheet.addRow(r));
 
-  // estilo cabecera
   const headerRow = worksheet.getRow(1);
   headerRow.eachCell((cell) => {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } };
@@ -118,7 +125,6 @@ export async function exportGridFromModal(allRows: Item[], selectedRows: Item[],
     cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
   });
 
-  // zebra rows + ancho
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1) {
       const isEven = rowNumber % 2 === 0;
@@ -131,16 +137,16 @@ export async function exportGridFromModal(allRows: Item[], selectedRows: Item[],
   });
 
   (worksheet.columns || []).forEach((col) => {
-    if (col && typeof col.eachCell === 'function') {
-      let maxLength = 10;
-      col.eachCell({ includeEmpty: true }, (cell) => {
-        const len = cell.value ? String(cell.value).length : 0;
-        if (len > maxLength) maxLength = len;
-      });
-      col.width = maxLength + 2;
-    }
+    if (!col || typeof col.eachCell !== 'function') return;
+    let maxLength = 10;
+    col.eachCell({ includeEmpty: true }, (cell) => {
+      const len = cell.value ? String(cell.value).length : 0;
+      if (len > maxLength) maxLength = len;
+    });
+    col.width = maxLength + 2;
   });
 
+  colorClosedDelayColumn(worksheet, headers);
   worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
 
   const buffer = await workbook.xlsx.writeBuffer();

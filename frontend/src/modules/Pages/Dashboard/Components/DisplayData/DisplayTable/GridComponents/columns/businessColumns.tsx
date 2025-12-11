@@ -199,7 +199,7 @@ function EstadoHeaderComponent(props: IHeaderParams) {
   useEffect(() => {
     const api = props.api;
     const model = api.getFilterModel();
-    model['estado'] = { type: 'notContains', filter: 'Resuelto' };
+    model['estado'] = { type: 'notContains', filter: 'Cerrado' };
     api.setFilterModel(model);
   }, []);
 
@@ -209,7 +209,7 @@ function EstadoHeaderComponent(props: IHeaderParams) {
     if (locked) {
       delete model['estado'];
     } else {
-      model['estado'] = { type: 'notContains', filter: 'Resuelto' };
+      model['estado'] = { type: 'notContains', filter: 'Cerrado' };
     }
     api.setFilterModel(model);
     setLocked(!locked);

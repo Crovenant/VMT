@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime
 
-CLOSED_STATES = {"Cerrado", "Closed", "Resuelto"}
+CLOSED_STATES = {"Cerrado", "Closed"}
 DUE_DATE_FIELD = "dueDate"
 
 
@@ -78,7 +78,9 @@ def update_status(request):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(vul_data, f, ensure_ascii=False, indent=2)
 
-        return JsonResponse({"success": True, "numero": numero, "estado": estado}, status=200)
+        return JsonResponse(
+            {"success": True, "numero": numero, "estado": estado}, status=200
+        )
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
