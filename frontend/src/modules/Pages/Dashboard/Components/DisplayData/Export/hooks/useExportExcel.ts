@@ -5,8 +5,14 @@ import { exportVITToExcel, exportVULToExcel } from '../exportExcel';
 import type { GridApi } from 'ag-grid-community';
 import type { Item } from '../../../../../../Types/item';
 
-function isVULItem(item: Item): boolean {
-  return !!item.vits || !!item.elementosVulnerables || !!item.activo;
+function collectVisibleRows(api?: GridApi | null): Item[] {
+  const out: Item[] = [];
+  if (!api) return out;
+  api.forEachNodeAfterFilterAndSort((node) => {
+    const data = node?.data as Item | undefined;
+    if (data) out.push(data);
+  });
+  return out;
 }
 
 export function useExportExcel(
@@ -16,16 +22,25 @@ export function useExportExcel(
 ) {
   useEffect(() => {
     window.exportFilteredDataToExcel = () => {
-      const api = gridRef.current?.api;
-      const selected = api?.getSelectedRows?.() ?? [];
-      const base = (selected as Item[]).length > 0 ? (selected as Item[]) : rows;
+      const api = gridRef.current?.api ?? null;
 
-      const isVULView = visibleColumns.includes('Activo') || visibleColumns.includes('Elementos vulnerables');
+      const selected = api?.getSelectedRows?.() ?? [];
+      const base =
+        (selected as Item[]).length > 0
+          ? (selected as Item[])
+          : collectVisibleRows(api).length > 0
+          ? collectVisibleRows(api)
+          : rows;
+
+      const isVULView =
+        visibleColumns.includes('Activo') || visibleColumns.includes('Elementos vulnerables');
 
       if (isVULView) {
-        exportVULToExcel(base.filter(isVULItem));
+        // Exporta tal cual lo visible/seleccionado en VUL
+        exportVULToExcel(base);
       } else {
-        exportVITToExcel(base.filter((item) => !isVULItem(item)));
+        // Exporta tal cual lo visible/seleccionado en VIT
+        exportVITToExcel(base);
       }
     };
   }, [gridRef, rows, visibleColumns]);

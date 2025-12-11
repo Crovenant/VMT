@@ -40,51 +40,6 @@ const vulColumnMap: Record<string, keyof Item> = {
   'VITS': 'vits',
 };
 
-function styleHeader(row: ExcelJS.Row) {
-  row.eachCell((cell) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } };
-    cell.font = { bold: true, color: { argb: 'FFFFFF' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-  });
-}
-
-function styleRows(worksheet: ExcelJS.Worksheet) {
-  worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber > 1) {
-      const isEven = rowNumber % 2 === 0;
-      row.eachCell((cell) => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'EAF2F8' : 'FFFFFF' } };
-        cell.alignment = { horizontal: 'left', vertical: 'middle' };
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-      });
-    }
-  });
-}
-
-function adjustColumnWidth(worksheet: ExcelJS.Worksheet) {
-  (worksheet.columns || []).forEach((col) => {
-    if (col && typeof col.eachCell === 'function') {
-      let maxLength = 10;
-      col.eachCell({ includeEmpty: true }, (cell) => {
-        const len = cell.value ? String(cell.value).length : 0;
-        if (len > maxLength) maxLength = len;
-      });
-      col.width = maxLength + 2;
-    }
-  });
-}
-
-async function downloadExcel(workbook: ExcelJS.Workbook, fileName: string) {
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-}
-
 function hasClosedData(data: Item[]): boolean {
   return Array.isArray(data) && data.some((r) => {
     const cd = r?.closedDate;
@@ -118,10 +73,31 @@ function rowsFrom(data: Item[], headers: string[], map: Record<string, keyof Ite
   });
 }
 
-export async function exportGridFromModal(allRows: Item[], selectedRows: Item[], isVULView: boolean) {
+/**
+ * Detección robusta: si las filas tienen campos típicos de VUL (activo, elementosVulnerables, vits),
+ * consideramos VUL; en otro caso, VIT. Esto evita errores si el flag que recibe el modal viene invertido.
+ */
+function detectIsVULView(rows: Item[]): boolean {
+  if (!Array.isArray(rows) || rows.length === 0) return false;
+  const sample = rows[0];
+  const vulSignals = [
+    sample.activo,
+    sample.elementosVulnerables,
+    sample.vits,
+  ];
+  return vulSignals.some((s) => s !== undefined && s !== null);
+}
+
+/**
+ * Export modal: si hay selectedRows, exporta esas; si no, allRows.
+ * Map y cabeceras se eligen automáticamente en base a los datos (detectIsVULView),
+ * y se incluyen closed* solo cuando haya datos cerrados.
+ */
+export async function exportGridFromModal(allRows: Item[], selectedRows: Item[], isVULViewFlag: boolean) {
   const dataToExport = selectedRows.length > 0 ? selectedRows : allRows;
   if (!dataToExport || dataToExport.length === 0) return;
 
+  const isVULView = detectIsVULView(dataToExport);
   const map = isVULView ? vulColumnMap : vitColumnMap;
   const headers = buildHeaders(map, dataToExport);
 
@@ -133,11 +109,45 @@ export async function exportGridFromModal(allRows: Item[], selectedRows: Item[],
   const rows = rowsFrom(dataToExport, headers, map);
   rows.forEach((r) => worksheet.addRow(r));
 
-  styleHeader(worksheet.getRow(1));
-  styleRows(worksheet);
-  adjustColumnWidth(worksheet);
+  // estilo cabecera
+  const headerRow = worksheet.getRow(1);
+  headerRow.eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } };
+    cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+  });
+
+  // zebra rows + ancho
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1) {
+      const isEven = rowNumber % 2 === 0;
+      row.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'EAF2F8' : 'FFFFFF' } };
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+    }
+  });
+
+  (worksheet.columns || []).forEach((col) => {
+    if (col && typeof col.eachCell === 'function') {
+      let maxLength = 10;
+      col.eachCell({ includeEmpty: true }, (cell) => {
+        const len = cell.value ? String(cell.value).length : 0;
+        if (len > maxLength) maxLength = len;
+      });
+      col.width = maxLength + 2;
+    }
+  });
 
   worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
 
-  await downloadExcel(workbook, isVULView ? 'VUL_associated.xlsx' : 'VIT_associated.xlsx');
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = isVULView ? 'VUL_associated.xlsx' : 'VIT_associated.xlsx';
+  link.click();
 }
