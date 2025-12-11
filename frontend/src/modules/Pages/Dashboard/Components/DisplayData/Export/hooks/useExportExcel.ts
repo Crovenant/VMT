@@ -20,7 +20,6 @@ export function useExportExcel(
       const selected = api?.getSelectedRows?.() ?? [];
       const base = (selected as Item[]).length > 0 ? (selected as Item[]) : rows;
 
-      // Detecta si la vista es VUL por las columnas visibles
       const isVULView = visibleColumns.includes('Activo') || visibleColumns.includes('Elementos vulnerables');
 
       if (isVULView) {

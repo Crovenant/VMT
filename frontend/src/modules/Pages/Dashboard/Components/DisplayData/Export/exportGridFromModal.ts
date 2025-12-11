@@ -20,6 +20,8 @@ const vitColumnMap: Record<string, keyof Item> = {
   'Solución': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
   'Due date': 'dueDate',
+  'Fecha de cierre': 'closedDate',
+  'Retraso de cierre (días)': 'closedDelayDays',
   'VUL': 'vul',
 };
 
@@ -33,6 +35,8 @@ const vulColumnMap: Record<string, keyof Item> = {
   'Estado': 'estado',
   'Actualizado': 'actualizado',
   'Due date': 'dueDate',
+  'Fecha de cierre': 'closedDate',
+  'Retraso de cierre (días)': 'closedDelayDays',
   'VITS': 'vits',
 };
 
@@ -81,25 +85,53 @@ async function downloadExcel(workbook: ExcelJS.Workbook, fileName: string) {
   link.click();
 }
 
+function hasClosedData(data: Item[]): boolean {
+  return Array.isArray(data) && data.some((r) => {
+    const cd = r?.closedDate;
+    const cdd = r?.closedDelayDays as unknown as string | number | undefined;
+    const hasCD = cd !== undefined && cd !== null && String(cd).trim() !== '';
+    const hasCDD = cdd !== undefined && cdd !== null && String(cdd).trim() !== '';
+    return hasCD || hasCDD;
+  });
+}
+
+function buildHeaders(baseMap: Record<string, keyof Item>, data: Item[]): string[] {
+  const includeClosed = hasClosedData(data);
+  const headers = Object.keys(baseMap);
+  if (!includeClosed) {
+    return headers.filter((h) => h !== 'Fecha de cierre' && h !== 'Retraso de cierre (días)');
+  }
+  return headers;
+}
+
+function rowsFrom(data: Item[], headers: string[], map: Record<string, keyof Item>): (string | number | boolean)[][] {
+  return data.map((item) => {
+    return headers.map((header) => {
+      const key = map[header];
+      if (!key) return '';
+      let v = item[key] as unknown;
+      if (header === 'Fecha de cierre') v = item.closedDate ?? '';
+      if (header === 'Retraso de cierre (días)') v = (item.closedDelayDays ?? '') as unknown;
+      if (v === undefined || v === null) return '';
+      return v as string | number | boolean;
+    });
+  });
+}
+
 export async function exportGridFromModal(allRows: Item[], selectedRows: Item[], isVULView: boolean) {
   const dataToExport = selectedRows.length > 0 ? selectedRows : allRows;
   if (!dataToExport || dataToExport.length === 0) return;
 
-  const map = isVULView ? vitColumnMap : vulColumnMap;
-  const headers = Object.keys(map);
+  const map = isVULView ? vulColumnMap : vitColumnMap;
+  const headers = buildHeaders(map, dataToExport);
 
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet(isVULView ? 'VIT Associated' : 'VUL Associated');
+  const worksheet = workbook.addWorksheet(isVULView ? 'VUL Associated' : 'VIT Associated');
 
   worksheet.addRow(headers);
 
-  dataToExport.forEach((item) => {
-    const rowData = headers.map((header) => {
-      const key = map[header];
-      return key ? item[key] ?? '' : '';
-    });
-    worksheet.addRow(rowData);
-  });
+  const rows = rowsFrom(dataToExport, headers, map);
+  rows.forEach((r) => worksheet.addRow(r));
 
   styleHeader(worksheet.getRow(1));
   styleRows(worksheet);
@@ -107,5 +139,5 @@ export async function exportGridFromModal(allRows: Item[], selectedRows: Item[],
 
   worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
 
-  await downloadExcel(workbook, isVULView ? 'VIT_associated.xlsx' : 'VUL_associated.xlsx');
+  await downloadExcel(workbook, isVULView ? 'VUL_associated.xlsx' : 'VIT_associated.xlsx');
 }

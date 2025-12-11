@@ -1,3 +1,4 @@
+
 // src/modules/Pages/Dashboard/Components/DisplayData/DisplayTable/constants/columnMaps.ts
 import type { Item } from '../../../../../../Types/item';
 
@@ -17,8 +18,10 @@ export const VIT_MAP: Record<string, keyof Item> = {
   'Sites': 'sites',
   'Solución': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
-  'Due date': 'dueDate',
   'VUL': 'vul',
+  'dueDate': 'dueDate',
+  'closedDate': 'closedDate',
+  'closedDelayDays': 'closedDelayDays',
 };
 
 export const VUL_MAP: Record<string, keyof Item> = {
@@ -31,4 +34,7 @@ export const VUL_MAP: Record<string, keyof Item> = {
   'Estado': 'estado',
   'Actualizado': 'actualizado',
   'VITS': 'vits',
-};
+  'dueDate': 'dueDate',
+  'closedDate': 'closedDate',
+  'closedDelayDays': 'closedDelayDays',
+}

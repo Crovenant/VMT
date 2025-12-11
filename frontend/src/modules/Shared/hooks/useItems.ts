@@ -39,7 +39,6 @@ function pick(obj: Record<string, unknown>, keys: string[], fallback = ''): stri
   return fallback;
 }
 
-/* ---------- mapeos para CSO feed ---------- */
 function CsoToItem(row: Record<string, unknown>): Item {
   const numero = pick(row, ['Vulnerability ID', 'ID Test', 'VUL Code', 'VIT Code']);
   const resumen = pick(row, ['Vulnerability Title', 'Threat Description', 'Details']);
@@ -113,7 +112,6 @@ function CsoToItem(row: Record<string, unknown>): Item {
   return filled;
 }
 
-/* ---------- mapeo para CSIRT feed (backend canónico) ---------- */
 function CsirtToItem(row: Record<string, unknown>): Item {
   const id =
     (row['id'] as string) ??
@@ -145,10 +143,11 @@ function CsirtToItem(row: Record<string, unknown>): Item {
     vul: String((row['vul'] as string) ?? ''),
     vits: String((row['vits'] as string) ?? ''),
     hasLink: Boolean(row['hasLink']),
+    closedDate: String((row['closedDate'] as string) ?? ''),
+    closedDelayDays: String((row['closedDelayDays'] as string) ?? ''),
   } as Item;
 }
 
-/* ---------- flags ---------- */
 function computeFlags(items: Item[]): Item[] {
   const msPerDay = 1000 * 60 * 60 * 24;
   const horizonDaysByPriority: Record<Item['prioridad'], number> = {
@@ -160,6 +159,14 @@ function computeFlags(items: Item[]): Item[] {
   const now = new Date();
 
   return items.map((item) => {
+    const isClosed =
+      item.closedDate !== undefined &&
+      item.closedDate !== null &&
+      String(item.closedDate).trim() !== '';
+    if (isClosed) {
+      return { ...item, followUp: false, soonDue: false };
+    }
+
     const created = new Date(item.fechaCreacion);
     if (isNaN(created.getTime())) return { ...item, followUp: false, soonDue: false };
 
@@ -173,7 +180,6 @@ function computeFlags(items: Item[]): Item[] {
   });
 }
 
-/* ---------- HOOK ---------- */
 export default function useItems(
   refreshKey: number,
   listUrl?: string,

@@ -3,7 +3,6 @@
 import ExcelJS from 'exceljs';
 import type { Item } from '../../../../../Types/item';
 
-// Map VIT con claves canónicas
 const vitColumnMap: Record<string, keyof Item> = {
   'Número': 'numero',
   'ID externo': 'idExterno',
@@ -21,10 +20,11 @@ const vitColumnMap: Record<string, keyof Item> = {
   'Solución': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
   'Due date': 'dueDate',
+  'Fecha de cierre': 'closedDate',
+  'Retraso de cierre (días)': 'closedDelayDays',
   'VUL': 'vul',
 };
 
-// Map VUL con claves canónicas
 const vulColumnMap: Record<string, keyof Item> = {
   'Número': 'numero',
   'Activo': 'activo',
@@ -35,6 +35,8 @@ const vulColumnMap: Record<string, keyof Item> = {
   'Estado': 'estado',
   'Actualizado': 'actualizado',
   'Due date': 'dueDate',
+  'Fecha de cierre': 'closedDate',
+  'Retraso de cierre (días)': 'closedDelayDays',
   'VITS': 'vits',
 };
 
@@ -97,22 +99,50 @@ async function downloadExcel(workbook: ExcelJS.Workbook, fileName: string) {
   link.click();
 }
 
+function hasClosedData(data: Item[]): boolean {
+  return Array.isArray(data) && data.some((r) => {
+    const cd = r?.closedDate;
+    const cdd = r?.closedDelayDays as unknown as string | number | undefined;
+    const hasCD = cd !== undefined && cd !== null && String(cd).trim() !== '';
+    const hasCDD = cdd !== undefined && cdd !== null && String(cdd).trim() !== '';
+    return hasCD || hasCDD;
+  });
+}
+
+function buildHeaders(baseMap: Record<string, keyof Item>, data: Item[]): string[] {
+  const includeClosed = hasClosedData(data);
+  const headers = Object.keys(baseMap);
+  if (!includeClosed) {
+    return headers.filter((h) => h !== 'Fecha de cierre' && h !== 'Retraso de cierre (días)');
+  }
+  return headers;
+}
+
+function rowsFrom(data: Item[], headers: string[], map: Record<string, keyof Item>): (string | number | boolean)[][] {
+  return data.map((item) => {
+    return headers.map((header) => {
+      const key = map[header];
+      if (!key) return '';
+      let v = item[key] as unknown;
+      if (header === 'Fecha de cierre') v = item.closedDate ?? '';
+      if (header === 'Retraso de cierre (días)') v = (item.closedDelayDays ?? '') as unknown;
+      if (v === undefined || v === null) return '';
+      return v as string | number | boolean;
+    });
+  });
+}
+
 export async function exportVITToExcel(data: Item[]) {
   if (!data || data.length === 0) return;
 
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('VIT Items');
 
-  const headers = Object.keys(vitColumnMap);
+  const headers = buildHeaders(vitColumnMap, data);
   worksheet.addRow(headers);
 
-  data.forEach((item) => {
-    const rowData = headers.map((header) => {
-      const key = vitColumnMap[header];
-      return key ? item[key] ?? '' : '';
-    });
-    worksheet.addRow(rowData);
-  });
+  const rows = rowsFrom(data, headers, vitColumnMap);
+  rows.forEach((r) => worksheet.addRow(r));
 
   styleHeader(worksheet.getRow(1));
   styleRows(worksheet);
@@ -132,16 +162,11 @@ export async function exportVULToExcel(data: Item[]) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('VUL Items');
 
-  const headers = Object.keys(vulColumnMap);
+  const headers = buildHeaders(vulColumnMap, data);
   worksheet.addRow(headers);
 
-  data.forEach((item) => {
-    const rowData = headers.map((header) => {
-      const key = vulColumnMap[header];
-      return key ? item[key] ?? '' : '';
-    });
-    worksheet.addRow(rowData);
-  });
+  const rows = rowsFrom(data, headers, vulColumnMap);
+  rows.forEach((r) => worksheet.addRow(r));
 
   styleHeader(worksheet.getRow(1));
   styleRows(worksheet);

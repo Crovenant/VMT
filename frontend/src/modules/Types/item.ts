@@ -1,3 +1,5 @@
+
+// src/modules/Types/item.ts
 export type Item = {
   id: string;
   nombre: string;
@@ -23,7 +25,12 @@ export type Item = {
   sites: string;
   vulnerabilidad: string;
   vulnerabilitySolution: string;
-  dueDate: string;
+
+  dueDate: string;            
+  closedDate?: string;       
+  closedDelayDays?: string;   
+  overdue?: boolean;          
+
   activo?: string;
   elementosVulnerables?: string;
   vits?: string;

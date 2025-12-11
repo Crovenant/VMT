@@ -16,7 +16,10 @@
     "sites",
     "vulnerabilitySolution",
     "vulnerabilidad",
-    "vul"
+    "vul",
+    "dueDate",
+    "closedDate",
+    "closedDelayDays"
   ],
   "VUL": [
     "numero",
@@ -27,6 +30,9 @@
     "prioridad",
     "estado",
     "actualizado",
-    "vits"
+    "vits",
+    "dueDate",
+    "closedDate",
+    "closedDelayDays"
   ]
 }

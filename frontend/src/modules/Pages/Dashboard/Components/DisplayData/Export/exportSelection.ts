@@ -20,6 +20,8 @@ const vitColumnMap: Record<string, keyof Item> = {
   'Solución': 'vulnerabilitySolution',
   'Vulnerabilidad': 'vulnerabilidad',
   'Due date': 'dueDate',
+  'Fecha de cierre': 'closedDate',
+  'Retraso de cierre (días)': 'closedDelayDays',
   'VUL': 'vul',
 };
 
@@ -33,6 +35,8 @@ const vulColumnMap: Record<string, keyof Item> = {
   'Estado': 'estado',
   'Actualizado': 'actualizado',
   'Due date': 'dueDate',
+  'Fecha de cierre': 'closedDate',
+  'Retraso de cierre (días)': 'closedDelayDays',
   'VITS': 'vits',
 };
 
@@ -50,6 +54,39 @@ function styleHeader(row: ExcelJS.Row) {
   });
 }
 
+function hasClosedData(data: Item[]): boolean {
+  return Array.isArray(data) && data.some((r) => {
+    const cd = r?.closedDate;
+    const cdd = r?.closedDelayDays as unknown as string | number | undefined;
+    const hasCD = cd !== undefined && cd !== null && String(cd).trim() !== '';
+    const hasCDD = cdd !== undefined && cdd !== null && String(cdd).trim() !== '';
+    return hasCD || hasCDD;
+  });
+}
+
+function buildHeaders(baseMap: Record<string, keyof Item>, data: Item[]): string[] {
+  const includeClosed = hasClosedData(data);
+  const headers = Object.keys(baseMap);
+  if (!includeClosed) {
+    return headers.filter((h) => h !== 'Fecha de cierre' && h !== 'Retraso de cierre (días)');
+  }
+  return headers;
+}
+
+function rowsFrom(data: Item[], headers: string[], map: Record<string, keyof Item>): (string | number | boolean)[][] {
+  return data.map((item) => {
+    return headers.map((header) => {
+      const key = map[header];
+      if (!key) return '';
+      let v = item[key] as unknown;
+      if (header === 'Fecha de cierre') v = item.closedDate ?? '';
+      if (header === 'Retraso de cierre (días)') v = (item.closedDelayDays ?? '') as unknown;
+      if (v === undefined || v === null) return '';
+      return v as string | number | boolean;
+    });
+  });
+}
+
 export async function exportSelectionToExcel(selected: Item[], isVULView: boolean) {
   if (!selected || selected.length === 0) return;
 
@@ -57,38 +94,13 @@ export async function exportSelectionToExcel(selected: Item[], isVULView: boolea
   const worksheet = workbook.addWorksheet('Selected Items');
 
   const map = isVULView ? vulColumnMap : vitColumnMap;
-  const headers = Object.keys(map);
+  const headers = buildHeaders(map, selected);
   worksheet.addRow(headers);
 
-  selected.forEach((item) => {
-    const rowData = headers.map((header) => {
-      const key = map[header];
-      return key ? item[key] ?? '' : '';
-    });
-    worksheet.addRow(rowData);
-  });
+  const rows = rowsFrom(selected, headers, map);
+  rows.forEach((r) => worksheet.addRow(r));
 
   styleHeader(worksheet.getRow(1));
-
-  worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber > 1) {
-      const isEven = rowNumber % 2 === 0;
-      row.eachCell((cell) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: isEven ? 'EAF2F8' : 'FFFFFF' },
-        };
-        cell.alignment = { horizontal: 'left', vertical: 'middle' };
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
-        };
-      });
-    }
-  });
 
   (worksheet.columns || []).forEach((col) => {
     if (col && typeof col.eachCell === 'function') {
