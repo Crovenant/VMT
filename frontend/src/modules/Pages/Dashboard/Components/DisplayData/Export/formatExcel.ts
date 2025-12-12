@@ -1,70 +1,99 @@
 
 // src/modules/Pages/Dashboard/Components/DisplayData/Export/formatExcel.ts
-import type { WorkSheet } from 'xlsx';
-import { utils } from 'xlsx';
+import type { Worksheet } from 'exceljs';
 
-export function formatExcelSheet(ws: WorkSheet) {
-  const range = utils.decode_range(ws['!ref'] || '');
-  ws['!autofilter'] = { ref: utils.encode_range(range) };
+function colToLetter(n: number): string {
+  let s = '';
+  while (n > 0) {
+    const mod = (n - 1) % 26;
+    s = String.fromCharCode(65 + mod) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
 
-  const cols: { wch: number }[] = [];
-  for (let C = range.s.c; C <= range.e.c; ++C) {
+function normalizeHeader(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+export function formatExcelSheet(ws: Worksheet) {
+  const rowCount = ws.rowCount || 0;
+  const colCount = ws.columnCount || 0;
+  if (rowCount === 0 || colCount === 0) return;
+
+  const lastColLetter = colToLetter(colCount);
+  ws.autoFilter = { from: 'A1', to: `${lastColLetter}1` };
+
+  for (let c = 1; c <= colCount; c++) {
     let maxLength = 10;
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      const cellAddress = utils.encode_cell({ r: R, c: C });
-      const cell = ws[cellAddress];
-      if (cell && cell.v != null) {
-        const len = String(cell.v).length;
+    for (let r = 1; r <= rowCount; r++) {
+      const cell = ws.getCell(r, c);
+      const v = cell?.value;
+      if (v != null && v !== '') {
+        let text = '';
+        if (typeof v === 'object') {
+          if ((v as any).text) {
+            text = String((v as any).text);
+          } else if ((v as Date) instanceof Date) {
+            text = (v as Date).toISOString();
+          } else if ((v as any).richText) {
+            text = String((v as any).richText.map((rt: any) => rt.text).join(''));
+          } else {
+            text = String(v);
+          }
+        } else {
+          text = String(v);
+        }
+        const len = text.length;
         if (len > maxLength) maxLength = len;
       }
     }
-    cols.push({ wch: maxLength + 2 });
+    ws.getColumn(c).width = Math.max(10, maxLength + 2);
   }
-  ws['!cols'] = cols;
 
+  for (let c = 1; c <= colCount; c++) {
+    const cell = ws.getCell(1, c);
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF00B0F0' },
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: 'FFFFFFFF' },
+    };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+  }
 
-  for (let C = range.s.c; C <= range.e.c; ++C) {
-    const cellAddress = utils.encode_cell({ r: range.s.r, c: C });
-    const cell = ws[cellAddress];
-    if (cell) {
-      cell.s = {
-        fill: { fgColor: { rgb: '00B0F0' } },
-        font: { bold: true, color: { rgb: 'FFFFFF' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
+  for (let r = 2; r <= rowCount; r++) {
+    const isEven = (r - 1) % 2 === 0;
+    for (let c = 1; c <= colCount; c++) {
+      const cell = ws.getCell(r, c);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: isEven ? 'FFEAF2F8' : 'FFFFFFFF' },
       };
-    }
-  }
-
-  for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-    const isEven = (R - range.s.r) % 2 === 0;
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const cellAddress = utils.encode_cell({ r: R, c: C });
-      const cell = ws[cellAddress];
-      if (cell) {
-        cell.s = {
-          fill: { fgColor: { rgb: isEven ? 'EAF2F8' : 'FFFFFF' } },
-          alignment: { horizontal: 'left', vertical: 'center' },
-        };
-      }
+      cell.alignment = { horizontal: 'left', vertical: 'middle' };
     }
   }
 
   const findClosedDelayColumnIndex = (): number | null => {
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const headerAddr = utils.encode_cell({ r: range.s.r, c: C });
-      const headerCell = ws[headerAddr];
-      const header = headerCell ? String(headerCell.v ?? '').trim() : '';
-      const norm = header
-        .normalize('NFD')
-        .replace(/\p{Diacritic}/gu, '')
-        .toLowerCase();
+    for (let c = 1; c <= colCount; c++) {
+      const headerCell = ws.getCell(1, c);
+      const header = headerCell?.value != null ? String(headerCell.value) : '';
+      const norm = normalizeHeader(header);
 
       if (
         norm === 'retraso de cierre (dias)' ||
         norm === 'retraso de cierre dias' ||
         norm === 'closeddelaydays'
       ) {
-        return C;
+        return c;
       }
     }
     return null;
@@ -72,27 +101,29 @@ export function formatExcelSheet(ws: WorkSheet) {
 
   const targetCol = findClosedDelayColumnIndex();
   if (targetCol !== null) {
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-      const addr = utils.encode_cell({ r: R, c: targetCol });
-      const cell = ws[addr];
-      if (!cell) continue;
+    for (let r = 2; r <= rowCount; r++) {
+      const cell = ws.getCell(r, targetCol);
+      const raw = cell?.value;
+      const num =
+        raw === '' || raw == null
+          ? null
+          : typeof raw === 'number'
+          ? raw
+          : Number(String(raw));
 
- 
-      const raw = cell.v;
-      const num = raw === '' || raw == null ? null : Number(raw);
       if (num == null || Number.isNaN(num)) continue;
 
       if (num > 0) {
-
-        cell.s = {
-          ...(cell.s || {}),
-          font: { ...(cell.s?.font || {}), bold: true, color: { rgb: 'CC0000' } },
+        cell.font = {
+          ...(cell.font || {}),
+          bold: true,
+          color: { argb: 'FFCC0000' },
         };
       } else {
-
-        cell.s = {
-          ...(cell.s || {}),
-          font: { ...(cell.s?.font || {}), bold: false, color: { rgb: '2E7D32' } },
+        cell.font = {
+          ...(cell.font || {}),
+          bold: false,
+          color: { argb: 'FF2E7D32' },
         };
       }
     }

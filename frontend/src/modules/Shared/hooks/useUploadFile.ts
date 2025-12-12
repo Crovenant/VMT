@@ -1,17 +1,15 @@
 
 // src/modules/Shared/hooks/useUploadFile.ts
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { mutate } from 'swr';
 import RelationResolverModal from './../../Pages/Dashboard/Components/upload/Vit to Vul/RelationResolverModal';
 import { NewFieldsModal, detectNewFields } from './../../Shared/FieldMapping';
+import * as ExcelJS from 'exceljs';
 
 export interface Entry { [key: string]: unknown }
 export interface DuplicatePair { existing: Entry; incoming: Entry }
-
-type RelationChange = { vulNumero: string; vitNumero: string; before: string; after: string; };
-
-type Endpoints = { uploadUrl: string; saveUrl: string; listUrlForMutate?: string; };
-
+type RelationChange = { vulNumero: string; vitNumero: string; before: string; after: string };
+type Endpoints = { uploadUrl: string; saveUrl: string; listUrlForMutate?: string };
 type UploadResponse = {
   duplicates?: DuplicatePair[];
   new?: Entry[];
@@ -23,7 +21,12 @@ type UploadResponse = {
 function sanitizeEntry(entry: Record<string, any>): Record<string, any> {
   const out: Record<string, any> = {};
   for (const [key, value] of Object.entries(entry)) {
-    out[key] = value === null || value === undefined || (typeof value === 'number' && isNaN(value)) ? '' : value;
+    out[key] =
+      value === null ||
+      value === undefined ||
+      (typeof value === 'number' && isNaN(value))
+        ? ''
+        : value;
   }
   return out;
 }
@@ -31,7 +34,11 @@ function sanitizeEntry(entry: Record<string, any>): Record<string, any> {
 type FileType = 'VIT' | 'VUL' | 'UNKNOWN';
 
 function normHeader(s: unknown): string {
-  return String(s ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+  return String(s ?? '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
 }
 
 async function extractHeaders(file: File): Promise<string[]> {
@@ -42,11 +49,11 @@ async function extractHeaders(file: File): Promise<string[]> {
     return firstLine.split(',').map(h => h.trim()).filter(Boolean);
   }
   const buffer = await file.arrayBuffer();
-  const XLSX = await import('xlsx');
-  const wb = XLSX.read(buffer, { type: 'array' });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown as (string | number)[][];
-  const headerRow = (rows[0] ?? []).map(v => String(v).trim());
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buffer);
+  const ws = wb.worksheets[0];
+  if (!ws) return [];
+  const headerRow = (ws.getRow(1).values as any[]).slice(1).map(v => String(v ?? '').trim());
   return headerRow.filter(Boolean);
 }
 
@@ -107,31 +114,25 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
 
   const safeMutate = () => { if (listUrlForMutate) mutate(listUrlForMutate); };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (event.target) event.target.value = '';
-
     if (!file) {
       setMensaje('❌ No file selected.');
       onClose(false);
       return;
     }
-
     if (loading) return;
     setLoading(true);
-
     try {
       const headers = await extractHeaders(file);
       const detected = detectFileType(headers);
-
       if (detected === 'UNKNOWN') {
         setMensaje('❌ Unrecognized format. Please check the file.');
         onClose(false);
         return;
       }
-
       setPendingHeaders(headers);
-
       const unknownFields = detectNewFields(headers, detected);
       if (unknownFields.length > 0) {
         setNewFieldsDetected(unknownFields);
@@ -141,7 +142,6 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
         setLoading(false);
         return;
       }
-
       await processUpload(file, detected);
     } catch (error: unknown) {
       const msg =
@@ -172,9 +172,8 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     formData.append('file', file);
 
     const response = await fetch(targetUploadUrl, { method: 'POST', body: formData });
-
     let result: UploadResponse = {};
-    const contentType = response.headers.get('content-type') || '';
+    const contentType = response.headers.get('content-type') ?? '';
 
     if (contentType.includes('application/json')) {
       const rawText = await response.text();
@@ -184,16 +183,15 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     }
 
     if (!response.ok) {
-      const msg = result?.error || result?.message || `HTTP ${response.status}`;
+      const msg = result?.error ?? result?.message ?? `HTTP ${response.status}`;
       throw new Error(msg);
     }
 
     if (Array.isArray(result.duplicates) && result.duplicates.length > 0) {
       const sanitizedDuplicates = result.duplicates.map(pair => ({
         existing: sanitizeEntry(pair.existing),
-        incoming: sanitizeEntry(pair.incoming)
+        incoming: sanitizeEntry(pair.incoming),
       }));
-
       setDuplicates(sanitizedDuplicates);
       setNewEntries(Array.isArray(result.new) ? result.new.map(sanitizeEntry) : []);
       setSelectedOptions(Array(result.duplicates.length).fill('incoming'));
@@ -223,18 +221,16 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
 
   const guardarFinal = async (saveEndpoint: string, finalEntries: Entry[]) => {
     const sanitizedFinal = finalEntries.map(sanitizeEntry);
-
     const res = await fetch(saveEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entries: sanitizedFinal })
+      body: JSON.stringify({ entries: sanitizedFinal }),
     });
-
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
       try {
         const j = (await res.json()) as Partial<UploadResponse>;
-        msg = j?.error || j?.message || msg;
+        msg = j?.error ?? j?.message ?? msg;
       } catch {}
       throw new Error(`Error saving selection: ${msg}`);
     }
@@ -278,7 +274,6 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     setLoading(true);
     try {
       const relacionesAplicadas = relations.filter((_, idx) => relationSelections[idx] === 'apply');
-
       if (relacionesAplicadas.length === 0) {
         setMensaje('❌ No relations applied.');
         setRelationModalOpen(false);
@@ -299,14 +294,14 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       const res = await fetch(applyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ relations: relacionesAplicadas })
+        body: JSON.stringify({ relations: relacionesAplicadas }),
       });
 
       if (!res.ok) {
         let msg = `HTTP ${res.status}`;
         try {
           const j = await res.json();
-          msg = j?.error || msg;
+          msg = j?.error ?? msg;
         } catch {}
         throw new Error(`Error applying relations: ${msg}`);
       }
@@ -336,7 +331,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       await fetch('/common/apply-new-fields/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ viewType: pendingDetectedType, newFields: newFieldsDetected })
+        body: JSON.stringify({ viewType: pendingDetectedType, newFields: newFieldsDetected }),
       });
       setNewFieldsModalOpen(false);
       await processUpload(pendingFile, pendingDetectedType);
@@ -356,6 +351,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
     handleFileUpload,
     handleConfirmDuplicates,
     closeResolver: () => setResolverOpen(false),
+
     relationModalOpen,
     relations,
     relationSelections,
@@ -368,6 +364,7 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       setNewEntries([]);
       setMensaje('❌ Operation cancelled. No changes were saved.');
     },
+
     RelationResolverModal,
     NewFieldsModal,
     newFieldsModalOpen,
@@ -379,6 +376,6 @@ export function useUploadFile(onClose: (success: boolean) => void, endpoints: En
       setNewFieldsDetected([]);
       setPendingFile(null);
       setMensaje('❌ Operation cancelled. No changes were saved.');
-    }
+    },
   };
 }
